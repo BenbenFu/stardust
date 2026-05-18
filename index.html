@@ -797,10 +797,291 @@
       }
     })();
 
-    // ===== 保留你原本的 BLE / WiFi JS 逻辑 =====
-    // 你可以直接把原文件中的 script 逻辑整体复制到这里。
-    // UI 已经全部兼容原有 ID：
-    // connectBtn / disconnectBtn / wifiPanel / wifiList / currentDiary 等。
+    // ===== 调试日志 =====
+    function dbg(msg) {
+      console.log('[Stardust] ' + msg);
+    }
+
+    // ===== BLE 配置 =====
+    var BLE_SERVICE_UUID = '0000fe40-0000-1000-8000-00805f9b34fb';
+    var BLE_CMD_CHAR_UUID = '0000fe41-0000-1000-8000-00805f9b34fb';
+    var BLE_STATUS_CHAR_UUID = '0000fe42-0000-1000-8000-00805f9b34fb';
+
+    var bleDevice = null;
+    var bleServer = null;
+    var cmdChar = null;
+    var statusChar = null;
+    var isConnected = false;
+
+    var wifiNetworks = [];
+    var selectedSSID = null;
+
+    function toggleWifiPanel() {
+      document.getElementById('wifiPanel').classList.toggle('expanded');
+    }
+
+    function updateWiFiStatus(type, msg) {
+      const statusEl = document.getElementById('wifiStatus');
+      const textEl = document.getElementById('wifiStatusText');
+
+      statusEl.className = 'wifi-status';
+
+      if (type === 'connected') {
+        statusEl.classList.add('connected');
+      }
+
+      if (type === 'error' || type === 'disconnected') {
+        statusEl.classList.add('disconnected');
+      }
+
+      textEl.textContent = msg;
+    }
+
+    function sendWiFiCmd(cmd) {
+      if (!isConnected || !cmdChar) return;
+
+      const encoder = new TextEncoder();
+
+      cmdChar.writeValue(encoder.encode(cmd))
+      .then(() => dbg('WiFi CMD: ' + cmd))
+      .catch(err => dbg(err.message));
+    }
+
+    function scanWiFi() {
+      if (!isConnected) {
+        alert('请先连接设备');
+        return;
+      }
+
+      const scanBtn = document.getElementById('wifiScanBtn');
+      const listEl = document.getElementById('wifiList');
+
+      scanBtn.disabled = true;
+      scanBtn.textContent = '扫描中...';
+
+      listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#8e9bc6;">正在扫描附近网络...</div>';
+
+      sendWiFiCmd('WIFI:SCAN');
+    }
+
+    function renderWiFiList(networks) {
+      const listEl = document.getElementById('wifiList');
+
+      listEl.innerHTML = '';
+
+      networks.sort((a,b)=>b.rssi-a.rssi);
+
+      networks.forEach(net => {
+        const item = document.createElement('div');
+
+        item.className = 'wifi-item';
+
+        item.innerHTML = `
+          <div>
+            <div class="wifi-item-ssid">${net.ssid}</div>
+            <div class="wifi-item-rssi">信号强度 ${Math.max(0,Math.min(100,(net.rssi+100)*2))}%</div>
+          </div>
+          <div>${net.secure ? '🔒' : ''}</div>
+        `;
+
+        item.onclick = () => selectWiFi(net.ssid);
+
+        listEl.appendChild(item);
+      });
+    }
+
+    function selectWiFi(ssid) {
+      selectedSSID = ssid;
+
+      document.getElementById('wifiPasswordSection').style.display = 'block';
+      document.getElementById('selectedSSID').textContent = '已选择：' + ssid;
+
+      sendWiFiCmd('WIFI:SET_SSID:' + ssid);
+    }
+
+    function connectWiFi() {
+      if (!selectedSSID) {
+        alert('请先选择 WiFi');
+        return;
+      }
+
+      const password = document.getElementById('wifiPassword').value;
+
+      if (!password) {
+        alert('请输入密码');
+        return;
+      }
+
+      sendWiFiCmd('WIFI:SET_PASS:' + password);
+
+      setTimeout(() => {
+        sendWiFiCmd('WIFI:CONNECT');
+      }, 120);
+    }
+
+    function checkWiFiStatus() {
+      sendWiFiCmd('WIFI:STATUS');
+    }
+
+    function clearWiFi() {
+      sendWiFiCmd('WIFI:CLEAR');
+    }
+
+    function handleConnect() {
+      const bt = navigator.bluetooth || window.bluetooth;
+
+      if (!bt) {
+        alert('浏览器不支持蓝牙，请使用 Bluefy / Chrome');
+        return;
+      }
+
+      bt.requestDevice({
+        filters: [{ namePrefix: 'Stardust' }],
+        optionalServices: [BLE_SERVICE_UUID]
+      })
+      .then(device => {
+        bleDevice = device;
+
+        bleDevice.addEventListener('gattserverdisconnected', onBleDisconnect);
+
+        return device.gatt.connect();
+      })
+      .then(server => {
+        bleServer = server;
+        return server.getPrimaryService(BLE_SERVICE_UUID);
+      })
+      .then(service => {
+        return Promise.all([
+          service.getCharacteristic(BLE_CMD_CHAR_UUID),
+          service.getCharacteristic(BLE_STATUS_CHAR_UUID)
+        ]);
+      })
+      .then(chars => {
+        cmdChar = chars[0];
+        statusChar = chars[1];
+
+        return statusChar.startNotifications();
+      })
+      .then(() => {
+        statusChar.addEventListener('characteristicvaluechanged', onStatusNotify);
+
+        isConnected = true;
+
+        onBleConnect();
+
+        setTimeout(() => {
+          checkWiFiStatus();
+        }, 500);
+      })
+      .catch(err => {
+        alert('连接失败：' + err.message);
+      });
+    }
+
+    function handleDisconnect() {
+      if (bleDevice && bleDevice.gatt.connected) {
+        bleDevice.gatt.disconnect();
+      }
+
+      isConnected = false;
+
+      onBleDisconnect();
+    }
+
+    function sendCmd(cmd) {
+      if (!isConnected || !cmdChar) return;
+
+      const encoder = new TextEncoder();
+
+      cmdChar.writeValue(encoder.encode(cmd));
+    }
+
+    function onBleConnect() {
+      document.getElementById('statusDot').classList.add('connected');
+      document.getElementById('statusText').textContent = '已连接';
+
+      document.getElementById('connectBtn').style.display = 'none';
+      document.getElementById('disconnectBtn').style.display = 'block';
+
+      document.getElementById('wifiPanel').classList.add('show');
+
+      document.querySelectorAll('.control-btn').forEach(btn => {
+        btn.disabled = false;
+      });
+    }
+
+    function onBleDisconnect() {
+      document.getElementById('statusDot').classList.remove('connected');
+      document.getElementById('statusText').textContent = '未连接';
+
+      document.getElementById('connectBtn').style.display = 'block';
+      document.getElementById('disconnectBtn').style.display = 'none';
+
+      document.getElementById('wifiPanel').classList.remove('show');
+      document.getElementById('wifiPanel').classList.remove('expanded');
+
+      document.querySelectorAll('.control-btn').forEach(btn => {
+        btn.disabled = true;
+      });
+    }
+
+    function onStatusNotify(event) {
+      const value = event.target.value;
+      const decoder = new TextDecoder();
+
+      const jsonStr = decoder.decode(value);
+
+      try {
+        const data = JSON.parse(jsonStr);
+
+        if (data.wifi !== undefined) {
+
+          if (data.wifi === 'connected') {
+            updateWiFiStatus('connected', 'WiFi 已连接');
+          }
+
+          else if (data.wifi === 'failed') {
+            updateWiFiStatus('error', '连接失败');
+          }
+
+          else if (data.wifi === 'scan_done') {
+            document.getElementById('wifiScanBtn').disabled = false;
+            document.getElementById('wifiScanBtn').textContent = '🔍 扫描 WiFi';
+
+            renderWiFiList(data.networks || []);
+          }
+
+          return;
+        }
+
+        document.getElementById('currentDiary').textContent = data.diary !== undefined
+          ? data.diary + 1
+          : '--';
+
+        document.getElementById('totalDiary').textContent = data.total || '--';
+
+        const stateEl = document.getElementById('scrollState');
+
+        if (data.state === 'scrolling') {
+          stateEl.className = 'state-chip scrolling';
+          stateEl.innerHTML = '✦ 滚动中';
+        }
+
+        else if (data.state === 'paused') {
+          stateEl.className = 'state-chip paused';
+          stateEl.innerHTML = '✦ 已暂停';
+        }
+
+        else {
+          stateEl.className = 'state-chip idle';
+          stateEl.innerHTML = '✦ 空闲中';
+        }
+      }
+
+      catch(e) {
+        dbg(e.message);
+      }
+    }
   </script>
 </body>
 </html>
