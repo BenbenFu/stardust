@@ -455,6 +455,9 @@
     }
 
     .wifi-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-size: .92rem;
       letter-spacing: .12em;
       color: #dce5ff;
@@ -578,6 +581,25 @@
       margin-top: 16px;
     }
 
+    .panel-title-icon {
+      width: 18px;
+      height: 18px;
+      color: #9fc0ff;
+    }
+
+    .btn-inline-icon {
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      vertical-align: -3px;
+    }
+
+    .wifi-lock-icon {
+      width: 16px;
+      height: 16px;
+      color: #8e9bc6;
+    }
+
     .wifi-action-btn.clear {
       color: var(--red);
       background: rgba(255,125,144,.08);
@@ -672,7 +694,7 @@
 
     <section class="wifi-panel" id="wifiPanel">
       <div class="wifi-panel-header" onclick="toggleWifiPanel()">
-        <div class="wifi-panel-title">📶 WIFI CONFIGURATION</div>
+        <div class="wifi-panel-title"><svg class="panel-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4.5 9.5C8.8 5.8 15.2 5.8 19.5 9.5"/><path d="M7.5 12.5C10.1 10.3 13.9 10.3 16.5 12.5"/><path d="M10.5 15.5C11.3 14.9 12.7 14.9 13.5 15.5"/><circle cx="12" cy="18" r="1" fill="currentColor" stroke="none"/></svg><span>WIFI CONFIGURATION</span></div>
         <div class="wifi-panel-arrow">▼</div>
       </div>
 
@@ -683,7 +705,7 @@
         </div>
 
         <button class="wifi-scan-btn" id="wifiScanBtn" onclick="scanWiFi()">
-          🔍 扫描 WiFi
+          <svg class="btn-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M20 20L16.5 16.5"/></svg>扫描 WiFi
         </button>
 
         <div class="wifi-list" id="wifiList"></div>
@@ -705,11 +727,11 @@
 
         <div class="wifi-actions">
           <button class="wifi-action-btn" onclick="checkWiFiStatus()">
-            📡 状态
+            <svg class="btn-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 18h.01"/><path d="M8.5 14.5a5 5 0 0 1 7 0"/><path d="M5 11a10 10 0 0 1 14 0"/></svg>状态
           </button>
 
           <button class="wifi-action-btn clear" onclick="clearWiFi()">
-            🗑 清除
+            <svg class="btn-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7H20"/><path d="M9 7V4H15V7"/><path d="M7 7L8 19H16L17 7"/></svg>清除
           </button>
         </div>
 
@@ -881,7 +903,7 @@
             <div class="wifi-item-ssid">${net.ssid}</div>
             <div class="wifi-item-rssi">信号强度 ${Math.max(0,Math.min(100,(net.rssi+100)*2))}%</div>
           </div>
-          <div>${net.secure ? '🔒' : ''}</div>
+          <div>${net.secure ? '<svg class="wifi-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V8a3 3 0 0 1 6 0v3"/></svg>' : ''}</div>
         `;
 
         item.onclick = () => selectWiFi(net.ssid);
@@ -1046,7 +1068,7 @@
 
           else if (data.wifi === 'scan_done') {
             document.getElementById('wifiScanBtn').disabled = false;
-            document.getElementById('wifiScanBtn').textContent = '🔍 扫描 WiFi';
+            document.getElementById('wifiScanBtn').textContent = '<svg class="btn-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M20 20L16.5 16.5"/></svg>扫描 WiFi';
 
             renderWiFiList(data.networks || []);
           }
