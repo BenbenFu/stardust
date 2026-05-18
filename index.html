@@ -883,6 +883,7 @@
 
       listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#8e9bc6;">正在扫描附近网络...</div>';
 
+      wifiNetworks = [];  // ★ 修复：扫描前重置列表
       sendWiFiCmd('WIFI:SCAN');
     }
 
@@ -1068,9 +1069,16 @@
 
           else if (data.wifi === 'scan_done') {
             document.getElementById('wifiScanBtn').disabled = false;
-            document.getElementById('wifiScanBtn').textContent = '<svg class="btn-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M20 20L16.5 16.5"/></svg>扫描 WiFi';
+            document.getElementById('wifiScanBtn').innerHTML = '<svg class="btn-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M20 20L16.5 16.5"/></svg>扫描 WiFi';
+            wifiNetworks = data.networks || [];
+            renderWiFiList(wifiNetworks);
+          }
 
-            renderWiFiList(data.networks || []);
+          else if (data.wifi === 'scan_cont') {
+            if (data.networks) {
+              wifiNetworks = wifiNetworks.concat(data.networks);
+              renderWiFiList(wifiNetworks);
+            }
           }
 
           return;
