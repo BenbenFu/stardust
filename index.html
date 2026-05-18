@@ -616,7 +616,18 @@
     }
 
     .debug-log {
-      display: none;
+      max-height: 200px;
+      overflow-y: auto;
+      background: rgba(0,0,0,.55);
+      color: #8fbc8f;
+      font-family: monospace;
+      font-size: .68rem;
+      line-height: 1.6;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
     }
 
     @media (max-width: 420px) {
@@ -820,8 +831,16 @@
     })();
 
     // ===== 调试日志 =====
+    var _dbgEl = null;
     function dbg(msg) {
       console.log('[Stardust] ' + msg);
+      _dbgEl = _dbgEl || document.getElementById('debugLog');
+      if (_dbgEl) {
+        var line = document.createElement('div');
+        line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+        _dbgEl.appendChild(line);
+        _dbgEl.scrollTop = _dbgEl.scrollHeight;
+      }
     }
 
     // ===== BLE 配置 =====
@@ -1053,6 +1072,7 @@
       const decoder = new TextDecoder();
 
       const jsonStr = decoder.decode(value);
+      dbg('Notify raw (' + jsonStr.length + '): ' + jsonStr.substring(0, 120));
 
       try {
         const data = JSON.parse(jsonStr);
@@ -1109,7 +1129,7 @@
       }
 
       catch(e) {
-        dbg(e.message);
+        dbg('JSON parse failed: ' + e.message + ' | raw: ' + jsonStr.substring(0, 200));
       }
     }
   </script>
