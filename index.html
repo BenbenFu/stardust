@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>星屑遥控器 - Stardust Remote</title>
   <style>
     * {
@@ -14,21 +14,13 @@
 
     body {
       min-height: 100vh;
-      /* 三层叠加深空背景，增加宇宙深度感 */
-      background: 
-        radial-gradient(ellipse at top center, #2a2a6a 0%, transparent 55%),
-        radial-gradient(ellipse at bottom right, #1a1a5a 0%, transparent 50%),
-        linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 30%, #0d0d2a 70%, #0a0a1a 100%);
-      background-attachment: fixed;
+      background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3a 30%, #0d0d2a 70%, #0a0a1a 100%);
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       color: #e0e8ff;
       overflow-x: hidden;
-      /* iPhone安全区域适配 */
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
     }
 
-    /* 星尘粒子背景 - 升级为随机大小亮度 */
+    /* 星尘粒子背景 */
     .stars {
       position: fixed;
       top: 0; left: 0;
@@ -39,6 +31,7 @@
 
     .star {
       position: absolute;
+      width: 2px; height: 2px;
       background: rgba(255,255,255,0.8);
       border-radius: 50%;
       animation: twinkle 3s infinite ease-in-out;
@@ -47,22 +40,6 @@
     @keyframes twinkle {
       0%, 100% { opacity: 0.3; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.5); }
-    }
-
-    /* 流星效果 */
-    .meteor {
-      position: absolute;
-      width: 1px;
-      height: 40px;
-      background: linear-gradient(to bottom, rgba(200, 220, 255, 0.9), transparent);
-      transform: rotate(45deg);
-      animation: meteor 3s linear forwards;
-      opacity: 0;
-    }
-
-    @keyframes meteor {
-      0% { transform: translateX(0) translateY(0) rotate(45deg); opacity: 1; }
-      100% { transform: translateX(-300px) translateY(300px) rotate(45deg); opacity: 0; }
     }
 
     /* 主容器 */
@@ -77,26 +54,25 @@
       flex-direction: column;
     }
 
-    /* 头部 - 字体层级优化 */
+    /* 头部 */
     .header {
       text-align: center;
-      padding: 35px 0;
+      padding: 30px 0;
     }
 
     .logo {
       font-size: 28px;
-      font-weight: 200; /* 更细的字重，更有科技感 */
-      letter-spacing: 6px; /* 增加字间距 */
+      font-weight: 300;
+      letter-spacing: 4px;
       color: #c8d4ff;
-      text-shadow: 0 0 25px rgba(150,180,255,0.6);
-      margin-bottom: 10px;
+      text-shadow: 0 0 20px rgba(150,180,255,0.5);
+      margin-bottom: 8px;
     }
 
     .subtitle {
-      font-size: 11px;
+      font-size: 12px;
       color: #7a8aaa;
-      letter-spacing: 3px;
-      text-transform: uppercase; /* 全大写更精致 */
+      letter-spacing: 2px;
     }
 
     /* 连接状态 */
@@ -110,7 +86,6 @@
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 12px;
-      backdrop-filter: blur(5px);
     }
 
     .status-dot {
@@ -134,7 +109,6 @@
     .status-text {
       font-size: 14px;
       color: #a0b0d0;
-      transition: all 0.3s ease;
     }
 
     /* ========== 关键修复：所有按钮统一处理 ========== */
@@ -150,7 +124,7 @@
       color: inherit;
     }
 
-    /* 连接按钮 - 玻璃质感升级 */
+    /* 连接按钮 */
     .connect-btn {
       display: block;
       width: 100%;
@@ -159,24 +133,16 @@
       font-weight: 500;
       letter-spacing: 3px;
       color: #ffffff;
-      background: rgba(58, 74, 122, 0.6);
-      backdrop-filter: blur(10px);
+      background: linear-gradient(135deg, #3a4a7a, #2a3a6a);
       border: 1px solid rgba(150,180,255,0.3);
       border-radius: 14px;
       position: relative;
       z-index: 10;
-      box-shadow: 
-        0 4px 15px rgba(100, 140, 255, 0.2),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .connect-btn:active {
-      background: rgba(78, 94, 142, 0.7);
+      background: linear-gradient(135deg, #5a6a9a, #4a5a8a);
       transform: scale(0.97);
-      box-shadow: 
-        0 2px 8px rgba(100, 140, 255, 0.15),
-        inset 0 2px 4px rgba(0, 0, 0, 0.2);
     }
 
     .connect-btn:disabled {
@@ -192,28 +158,118 @@
       font-size: 13px;
       color: #ff6b6b;
       background: rgba(255,100,100,0.1);
-      backdrop-filter: blur(8px);
       border: 1px solid rgba(255,100,100,0.2);
       border-radius: 10px;
       position: relative;
       z-index: 10;
-      transition: all 0.2s ease;
     }
 
-    .disconnect-btn:active {
-      background: rgba(255,100,100,0.2);
+    /* 状态卡片 */
+    .status-card {
+      margin: 30px 0;
+      padding: 25px;
+      background: linear-gradient(145deg, rgba(40,50,90,0.6), rgba(30,40,80,0.8));
+      border: 1px solid rgba(100,140,200,0.2);
+      border-radius: 16px;
+      text-align: center;
     }
 
-    /* ========== WiFi 配网页面 - 玻璃质感统一 ========== */
+    .diary-counter {
+      font-size: 42px;
+      font-weight: 200;
+      color: #fff;
+      text-shadow: 0 0 30px rgba(150,180,255,0.4);
+    }
+
+    .diary-counter span {
+      font-size: 20px;
+      color: #6a7a9a;
+      margin: 0 5px;
+    }
+
+    .scroll-state {
+      margin-top: 15px;
+      padding: 8px 20px;
+      display: inline-block;
+      border-radius: 20px;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    .scroll-state.scrolling {
+      background: rgba(77,255,136,0.15);
+      color: #4dff88;
+      border: 1px solid rgba(77,255,136,0.3);
+    }
+
+    .scroll-state.paused {
+      background: rgba(255,200,77,0.15);
+      color: #ffc84d;
+      border: 1px solid rgba(255,200,77,0.3);
+    }
+
+    .scroll-state.idle {
+      background: rgba(150,160,200,0.15);
+      color: #a0b0d0;
+      border: 1px solid rgba(150,160,200,0.3);
+    }
+
+    /* 控制按钮组 */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: auto;
+      padding-bottom: 30px;
+    }
+
+    .control-btn {
+      padding: 20px 10px;
+      font-size: 28px;
+      background: linear-gradient(145deg, rgba(50,60,100,0.6), rgba(40,50,90,0.8));
+      border: 1px solid rgba(100,140,200,0.2);
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .control-btn .icon {
+      font-size: 26px;
+      filter: drop-shadow(0 0 8px rgba(150,180,255,0.4));
+    }
+
+    .control-btn .label {
+      font-size: 10px;
+      color: #7a8aaa;
+      letter-spacing: 1px;
+    }
+
+    .control-btn:active:not(:disabled) {
+      transform: scale(0.95);
+      background: linear-gradient(145deg, rgba(70,85,140,0.7), rgba(60,75,130,0.9));
+    }
+
+    .control-btn:disabled {
+      opacity: 0.4;
+    }
+
+    .control-btn.primary {
+      background: linear-gradient(145deg, rgba(60,80,140,0.7), rgba(50,70,120,0.9));
+    }
+
+    /* ========== WiFi 配网页面 ========== */
     .wifi-panel {
       margin: 20px 0;
-      background: rgba(30, 40, 70, 0.4);
-      backdrop-filter: blur(10px);
+      background: linear-gradient(145deg, rgba(30,40,70,0.6), rgba(20,30,60,0.8));
       border: 1px solid rgba(100,140,200,0.2);
       border-radius: 16px;
       overflow: hidden;
       display: none;  /* 默认折叠 */
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     }
 
     .wifi-panel.show {
@@ -225,9 +281,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 15px 20px;
-      background: rgba(255,255,255,0.02);
+      background: rgba(255,255,255,0.03);
       cursor: pointer;
-      transition: background 0.2s ease;
     }
 
     .wifi-panel-header:active {
@@ -243,7 +298,7 @@
     .wifi-panel-arrow {
       font-size: 12px;
       color: #6a7a9a;
-      transition: transform 0.3s ease;
+      transition: transform 0.3s;
     }
 
     .wifi-panel.expanded .wifi-panel-arrow {
@@ -251,14 +306,12 @@
     }
 
     .wifi-panel-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+      padding: 0 20px 20px;
+      display: none;
     }
 
     .wifi-panel.expanded .wifi-panel-content {
-      max-height: 500px;
-      padding: 0 20px 20px;
+      display: block;
     }
 
     /* WiFi 状态 */
@@ -268,7 +321,6 @@
       background: rgba(0,0,0,0.2);
       border-radius: 10px;
       font-size: 12px;
-      transition: all 0.3s ease;
     }
 
     .wifi-status.connected {
@@ -289,11 +341,9 @@
       font-size: 14px;
       color: #c8d4ff;
       background: rgba(80,100,160,0.4);
-      backdrop-filter: blur(8px);
       border: 1px solid rgba(100,140,200,0.3);
       border-radius: 10px;
       margin-bottom: 15px;
-      transition: all 0.2s ease;
     }
 
     .wifi-scan-btn:active {
@@ -317,12 +367,10 @@
       justify-content: space-between;
       padding: 12px;
       margin-bottom: 8px;
-      background: rgba(255,255,255,0.02);
-      backdrop-filter: blur(5px);
+      background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.08);
       border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
     }
 
     .wifi-item:active {
@@ -373,7 +421,6 @@
       border-radius: 10px;
       outline: none;
       margin-bottom: 12px;
-      transition: border-color 0.2s ease;
     }
 
     .wifi-password-input:focus {
@@ -390,15 +437,13 @@
       padding: 14px;
       font-size: 14px;
       color: #ffffff;
-      background: rgba(74, 106, 154, 0.6);
-      backdrop-filter: blur(8px);
+      background: linear-gradient(135deg, #4a6a9a, #3a5a8a);
       border: 1px solid rgba(100,140,200,0.3);
       border-radius: 10px;
-      transition: all 0.2s ease;
     }
 
     .wifi-connect-btn:active {
-      background: rgba(94, 126, 174, 0.7);
+      background: linear-gradient(135deg, #5a7aaa, #4a6a9a);
     }
 
     .wifi-connect-btn:disabled {
@@ -418,10 +463,8 @@
       font-size: 12px;
       color: #a0b0d0;
       background: rgba(255,255,255,0.05);
-      backdrop-filter: blur(5px);
       border: 1px solid rgba(255,255,255,0.1);
       border-radius: 8px;
-      transition: all 0.2s ease;
     }
 
     .wifi-action-btn:active {
@@ -432,10 +475,6 @@
       color: #ff6b6b;
       background: rgba(255,100,100,0.1);
       border-color: rgba(255,100,100,0.2);
-    }
-
-    .wifi-action-btn.clear:active {
-      background: rgba(255,100,100,0.2);
     }
 
     /* 扫描中状态 */
@@ -463,115 +502,6 @@
       to { transform: rotate(360deg); }
     }
 
-    /* 状态卡片 - 玻璃质感升级 */
-    .status-card {
-      margin: 30px 0;
-      padding: 25px;
-      background: rgba(40, 50, 90, 0.4);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(100,140,200,0.2);
-      border-radius: 16px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    }
-
-    .diary-counter {
-      font-size: 42px;
-      font-weight: 200;
-      color: #fff;
-      text-shadow: 0 0 30px rgba(150,180,255,0.4);
-      transition: all 0.3s ease;
-    }
-
-    .diary-counter span {
-      font-size: 20px;
-      color: #6a7a9a;
-      margin: 0 5px;
-    }
-
-    .scroll-state {
-      margin-top: 15px;
-      padding: 8px 20px;
-      display: inline-block;
-      border-radius: 20px;
-      font-size: 13px;
-      letter-spacing: 1px;
-      transition: all 0.3s ease;
-    }
-
-    .scroll-state.scrolling {
-      background: rgba(77,255,136,0.15);
-      color: #4dff88;
-      border: 1px solid rgba(77,255,136,0.3);
-    }
-
-    .scroll-state.paused {
-      background: rgba(255,200,77,0.15);
-      color: #ffc84d;
-      border: 1px solid rgba(255,200,77,0.3);
-    }
-
-    .scroll-state.idle {
-      background: rgba(150,160,200,0.15);
-      color: #a0b0d0;
-      border: 1px solid rgba(150,160,200,0.3);
-    }
-
-    /* 控制按钮组 - 玻璃质感升级 */
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: auto;
-      padding-bottom: 30px;
-    }
-
-    .control-btn {
-      padding: 22px 12px; /* 扩大点击区域 */
-      font-size: 28px;
-      background: rgba(50, 60, 100, 0.4);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(100,140,200,0.2);
-      border-radius: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      position: relative;
-      overflow: hidden;
-      z-index: 1;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .control-btn .icon {
-      font-size: 26px;
-      filter: drop-shadow(0 0 8px rgba(150,180,255,0.4));
-    }
-
-    .control-btn .label {
-      font-size: 9px;
-      color: #7a8aaa;
-      letter-spacing: 2px;
-      text-transform: uppercase; /* 全大写更精致 */
-    }
-
-    .control-btn:active:not(:disabled) {
-      transform: scale(0.96);
-      background: rgba(80, 95, 150, 0.7);
-    }
-
-    .control-btn:disabled {
-      opacity: 0.4;
-    }
-
-    .control-btn.primary {
-      background: rgba(60, 80, 140, 0.5);
-    }
-
-    .control-btn.primary:active:not(:disabled) {
-      background: rgba(80, 110, 180, 0.7);
-    }
-
     /* 浏览器提示 */
     .browser-hint {
       text-align: center;
@@ -580,7 +510,7 @@
       color: #5a6a8a;
     }
 
-    /* 调试日志 */
+    /* 调试日志（开发阶段可见） */
     .debug-log {
       margin-top: 15px;
       padding: 10px;
@@ -596,6 +526,7 @@
 </head>
 <body>
   <div class="stars" id="stars"></div>
+
   <div class="container">
     <div class="header">
       <div class="logo">✧ STARDUST ✧</div>
@@ -607,9 +538,11 @@
       <span class="status-text" id="statusText">未连接</span>
     </div>
 
+    <!-- 三重保障：inline onclick + addEventListener + touchstart -->
     <button class="connect-btn" id="connectBtn" onclick="handleConnect()">
       ⚡ 连接星屑
     </button>
+
     <button class="disconnect-btn" id="disconnectBtn" style="display:none;" onclick="handleDisconnect()">
       断开连接
     </button>
@@ -621,16 +554,20 @@
         <span class="wifi-panel-arrow">▼</span>
       </div>
       <div class="wifi-panel-content">
+        <!-- WiFi 状态 -->
         <div class="wifi-status" id="wifiStatus">
           <div id="wifiStatusText">点击"扫描WiFi"开始配置</div>
         </div>
         
+        <!-- 扫描按钮 -->
         <button class="wifi-scan-btn" id="wifiScanBtn" onclick="scanWiFi()">
           🔍 扫描 WiFi
         </button>
         
+        <!-- WiFi 列表 -->
         <div class="wifi-list" id="wifiList"></div>
         
+        <!-- 密码输入区域 -->
         <div class="wifi-password-section" id="wifiPasswordSection" style="display:none;">
           <div class="wifi-selected-ssid" id="selectedSSID">已选择: ---</div>
           <input type="password" class="wifi-password-input" id="wifiPassword" placeholder="输入WiFi密码">
@@ -639,6 +576,7 @@
           </button>
         </div>
         
+        <!-- WiFi 操作按钮 -->
         <div class="wifi-actions">
           <button class="wifi-action-btn" onclick="checkWiFiStatus()">📡 状态</button>
           <button class="wifi-action-btn clear" onclick="clearWiFi()">🗑 清除</button>
@@ -658,25 +596,25 @@
         <span class="icon">⏮</span>
         <span class="label">PREV</span>
       </button>
-      
       <button class="control-btn primary" id="btnSync" disabled onclick="sendCmd('SYNC')">
         <span class="icon">🔄</span>
         <span class="label">SYNC</span>
       </button>
-      
       <button class="control-btn" id="btnNext" disabled onclick="sendCmd('NEXT')">
         <span class="icon">⏭</span>
         <span class="label">NEXT</span>
       </button>
-      
       <button class="control-btn" id="btnStop" disabled onclick="sendCmd('STOP')">
         <span class="icon">⏸</span>
         <span class="label">STOP</span>
       </button>
-      
       <button class="control-btn primary" id="btnPlay" disabled onclick="sendCmd('PLAY')">
         <span class="icon">▶</span>
         <span class="label">PLAY</span>
+      </button>
+      <button class="control-btn" id="btnMode" disabled onclick="sendCmd('MODE')">
+        <span class="icon">📖</span>
+        <span class="label" id="modeLabel">ANSWERS</span>
       </button>
     </div>
 
@@ -689,6 +627,9 @@
   </div>
 
   <script>
+    // ===== 最先执行的验证：JS是否在跑 =====
+    alert('星屑遥控器已加载！');
+
     // ===== 调试日志 =====
     function dbg(msg) {
       console.log('[Stardust] ' + msg);
@@ -718,38 +659,19 @@
     var pendingSSID = null;
     var pendingPassword = null;
 
-    // ===== 星尘背景 + 流星效果 =====
+    // ===== 星尘背景 =====
     (function createStars() {
       try {
         var c = document.getElementById('stars');
-        for (var i = 0; i < 60; i++) {
+        for (var i = 0; i < 50; i++) {
           var s = document.createElement('div');
           s.className = 'star';
-          // 随机大小和位置
-          var size = 1 + Math.random() * 2;
-          s.style.width = size + 'px';
-          s.style.height = size + 'px';
           s.style.left = Math.random() * 100 + '%';
           s.style.top = Math.random() * 100 + '%';
           s.style.animationDelay = Math.random() * 3 + 's';
           s.style.animationDuration = (2 + Math.random() * 3) + 's';
-          s.style.opacity = 0.3 + Math.random() * 0.7;
           c.appendChild(s);
         }
-
-        // 随机生成流星
-        setInterval(() => {
-          if (Math.random() > 0.7) {
-            const meteor = document.createElement('div');
-            meteor.className = 'meteor';
-            meteor.style.left = Math.random() * 100 + '%';
-            meteor.style.top = '-40px';
-            meteor.style.animationDuration = (2 + Math.random() * 2) + 's';
-            c.appendChild(meteor);
-            setTimeout(() => meteor.remove(), 4000);
-          }
-        }, 5000);
-
       } catch(e) {
         dbg('Stars error: ' + e.message);
       }
@@ -807,6 +729,7 @@
       scanBtn.textContent = '🔍 扫描中...';
       listEl.innerHTML = '<div class="wifi-scanning">正在搜索附近的WiFi...</div>';
       
+      // 发送扫描命令
       sendWiFiCmd('WIFI:SCAN');
     }
 
@@ -838,13 +761,15 @@
         return b.rssi - a.rssi;
       });
       
-      networks.forEach(function(net) {
+      networks.forEach(function(net, index) {
         var item = document.createElement('div');
         item.className = 'wifi-item';
-        item.onclick = function() { selectWiFi(net.ssid); };
+        item.onclick = (function(ssid) {
+          return function() { selectWiFi(ssid); };
+        })(net.ssid);
         
         var rssiPercent = Math.max(0, Math.min(100, (net.rssi + 100) * 2));
-        var lockIcon = net.encrypted ? '🔒' : '';
+        var lockIcon = net.rssi < 0 ? '🔒' : '';
         
         item.innerHTML = 
           '<div class="wifi-item-info">' +
@@ -871,7 +796,9 @@
       pwdInput.value = '';
       pwdInput.focus();
       
+      // 先发送 SSID
       sendWiFiCmd('WIFI:SET_SSID:' + ssid);
+      
       dbg('已选择WiFi: ' + ssid);
     }
 
@@ -901,8 +828,10 @@
       
       pendingPassword = password;
       
+      // 发送密码
       sendWiFiCmd('WIFI:SET_PASS:' + password);
       
+      // 延迟一下再发送连接命令
       setTimeout(function() {
         sendWiFiCmd('WIFI:CONNECT');
       }, 100);
@@ -951,14 +880,14 @@
         var pwdSection = document.getElementById('wifiPasswordSection');
         pwdSection.style.display = 'none';
         
-        // 3秒后自动折叠WiFi面板
+        // 3秒后隐藏WiFi面板
         setTimeout(function() {
           var panel = document.getElementById('wifiPanel');
           panel.classList.remove('expanded');
         }, 3000);
         
       } else if (data.wifi === 'failed') {
-        updateWiFiStatus('error', '连接失败: ' + (data.msg || '密码错误或信号弱'));
+        updateWiFiStatus('error', '连接失败: ' + (data.msg || '未知错误'));
         
       } else if (data.wifi === 'ssid_set') {
         updateWiFiStatus('info', 'SSID已设置');
@@ -976,6 +905,7 @@
         handleWiFiScanResult(data);
         
       } else if (data.wifi === 'scan_cont') {
+        // 继续扫描结果
         if (data.networks) {
           wifiNetworks = wifiNetworks.concat(data.networks);
         }
@@ -1001,15 +931,19 @@
       return div.innerHTML;
     }
 
-    // ===== 连接函数 =====
+    // ===== 连接函数（全局，供inline onclick调用） =====
     function handleConnect() {
       dbg('按钮被点击！');
+      alert('正在搜索星屑...');
+
       var bt = navigator.bluetooth || window.bluetooth;
       if (!bt) {
         alert('浏览器不支持蓝牙，请用 Bluefy 或 Chrome');
         return;
       }
+
       dbg('蓝牙API可用，开始扫描...');
+
       bt.requestDevice({
         filters: [{ namePrefix: 'Stardust' }],
         optionalServices: [BLE_SERVICE_UUID]
@@ -1039,6 +973,8 @@
         cmdChar = chars[0];
         statusChar = chars[1];
         dbg('特征值已获取');
+
+        // 订阅状态通知
         return statusChar.startNotifications();
       })
       .then(function() {
@@ -1047,6 +983,7 @@
         onBleConnect();
         dbg('连接成功！');
         
+        // 连接成功后检查WiFi状态
         setTimeout(function() {
           checkWiFiStatus();
         }, 500);
@@ -1064,6 +1001,7 @@
       isConnected = false;
       onBleDisconnect();
       
+      // 重置WiFi状态
       wifiNetworks = [];
       selectedSSID = null;
       pendingSSID = null;
@@ -1098,6 +1036,7 @@
       document.getElementById('connectBtn').style.display = 'none';
       document.getElementById('disconnectBtn').style.display = 'block';
       
+      // 显示WiFi配网页面
       var wifiPanel = document.getElementById('wifiPanel');
       wifiPanel.classList.add('show');
       
@@ -1111,6 +1050,7 @@
       document.getElementById('connectBtn').style.display = 'block';
       document.getElementById('disconnectBtn').style.display = 'none';
       
+      // 隐藏WiFi配网页面
       var wifiPanel = document.getElementById('wifiPanel');
       wifiPanel.classList.remove('show');
       wifiPanel.classList.remove('expanded');
@@ -1129,39 +1069,59 @@
       var jsonStr = decoder.decode(value);
       dbg('状态: ' + jsonStr);
       
+      // 尝试解析为 JSON
       try {
         var data = JSON.parse(jsonStr);
         
+        // 检查是否是 WiFi 相关状态
         if (data.wifi !== undefined) {
           handleWiFiStatus(data);
           return;
         }
         
+        // 处理日记状态
         document.getElementById('currentDiary').textContent = (data.diary !== undefined && data.diary !== null) ? data.diary + 1 : '--';
         document.getElementById('totalDiary').textContent = data.total || '--';
         var stateEl = document.getElementById('scrollState');
-        if (data.state === 'scrolling' || data.scrolling === true) {
-          stateEl.className = 'scroll-state scrolling';
-          stateEl.textContent = '滚动中';
-        } else if (data.state === 'paused') {
+        
+        // 模式切换处理
+        var modeLabel = document.getElementById('modeLabel');
+        if (data.mode === 'answers') {
           stateEl.className = 'scroll-state paused';
-          stateEl.textContent = '已暂停';
+          stateEl.textContent = '答案之书';
+          if (modeLabel) modeLabel.textContent = 'DIARY';
+          // 更新答案计数
+          document.getElementById('currentDiary').textContent = data.answer || '--';
+          document.getElementById('totalDiary').textContent = data.answerTotal || '--';
         } else {
-          stateEl.className = 'scroll-state idle';
-          stateEl.textContent = '空闲中';
+          if (data.state === 'scrolling' || data.scrolling === true) {
+            stateEl.className = 'scroll-state scrolling';
+            stateEl.textContent = '滚动中';
+          } else if (data.state === 'paused') {
+            stateEl.className = 'scroll-state paused';
+            stateEl.textContent = '已暂停';
+          } else {
+            stateEl.className = 'scroll-state idle';
+            stateEl.textContent = '空闲中';
+          }
+          if (modeLabel) modeLabel.textContent = 'ANSWERS';
         }
       } catch(e) {
         dbg('解析失败: ' + e.message);
       }
     }
 
-    // ===== iOS触摸事件兜底 =====
+    // ===== 额外绑定touchstart（iOS兼容） =====
     document.addEventListener('DOMContentLoaded', function() {
       dbg('DOM就绪');
+
       var connectBtn = document.getElementById('connectBtn');
+      // touchstart兜底
       connectBtn.addEventListener('touchstart', function(e) {
         dbg('touchstart触发！');
       }, {passive: true});
+
+      // addEventListener兜底
       connectBtn.addEventListener('click', function() {
         dbg('click事件触发！');
       });
