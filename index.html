@@ -1110,21 +1110,45 @@
 
         document.getElementById('totalDiary').textContent = data.total || '--';
 
-        const stateEl = document.getElementById('scrollState');
+        // 模式适配
+        var mode = data.mode || 'diary';
+        var modeLabel = document.getElementById('modeLabel');
+        var stateEl = document.getElementById('scrollState');
+        var btnSync = document.getElementById('btnSync');
+        var btnStop = document.getElementById('btnStop');
 
-        if (data.state === 'scrolling') {
-          stateEl.className = 'state-chip scrolling';
-          stateEl.innerHTML = '✦ 滚动中';
-        }
-
-        else if (data.state === 'paused') {
-          stateEl.className = 'state-chip paused';
-          stateEl.innerHTML = '✦ 已暂停';
-        }
-
-        else {
+        if (mode === 'menu') {
+          // 菜单模式
+          modeLabel.textContent = 'MENU';
           stateEl.className = 'state-chip idle';
-          stateEl.innerHTML = '✦ 空闲中';
+          stateEl.innerHTML = '✦ 菜单';
+          btnSync.style.display = 'none';
+          btnStop.style.display = 'none';
+        } else if (mode === 'answers') {
+          // 答案之书模式
+          modeLabel.textContent = 'MENU';
+          stateEl.className = 'state-chip idle';
+          stateEl.innerHTML = '✦ 答案之书';
+          btnSync.style.display = 'none';
+          btnStop.style.display = 'none';
+        } else {
+          // 日记模式
+          modeLabel.textContent = 'ANSWERS';
+          btnSync.style.display = '';
+          btnStop.style.display = '';
+
+          if (data.state === 'scrolling') {
+            stateEl.className = 'state-chip scrolling';
+            stateEl.innerHTML = '✦ 滚动中';
+          }
+          else if (data.state === 'paused') {
+            stateEl.className = 'state-chip paused';
+            stateEl.innerHTML = '✦ 已暂停';
+          }
+          else {
+            stateEl.className = 'state-chip idle';
+            stateEl.innerHTML = '✦ 空闲中';
+          }
         }
       }
 
