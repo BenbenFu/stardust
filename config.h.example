@@ -1,0 +1,57 @@
+/*
+ * Project configuration - TEMPLATE
+ * Copy this file to config.h and fill in your values.
+ */
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// ============================================================
+// WiFi 配置（已废弃，请通过 BLE 配网设置）
+// 凭据现在存储在 Preferences 中 (namespace: stardust)
+// ============================================================
+// #define WIFI_SSID "your_ssid"
+// #define WIFI_PASS "your_password"
+
+// Preferences namespace for WiFi credentials
+#define WIFI_PREF_NS "stardust"
+#define WIFI_PREF_SSID_KEY "wifi_ssid"
+#define WIFI_PREF_PASS_KEY "wifi_pass"
+
+#define SUPABASE_HOST     "your-project.supabase.co"
+#define SUPABASE_ANON_KEY "your-supabase-anon-key"
+#define SUPABASE_TABLE    "DIARIES"
+
+#define SD_CS_PIN    10
+#define SD_MOSI_PIN  11
+#define SD_MISO_PIN  17
+#define SD_SCK_PIN   18
+
+// OLED display (SSD1306 128x64, I2C)
+#define OLED_SCL_PIN  8
+#define OLED_SDA_PIN  9
+
+#define HTTP_BUF_SIZE    262144
+#define CONTENT_BUF_SIZE 65536
+
+// Diagnostic mode: write only the first N new diaries. Set to 0 for unlimited.
+#define SYNC_MAX_FILES 0
+
+// Pagination: number of diary entries per HTTP request
+#define SYNC_PAGE_SIZE 10
+
+// Debug gate: wait for a serial character before touching the SD card.
+#define WAIT_FOR_SERIAL_START 1
+#define SERIAL_START_TIMEOUT_MS 60000
+
+// Diagnostic filenames: 1 writes TYYMMDDX.TXT, 0 writes YYYYMMDD.TXT.
+#define USE_DIAG_FILENAMES 1
+
+// ============================================================
+// BLE configuration (Web Bluetooth control)
+// ============================================================
+#define BLE_DEVICE_NAME       "Stardust"
+#define BLE_SERVICE_UUID      "0000fe40-0000-1000-8000-00805f9b34fb"
+#define BLE_CMD_CHAR_UUID    "0000fe41-0000-1000-8000-00805f9b34fb"
+#define BLE_STATUS_CHAR_UUID "0000fe42-0000-1000-8000-00805f9b34fb"
+
+#endif

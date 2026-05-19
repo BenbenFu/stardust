@@ -1,0 +1,19 @@
+# 敏感配置（每人本地不同，不入库）
+config.h
+
+# 编译产物
+*.bin
+*.elf
+*.map
+*.hex
+
+# PlatformIO / Arduino 构建目录
+.pio/
+build/
+.vscode/.browse.c_cpp.db*
+
+# macOS
+.DS_Store
+
+# WorkBuddy 内部文件（不对外）
+.workbuddy/
