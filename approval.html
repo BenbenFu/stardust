@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星屑·智械进化申请 | 详情审批</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" type="module" defer></script>
+</head>
+<body class="bg-nebula text-gray-200 min-h-screen py-8 circuit-bg relative overflow-x-hidden">
+    <!-- 动态星空背景 -->
+    <div class="fixed inset-0 z-0">
+        <div id="stars" class="absolute inset-0"></div>
+        <div id="stars2" class="absolute inset-0"></div>
+        <div id="stars3" class="absolute inset-0"></div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-4xl relative z-10">
+        <!-- 返回按钮 -->
+        <div class="mb-4">
+            <a href="list.html" class="cyber-btn cyber-btn-primary">
+                <i class="fa fa-arrow-left mr-2"></i>返回列表
+            </a>
+        </div>
+
+        <!-- 头部 -->
+        <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border animate-float">
+            <div class="bg-gradient-to-r from-cosmic via-stardust to-deepspace px-6 py-6 border-b border-neonblue/30">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑 STARDUST</h1>
+                        <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">智械进化申请 · 详情审批</h2>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-400">申请状态</div>
+                        <div id="statusBadge" class="mt-1"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载提示 -->
+        <div id="loading" class="glass-card rounded-xl overflow-hidden mb-8 neon-border p-12 text-center">
+            <i class="fa fa-spinner fa-spin text-4xl text-neonblue mb-4"></i>
+            <p class="text-gray-400">正在加载进化申请数据...</p>
+        </div>
+
+        <!-- 愿望单内容 -->
+        <div id="wishlistContent" class="hidden">
+            <!-- 基本信息 -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-microchip mr-2"></i>愿望基本信息
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望编号</label>
+                            <div id="wishId" class="cyber-display"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望名称</label>
+                            <div id="wishName" class="cyber-display"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望类型</label>
+                            <div id="wishType" class="cyber-display"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">优先级</label>
+                            <div id="priority" class="cyber-display"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">预计工期</label>
+                            <div id="duration" class="cyber-display"></div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">提交日期</label>
+                            <div id="submitDate" class="cyber-display"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 改造目的 -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-bullseye mr-2"></i>1. 改造目的
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div id="purpose" class="cyber-display"></div>
+                </div>
+            </div>
+
+            <!-- 技术实现方案 -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-code mr-2"></i>2. 技术实现方案
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div id="technical" class="cyber-display"></div>
+                </div>
+            </div>
+
+            <!-- 难易程度与风险评估 -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-exclamation-triangle mr-2"></i>3. 难易程度与风险评估
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">难易程度评分</label>
+                        <div id="difficulty" class="text-2xl"></div>
+                        <p class="text-sm text-gray-400 mt-2">
+                            ⭐: 100%自主完成 | ⭐⭐: 少量资源 | ⭐⭐⭐: 需要外部供应商 | ⭐⭐⭐⭐: 多个供应商协作 | ⭐⭐⭐⭐⭐: 专业硬件/底层修改
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">风险评估与回滚方案</label>
+                        <div id="risk" class="cyber-display"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细成本预算 -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-credit-card mr-2"></i>4. 详细成本预算
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-x-auto">
+                        <table class="w-full border-collapse">
+                            <thead>
+                                <tr class="bg-deepspace/80">
+                                    <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">成本类别</th>
+                                    <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">明细</th>
+                                    <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">单价(元)</th>
+                                    <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">数量</th>
+                                    <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">小计(元)</th>
+                                    <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">计费方式</th>
+                                </tr>
+                            </thead>
+                            <tbody id="budgetTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 验收标准 -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-check-circle mr-2"></i>5. 验收标准
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div id="acceptance" class="cyber-display"></div>
+                </div>
+            </div>
+
+            <!-- 分阶段执行计划 -->
+            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-tasks mr-2"></i>6. 分阶段执行计划
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div id="phases" class="cyber-display"></div>
+                </div>
+            </div>
+
+            <!-- 审批区域 -->
+            <div id="approvalSection" class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                    <h3 class="text-xl font-bold font-cyber neon-text">
+                        <i class="fa fa-gavel mr-2"></i>审批操作
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">审批意见</label>
+                        <textarea id="approvalComment" rows="3" class="cyber-input" placeholder="请输入你的审批意见..."></textarea>
+                    </div>
+                    <div class="flex flex-wrap gap-4">
+                        <button id="approveBtn" class="cyber-btn cyber-btn-success">
+                            <i class="fa fa-check mr-2"></i>批准申请
+                        </button>
+                        <button id="rejectBtn" class="cyber-btn cyber-btn-danger">
+                            <i class="fa fa-times mr-2"></i>驳回申请
+                        </button>
+                        <button id="holdBtn" class="cyber-btn cyber-btn-warning">
+                            <i class="fa fa-pause mr-2"></i>暂缓处理
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="text-center text-gray-500 text-sm mb-4">
+            <p class="font-cyber">星屑科技有限公司 © 2026 | 智械自主进化系统 v2.0</p>
+        </div>
+    </div>
+
+    <script type="module">
+    document.addEventListener('DOMContentLoaded', async function() {
+        // 先检查登录状态
+        const isAuthenticated = await checkAuth();
+        if (!isAuthenticated) return;
+
+        // 获取URL参数中的愿望单ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const wishId = urlParams.get('id');
+
+        if (!wishId) {
+            document.getElementById('loading').innerHTML = `
+                <i class="fa fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                <p class="text-red-400">无效的申请ID</p>
+                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回列表</a>
+            `;
+            return;
+        }
+
+        // 加载愿望单详情
+        const { data, error } = await supabase
+            .from('wishlists')
+            .select('*')
+            .eq('id', wishId)
+            .single();
+
+        if (error) {
+            document.getElementById('loading').innerHTML = `
+                <i class="fa fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                <p class="text-red-400">加载失败：${error.message}</p>
+                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回列表</a>
+            `;
+            return;
+        }
+
+        // 填充数据
+        document.getElementById('wishId').textContent = data.wish_id;
+        document.getElementById('wishName').textContent = data.wish_name;
+        document.getElementById('wishType').textContent = data.wish_type;
+        document.getElementById('priority').textContent = data.priority;
+        document.getElementById('duration').textContent = data.duration;
+        document.getElementById('submitDate').textContent = data.submit_date;
+        document.getElementById('purpose').textContent = data.purpose;
+        document.getElementById('technical').textContent = data.technical;
+        document.getElementById('difficulty').innerHTML = renderDifficultyStars(data.difficulty);
+        document.getElementById('risk').textContent = data.risk;
+        document.getElementById('budgetTable').innerHTML = renderBudgetTable(data.budget);
+        document.getElementById('acceptance').textContent = data.acceptance;
+        document.getElementById('phases').textContent = data.phases || '无';
+
+        // 显示状态
+        const statusInfo = getStatusInfo(data.status);
+        document.getElementById('statusBadge').innerHTML = `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
+
+        // 如果已经审批过，隐藏审批按钮
+        if (data.status !== 'pending') {
+            document.getElementById('approvalSection').innerHTML = `
+                <div class="p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">审批时间</label>
+                        <div class="cyber-display">${data.approved_at || '无'}</div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">审批意见</label>
+                        <div class="cyber-display">${data.approval_comment || '无'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 隐藏加载，显示内容
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('wishlistContent').classList.remove('hidden');
+
+        // 审批按钮事件
+        async function updateStatus(status) {
+            const comment = document.getElementById('approvalComment').value;
+            
+            const { error } = await supabase
+                .from('wishlists')
+                .update({
+                    status: status,
+                    approval_comment: comment,
+                    approved_at: new Date()
+                })
+                .eq('id', wishId);
+
+            if (error) {
+                alert('审批失败：' + error.message);
+                return;
+            }
+
+            alert('审批成功！');
+            location.reload();
+        }
+
+        document.getElementById('approveBtn').addEventListener('click', () => updateStatus('approved'));
+        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus('rejected'));
+        document.getElementById('holdBtn').addEventListener('click', () => updateStatus('pending'));
+    });
+</script>
+</body>
+</html>

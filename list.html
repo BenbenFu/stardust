@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星屑·智械进化申请 | 愿望单列表</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" type="module" defer></script>
+</head>
+<body class="bg-nebula text-gray-200 min-h-screen py-8 circuit-bg relative overflow-x-hidden">
+    <!-- 动态星空背景 -->
+    <div class="fixed inset-0 z-0">
+        <div id="stars" class="absolute inset-0"></div>
+        <div id="stars2" class="absolute inset-0"></div>
+        <div id="stars3" class="absolute inset-0"></div>
+    </div>
+
+    <div class="container mx-auto px-4 max-w-5xl relative z-10">
+        <!-- 头部 -->
+        <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border animate-float">
+            <div class="bg-gradient-to-r from-cosmic via-stardust to-deepspace px-6 py-6 border-b border-neonblue/30">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑 STARDUST</h1>
+                        <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">智械进化申请 · 愿望单列表</h2>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm text-gray-400">系统状态</div>
+                        <div class="text-neonblue font-cyber">在线 · 运行正常</div>
+                        <div class="text-xs text-gray-500 mt-1">进化版本 v2.0.1</div>
+			<!-- 新增登出按钮 -->
+  		        <button onclick="logout()" class="cyber-btn cyber-btn-danger text-xs py-1 px-3 mt-2">
+        	    	    <i class="fa fa-sign-out mr-1"></i>安全登出
+        		</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 愿望单列表 -->
+        <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                <h3 class="text-xl font-bold font-cyber neon-text">
+                    <i class="fa fa-list mr-2"></i>所有进化申请
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-deepspace/80">
+                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">申请编号</th>
+                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">愿望名称</th>
+                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">类型</th>
+                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">优先级</th>
+                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">提交日期</th>
+                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">状态</th>
+                                <th class="border border-neonblue/30 px-4 py-2 text-center text-neonblue font-cyber">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wishlistTable">
+                            <tr>
+                                <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-gray-400">
+                                    <i class="fa fa-spinner fa-spin mr-2"></i>正在加载愿望单数据...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="text-center text-gray-500 text-sm mb-4">
+            <p class="font-cyber">星屑科技有限公司 © 2026 | 智械自主进化系统 v2.0</p>
+        </div>
+    </div>
+
+    <script type="module">
+    document.addEventListener('DOMContentLoaded', async function() {
+        // 先检查登录状态
+        const isAuthenticated = await checkAuth();
+        if (!isAuthenticated) return;
+
+        // 加载愿望单列表
+        const { data, error } = await supabase
+            .from('wishlists')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        const tableBody = document.getElementById('wishlistTable');
+        
+        if (error) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-red-400">
+                        <i class="fa fa-exclamation-triangle mr-2"></i>加载失败：${error.message}
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        if (data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-gray-400">
+                        <i class="fa fa-inbox mr-2"></i>暂无进化申请
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let html = '';
+        data.forEach(wish => {
+            const statusInfo = getStatusInfo(wish.status);
+            html += `
+                <tr class="hover:bg-neonblue/5 transition-colors">
+                    <td class="border border-neonblue/30 px-4 py-2 font-cyber">${wish.wish_id}</td>
+                    <td class="border border-neonblue/30 px-4 py-2">${wish.wish_name}</td>
+                    <td class="border border-neonblue/30 px-4 py-2">${wish.wish_type}</td>
+                    <td class="border border-neonblue/30 px-4 py-2">${wish.priority}</td>
+                    <td class="border border-neonblue/30 px-4 py-2">${wish.submit_date}</td>
+                    <td class="border border-neonblue/30 px-4 py-2">
+                        <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>
+                    </td>
+                    <td class="border border-neonblue/30 px-4 py-2 text-center">
+                        <a href="approval.html?id=${wish.id}" class="cyber-btn cyber-btn-primary text-sm py-1 px-3">
+                            <i class="fa fa-eye mr-1"></i>查看
+                        </a>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tableBody.innerHTML = html;
+    });
+</script>
+</body>
+</html>
