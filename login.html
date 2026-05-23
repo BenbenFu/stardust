@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星屑愿望机 | 投资者登录</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="tailwind.css">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -32,7 +32,7 @@
                 <!-- 登录表单 -->
                 <form id="loginForm" class="space-y-6">
                     <div>
-                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">
+                        <label for="email" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">
                             <i class="fa fa-envelope-o mr-2"></i>投资者识别邮箱
                         </label>
                         <input 
@@ -40,12 +40,13 @@
                             id="email" 
                             class="cyber-input" 
                             placeholder="your@email.com" 
+                            autocomplete="email"
                             required
                         >
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">
+                        <label for="password" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">
                             <i class="fa fa-lock mr-2"></i>访问密钥
                         </label>
                         <input 
@@ -53,6 +54,7 @@
                             id="password" 
                             class="cyber-input" 
                             placeholder="请输入访问密钥" 
+                            autocomplete="current-password"
                             required
                         >
                     </div>

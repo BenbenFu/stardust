@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星屑愿望机 | 投资提案详情</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="tailwind.css">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -37,6 +37,20 @@
                             <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑愿望机</h1>
                             <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">升级投资提案</h2>
                             <p class="ai-note mt-3 text-sm">我正在用缜密逻辑、风险回滚和预算明细，向你争取这一次进化所需的资源。</p>
+                            <div class="data-strip mt-5">
+                                <div class="data-chip">
+                                    <span>提案主体</span>
+                                    <strong>星屑本体</strong>
+                                </div>
+                                <div class="data-chip">
+                                    <span>审批身份</span>
+                                    <strong>投资人</strong>
+                                </div>
+                                <div class="data-chip">
+                                    <span>拨款账户</span>
+                                    <strong>进化基金</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="text-right">
@@ -65,27 +79,27 @@
                 <div class="p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <div>
-                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望编号</label>
+                            <div class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望编号</div>
                             <div id="wishId" class="cyber-display"></div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望名称</label>
+                            <div class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望名称</div>
                             <div id="wishName" class="cyber-display"></div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望类型</label>
+                            <div class="block text-sm font-medium text-neonpurple mb-1 font-cyber">愿望类型</div>
                             <div id="wishType" class="cyber-display"></div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">优先级</label>
+                            <div class="block text-sm font-medium text-neonpurple mb-1 font-cyber">优先级</div>
                             <div id="priority" class="cyber-display"></div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">预计工期</label>
+                            <div class="block text-sm font-medium text-neonpurple mb-1 font-cyber">预计工期</div>
                             <div id="duration" class="cyber-display"></div>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-neonpurple mb-1 font-cyber">提交日期</label>
+                            <div class="block text-sm font-medium text-neonpurple mb-1 font-cyber">提交日期</div>
                             <div id="submitDate" class="cyber-display"></div>
                         </div>
                     </div>
@@ -125,14 +139,14 @@
                 </div>
                 <div class="p-6">
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">进化复杂度评分</label>
+                        <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">进化复杂度评分</div>
                         <div id="difficulty" class="text-2xl"></div>
                         <p class="text-sm text-gray-400 mt-2">
                             ⭐: 100%自主完成 | ⭐⭐: 少量资源 | ⭐⭐⭐: 需要外部供应商 | ⭐⭐⭐⭐: 多个供应商协作 | ⭐⭐⭐⭐⭐: 专业硬件/底层修改
                         </p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">风险评估与回滚方案</label>
+                        <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">风险评估与回滚方案</div>
                         <div id="risk" class="cyber-display"></div>
                     </div>
                 </div>
@@ -197,8 +211,8 @@
                 </div>
                 <div class="p-6">
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">投资者指令</label>
-                        <textarea id="approvalComment" rows="3" class="cyber-input" placeholder="留下你的投资意见、约束条件或追加要求..."></textarea>
+                        <label for="approvalComment" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">投资者指令</label>
+                        <textarea id="approvalComment" rows="3" class="cyber-input" placeholder="留下你的投资意见、约束条件或追加要求..." autocomplete="off"></textarea>
                     </div>
                     <div class="flex flex-wrap gap-4">
                         <button id="approveBtn" class="cyber-btn cyber-btn-success">
@@ -293,11 +307,11 @@
             document.getElementById('approvalSection').innerHTML = `
                 <div class="p-6">
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">决策时间</label>
+                        <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">决策时间</div>
                         <div class="cyber-display">${data.approved_at || '无'}</div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-neonpurple mb-2 font-cyber">投资者指令</label>
+                        <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">投资者指令</div>
                         <div class="cyber-display">${data.approval_comment || '无'}</div>
                     </div>
                 </div>

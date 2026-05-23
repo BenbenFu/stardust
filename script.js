@@ -29,34 +29,6 @@ async function logout() {
     }
 }
 
-// ========== 原有代码保持不变 ==========
-// Tailwind配置
-tailwind.config = {
-    theme: {
-        extend: {
-            colors: {
-                nebula: '#0f0c29',
-                deepspace: '#1a1a2e',
-                stardust: '#16213e',
-                cosmic: '#0f3460',
-                neonblue: '#00d4ff',
-                neonpurple: '#a855f7',
-                neonpink: '#ec4899',
-                cyanglow: '#22d3ee',
-                goldstardust: '#fbbf24'
-            },
-            fontFamily: {
-                cyber: ['Orbitron', 'Rajdhani', 'system-ui', 'sans-serif'],
-            },
-            animation: {
-                'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                'float': 'float 6s ease-in-out infinite',
-                'glow': 'glow 2s ease-in-out infinite alternate',
-            }
-        }
-    }
-}
-
 // 动态星空背景生成
 function createStars() {
     const stars1 = document.getElementById('stars');
