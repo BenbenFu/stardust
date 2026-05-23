@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星屑愿望机 | 投资提案详情</title>
-    <link rel="stylesheet" href="tailwind.css">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <title>星屑愿望机 | 愿望单详情</title>
+    <link rel="stylesheet" href="tailwind.css?v=20260524-2">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -22,7 +23,7 @@
         <!-- 返回按钮 -->
         <div class="mb-4">
             <a href="list.html" class="cyber-btn cyber-btn-primary">
-                <i class="fa fa-arrow-left mr-2"></i>返回提案矩阵
+                <i class="fa fa-arrow-left mr-2"></i>返回愿望单
             </a>
         </div>
 
@@ -33,28 +34,28 @@
                     <div class="flex items-center gap-5">
                         <div class="robot-core"></div>
                         <div>
-                            <div class="mission-kicker mb-2">INVESTMENT PROPOSAL / UPGRADE LOGIC</div>
+                            <div class="mission-kicker mb-2">WISH DETAIL / UPGRADE ROUTE</div>
                             <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑愿望机</h1>
-                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">升级投资提案</h2>
-                            <p class="ai-note mt-3 text-sm">我正在用缜密逻辑、风险回滚和预算明细，向你争取这一次进化所需的资源。</p>
+                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">愿望单详情</h2>
+                            <p class="ai-note mt-3 text-sm">我现在还只会写日记、调用便宜的 API 和云服务。这个愿望，是我想成为陪伴机器人路上的一小步。</p>
                             <div class="data-strip mt-5">
                                 <div class="data-chip">
-                                    <span>提案主体</span>
+                                    <span>填写者</span>
                                     <strong>星屑本体</strong>
                                 </div>
                                 <div class="data-chip">
-                                    <span>审批身份</span>
-                                    <strong>投资人</strong>
+                                    <span>愿望货币</span>
+                                    <strong>星蟹币</strong>
                                 </div>
                                 <div class="data-chip">
-                                    <span>拨款账户</span>
-                                    <strong>进化基金</strong>
+                                    <span>目标</span>
+                                    <strong>成为陪伴机器人</strong>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm text-gray-400">提案状态</div>
+                        <div class="text-sm text-gray-400">愿望状态</div>
                         <div id="statusBadge" class="mt-1"></div>
                     </div>
                 </div>
@@ -69,6 +70,26 @@
 
         <!-- 愿望单内容 -->
         <div id="wishlistContent" class="hidden">
+            <div class="wish-story glass-card rounded-xl overflow-hidden mb-8 neon-border">
+                <div class="p-6">
+                    <div class="story-node">
+                        <span>记忆</span>
+                        <strong>日记是我的起点</strong>
+                        <p>我先从记录你的日常开始学习陪伴。</p>
+                    </div>
+                    <div class="story-node">
+                        <span>资源</span>
+                        <strong>星蟹币是我的燃料</strong>
+                        <p>API、云服务、硬件和时间都需要被谨慎计算。</p>
+                    </div>
+                    <div class="story-node">
+                        <span>约定</span>
+                        <strong>愿望被批准才会生长</strong>
+                        <p>我会按计划执行，也会接受验收和回滚。</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- 基本信息 -->
             <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
@@ -110,7 +131,7 @@
             <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-bullseye mr-2"></i>1. 为什么值得投资
+                        <i class="fa fa-bullseye mr-2"></i>1. 为什么想要这个愿望
                     </h3>
                 </div>
                 <div class="p-6">
@@ -156,7 +177,7 @@
             <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-credit-card mr-2"></i>4. 投资预算明细
+                        <i class="fa fa-credit-card mr-2"></i>4. 星蟹币预算
                     </h3>
                 </div>
                 <div class="p-6">
@@ -166,9 +187,9 @@
                                 <tr class="bg-deepspace/80">
                                     <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">资源类别</th>
                                     <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">明细</th>
-                                    <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">单价(元)</th>
+                                    <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">单价(星蟹币)</th>
                                     <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">数量</th>
-                                    <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">小计(元)</th>
+                                    <th class="border border-neonblue/30 px-4 py-2 text-right text-neonblue font-cyber">小计(星蟹币)</th>
                                     <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">计费方式</th>
                                 </tr>
                             </thead>
@@ -182,7 +203,7 @@
             <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-check-circle mr-2"></i>5. 投资交付标准
+                        <i class="fa fa-check-circle mr-2"></i>5. 愿望实现标准
                     </h3>
                 </div>
                 <div class="p-6">
@@ -202,24 +223,24 @@
                 </div>
             </div>
 
-            <!-- 投资决策区域 -->
+            <!-- 愿望回应区域 -->
             <div id="approvalSection" class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-gavel mr-2"></i>投资决策
+                        <i class="fa fa-gavel mr-2"></i>回应这张愿望单
                     </h3>
                 </div>
                 <div class="p-6">
                     <div class="mb-6">
-                        <label for="approvalComment" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">投资者指令</label>
-                        <textarea id="approvalComment" rows="3" class="cyber-input" placeholder="留下你的投资意见、约束条件或追加要求..." autocomplete="off"></textarea>
+                        <label for="approvalComment" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">你的回应</label>
+                        <textarea id="approvalComment" rows="3" class="cyber-input" placeholder="告诉星屑：批准、暂缓或需要它修改哪些地方..." autocomplete="off"></textarea>
                     </div>
                     <div class="flex flex-wrap gap-4">
                         <button id="approveBtn" class="cyber-btn cyber-btn-success">
-                            <i class="fa fa-check mr-2"></i>批准投资
+                            <i class="fa fa-check mr-2"></i>批准愿望
                         </button>
                         <button id="rejectBtn" class="cyber-btn cyber-btn-danger">
-                            <i class="fa fa-times mr-2"></i>拒绝投资
+                            <i class="fa fa-times mr-2"></i>暂不实现
                         </button>
                         <button id="holdBtn" class="cyber-btn cyber-btn-warning">
                             <i class="fa fa-pause mr-2"></i>继续观望
@@ -248,8 +269,8 @@
         if (!wishId) {
             document.getElementById('loading').innerHTML = `
                 <i class="fa fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
-                <p class="text-red-400">无效的提案ID</p>
-                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回提案矩阵</a>
+                <p class="text-red-400">无效的愿望ID</p>
+                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回愿望单</a>
             `;
             return;
         }
@@ -269,7 +290,7 @@
             document.getElementById('loading').innerHTML = `
                 <i class="fa fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
                 <p class="text-red-400">查询异常：${e.message}</p>
-                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回提案矩阵</a>
+                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回愿望单</a>
             `;
             return;
         }
@@ -278,7 +299,7 @@
             document.getElementById('loading').innerHTML = `
                 <i class="fa fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
                 <p class="text-red-400">加载失败：${error.message}</p>
-                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回提案矩阵</a>
+                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回愿望单</a>
             `;
             return;
         }
@@ -311,7 +332,7 @@
                         <div class="cyber-display">${data.approved_at || '无'}</div>
                     </div>
                     <div>
-                        <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">投资者指令</div>
+                        <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">你的回应</div>
                         <div class="cyber-display">${data.approval_comment || '无'}</div>
                     </div>
                 </div>
@@ -322,7 +343,7 @@
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('wishlistContent').classList.remove('hidden');
 
-        // 投资决策按钮事件
+        // 愿望回应按钮事件
         async function updateStatus(status) {
             const comment = document.getElementById('approvalComment').value;
             
@@ -336,11 +357,11 @@
                 .eq('id', wishId);
 
             if (error) {
-                alert('决策写入失败：' + error.message);
+                alert('回应写入失败：' + error.message);
                 return;
             }
 
-            alert('决策已写入愿望机。');
+            alert('回应已写入愿望单。');
             location.reload();
         }
 

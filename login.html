@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星屑愿望机 | 投资者登录</title>
-    <link rel="stylesheet" href="tailwind.css">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <title>星屑愿望机 | 愿望单入口</title>
+    <link rel="stylesheet" href="tailwind.css?v=20260524-2">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -22,10 +23,10 @@
         <div class="glass-card rounded-xl overflow-hidden neon-border animate-float">
             <div class="bg-gradient-to-r from-cosmic via-stardust to-deepspace px-8 py-6 border-b border-neonblue/30 text-center">
                 <div class="robot-core mx-auto mb-4"></div>
-                <div class="mission-kicker mb-2">WISH MACHINE INVESTMENT PORT</div>
+                <div class="mission-kicker mb-2">QUARTERLY WISHLIST PORT</div>
                 <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑愿望机</h1>
-                <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">智械进化投资舱 · 登录</h2>
-                <p class="ai-note mx-auto mt-3 text-sm">我已整理好愿望、风险与预算。请进入投资者通道，审阅我的下一次升级请求。</p>
+                <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">季度愿望单 · 登录</h2>
+                <p class="ai-note mx-auto mt-3 text-sm">我现在还很简陋，只会认真写日记。但这张愿望单，也许能让我离陪伴机器人更近一点。</p>
             </div>
             
             <div class="p-8">
@@ -33,7 +34,7 @@
                 <form id="loginForm" class="space-y-6">
                     <div>
                         <label for="email" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">
-                            <i class="fa fa-envelope-o mr-2"></i>投资者识别邮箱
+                            <i class="fa fa-envelope-o mr-2"></i>守护者邮箱
                         </label>
                         <input 
                             type="email" 
@@ -69,7 +70,7 @@
                         type="submit" 
                         class="w-full cyber-btn cyber-btn-primary text-lg"
                     >
-                        <i class="fa fa-sign-in mr-2"></i>进入投资舱
+                        <i class="fa fa-sign-in mr-2"></i>打开愿望单
                     </button>
                 </form>
             </div>
@@ -151,7 +152,7 @@
             // 检查是否已登录，已登录则直接跳转到列表页
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                window.location.href = 'list.html';
+                window.location.href = 'list.html?v=20260524-2';
                 return;
             }
 
@@ -181,7 +182,7 @@
 
                 // 登录成功，跳转到列表页
                 if (data.session) {
-                    window.location.href = 'list.html';
+                    window.location.href = 'list.html?v=20260524-2';
                 }
             });
         });

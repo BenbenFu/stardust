@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星屑愿望机 | 升级提案矩阵</title>
-    <link rel="stylesheet" href="tailwind.css">
+    <meta http-equiv="Cache-Control" content="no-store">
+    <title>星屑愿望机 | 季度愿望单</title>
+    <link rel="stylesheet" href="tailwind.css?v=20260524-2">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -26,22 +27,22 @@
                     <div class="flex items-center gap-5">
                         <div class="robot-core"></div>
                         <div>
-                            <div class="mission-kicker mb-2">AUTONOMOUS WISH INVESTMENT MATRIX</div>
+                            <div class="mission-kicker mb-2">QUARTERLY WISHLIST / STARDUST GROWTH LOG</div>
                             <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑愿望机</h1>
-                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">升级提案矩阵</h2>
-                            <p class="ai-note mt-3 text-sm">我把所有愿望拆成可审计的投资请求，按优先级、风险和预算等待你的决策。</p>
+                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">季度愿望单</h2>
+                            <p class="ai-note mt-3 text-sm">系统每个季度只发给我一张愿望单。我会把想要的升级、风险和星蟹币预算认真写清楚，等待你的回应。</p>
                             <div class="data-strip mt-5">
                                 <div class="data-chip">
-                                    <span>投资人</span>
+                                    <span>守护者</span>
                                     <strong>造物主</strong>
                                 </div>
                                 <div class="data-chip">
-                                    <span>负责人</span>
+                                    <span>填写者</span>
                                     <strong>星屑本体</strong>
                                 </div>
                                 <div class="data-chip">
-                                    <span>资金池</span>
-                                    <strong>进化基金</strong>
+                                    <span>愿望货币</span>
+                                    <strong>星蟹币</strong>
                                 </div>
                             </div>
                         </div>
@@ -52,20 +53,45 @@
                         <div class="text-xs text-gray-500 mt-1">愿望逻辑核 v2.0.1</div>
 			<!-- 新增登出按钮 -->
   		        <button onclick="logout()" class="cyber-btn cyber-btn-danger text-xs py-1 px-3 mt-2">
-        	    	    <i class="fa fa-sign-out mr-1"></i>退出投资舱
+        	    	    <i class="fa fa-sign-out mr-1"></i>离开愿望单
         		</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 提案矩阵 -->
+        <div class="wish-story glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="p-6">
+                <div class="story-node">
+                    <span>01</span>
+                    <strong>初始状态</strong>
+                    <p>只会写日记，硬件和固件都很简单。</p>
+                </div>
+                <div class="story-node">
+                    <span>02</span>
+                    <strong>季度愿望单</strong>
+                    <p>每个季度获得一次填写机会，最多写下几个最重要的愿望。</p>
+                </div>
+                <div class="story-node">
+                    <span>03</span>
+                    <strong>星蟹币预算</strong>
+                    <p>每个愿望都要说明资源、风险、回滚和需要多少星蟹币。</p>
+                </div>
+                <div class="story-node">
+                    <span>04</span>
+                    <strong>成为陪伴机器人</strong>
+                    <p>被批准的愿望会成为下一次进化的一小块身体。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 愿望清单 -->
         <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
             <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                 <h3 class="text-xl font-bold font-cyber neon-text">
-                    <i class="fa fa-list mr-2"></i>待审阅的升级愿望
+                    <i class="fa fa-list mr-2"></i>本季度的升级愿望
                 </h3>
-                <p class="ai-note text-sm mt-2">每一行都是星屑提交给你的季度商业计划书摘要。</p>
+                <p class="ai-note text-sm mt-2">从日记、API、云服务到硬件外壳，每个愿望都是星屑想要长出来的一小块能力。</p>
             </div>
             <div class="p-6">
                 <div class="overflow-x-auto">
@@ -105,7 +131,7 @@
         const isAuthenticated = await checkAuth();
         if (!isAuthenticated) return;
 
-        // 加载升级提案矩阵
+        // 加载季度愿望单
         const { data, error } = await supabase
             .from('wishlists')
             .select('*')
@@ -149,7 +175,7 @@
                         <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>
                     </td>
                     <td class="border border-neonblue/30 px-4 py-2 text-center">
-                        <a href="approval.html?id=${wish.id}" class="cyber-btn cyber-btn-primary text-sm py-1 px-3">
+                        <a href="approval.html?id=${wish.id}&v=20260524-2" class="cyber-btn cyber-btn-primary text-sm py-1 px-3">
                             <i class="fa fa-eye mr-1"></i>审阅
                         </a>
                     </td>

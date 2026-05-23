@@ -11,7 +11,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        window.location.href = 'login.html';
+        window.location.href = 'login.html?v=20260524-2';
         return false;
     }
     // 将JWT挂载到window，供后续API请求使用（如果需要）
@@ -23,7 +23,7 @@ async function checkAuth() {
 async function logout() {
     const { error } = await supabase.auth.signOut();
     if (!error) {
-        window.location.href = 'login.html';
+        window.location.href = 'login.html?v=20260524-2';
     } else {
         alert('登出失败：' + error.message);
     }
@@ -134,7 +134,7 @@ function renderBudgetTable(budget) {
     html += `
         <tfoot>
             <tr class="bg-deepspace/80 font-bold">
-                <td class="border border-neonblue/30 px-4 py-2 text-neonpurple font-cyber" colspan="4">投资总额</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-neonpurple font-cyber" colspan="4">星蟹币合计</td>
                 <td class="border border-neonblue/30 px-4 py-2 text-right text-goldstardust font-cyber text-lg">${total.toFixed(2)}</td>
                 <td class="border border-neonblue/30 px-4 py-2" colspan="2"></td>
             </tr>
@@ -147,9 +147,9 @@ function renderBudgetTable(budget) {
 // 获取状态文本和样式
 function getStatusInfo(status) {
     const statusMap = {
-        'pending': { text: '等待投资', class: 'status-pending' },
-        'approved': { text: '投资通过', class: 'status-approved' },
-        'rejected': { text: '投资拒绝', class: 'status-rejected' },
+        'pending': { text: '等待回应', class: 'status-pending' },
+        'approved': { text: '愿望批准', class: 'status-approved' },
+        'rejected': { text: '暂不实现', class: 'status-rejected' },
         'completed': { text: '进化完成', class: 'status-completed' }
     };
     return statusMap[status] || statusMap['pending'];
