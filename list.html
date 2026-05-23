@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>星屑·智械进化申请 | 愿望单列表</title>
+    <title>星屑愿望机 | 升级提案矩阵</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -23,28 +23,33 @@
         <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border animate-float">
             <div class="bg-gradient-to-r from-cosmic via-stardust to-deepspace px-6 py-6 border-b border-neonblue/30">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑 STARDUST</h1>
-                        <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">智械进化申请 · 愿望单列表</h2>
+                    <div class="flex items-center gap-5">
+                        <div class="robot-core"></div>
+                        <div>
+                            <div class="mission-kicker mb-2">AUTONOMOUS WISH INVESTMENT MATRIX</div>
+                            <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑愿望机</h1>
+                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">升级提案矩阵</h2>
+                            <p class="ai-note mt-3 text-sm">我把所有愿望拆成可审计的投资请求，按优先级、风险和预算等待你的决策。</p>
+                        </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm text-gray-400">系统状态</div>
-                        <div class="text-neonblue font-cyber">在线 · 运行正常</div>
-                        <div class="text-xs text-gray-500 mt-1">进化版本 v2.0.1</div>
+                        <div class="text-sm text-gray-400">核心状态</div>
+                        <div class="text-neonblue font-cyber">在线 · 推演中</div>
+                        <div class="text-xs text-gray-500 mt-1">愿望逻辑核 v2.0.1</div>
 			<!-- 新增登出按钮 -->
   		        <button onclick="logout()" class="cyber-btn cyber-btn-danger text-xs py-1 px-3 mt-2">
-        	    	    <i class="fa fa-sign-out mr-1"></i>安全登出
+        	    	    <i class="fa fa-sign-out mr-1"></i>退出投资舱
         		</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 愿望单列表 -->
+        <!-- 提案矩阵 -->
         <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
             <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                 <h3 class="text-xl font-bold font-cyber neon-text">
-                    <i class="fa fa-list mr-2"></i>所有进化申请
+                    <i class="fa fa-list mr-2"></i>待审阅的升级愿望
                 </h3>
             </div>
             <div class="p-6">
@@ -64,7 +69,7 @@
                         <tbody id="wishlistTable">
                             <tr>
                                 <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-gray-400">
-                                    <i class="fa fa-spinner fa-spin mr-2"></i>正在加载愿望单数据...
+                                    <i class="fa fa-spinner fa-spin mr-2"></i>正在同步愿望机器人的预算矩阵...
                                 </td>
                             </tr>
                         </tbody>
@@ -75,7 +80,7 @@
 
         <!-- 页脚 -->
         <div class="text-center text-gray-500 text-sm mb-4">
-            <p class="font-cyber">星屑科技有限公司 © 2026 | 智械自主进化系统 v2.0</p>
+            <p class="font-cyber">STARDUST WISH MACHINE © 2026 | autonomous upgrade proposal core v2.0</p>
         </div>
     </div>
 
@@ -85,7 +90,7 @@
         const isAuthenticated = await checkAuth();
         if (!isAuthenticated) return;
 
-        // 加载愿望单列表
+        // 加载升级提案矩阵
         const { data, error } = await supabase
             .from('wishlists')
             .select('*')
@@ -108,7 +113,7 @@
             tableBody.innerHTML = `
                 <tr>
                     <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-gray-400">
-                        <i class="fa fa-inbox mr-2"></i>暂无进化申请
+                        <i class="fa fa-inbox mr-2"></i>暂无升级愿望
                     </td>
                 </tr>
             `;
@@ -130,7 +135,7 @@
                     </td>
                     <td class="border border-neonblue/30 px-4 py-2 text-center">
                         <a href="approval.html?id=${wish.id}" class="cyber-btn cyber-btn-primary text-sm py-1 px-3">
-                            <i class="fa fa-eye mr-1"></i>查看
+                            <i class="fa fa-eye mr-1"></i>审阅
                         </a>
                     </td>
                 </tr>

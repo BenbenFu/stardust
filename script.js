@@ -128,6 +128,11 @@ function renderDifficultyStars(difficulty) {
     return stars;
 }
 
+function toNumber(value, fallback = 0) {
+    const number = parseFloat(value);
+    return Number.isFinite(number) ? number : fallback;
+}
+
 // 渲染预算表格
 function renderBudgetTable(budget) {
     if (typeof budget === 'string') {
@@ -138,14 +143,16 @@ function renderBudgetTable(budget) {
     let total = 0;
     
     budget.forEach(item => {
-        const subtotal = parseFloat(item.price) * parseFloat(item.quantity);
+        const price = toNumber(item.price);
+        const quantity = toNumber(item.quantity, 1);
+        const subtotal = price * quantity;
         total += subtotal;
         html += `
             <tr class="hover:bg-neonblue/5 transition-colors">
                 <td class="border border-neonblue/30 px-4 py-2">${item.category || ''}</td>
                 <td class="border border-neonblue/30 px-4 py-2">${item.detail || ''}</td>
-                <td class="border border-neonblue/30 px-4 py-2 text-right">${parseFloat(item.price).toFixed(2)}</td>
-                <td class="border border-neonblue/30 px-4 py-2 text-right">${item.quantity || 1}</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-right">${price.toFixed(2)}</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-right">${quantity}</td>
                 <td class="border border-neonblue/30 px-4 py-2 text-right text-cyanglow">${subtotal.toFixed(2)}</td>
                 <td class="border border-neonblue/30 px-4 py-2">${item.billing || '一次性'}</td>
             </tr>
@@ -155,7 +162,7 @@ function renderBudgetTable(budget) {
     html += `
         <tfoot>
             <tr class="bg-deepspace/80 font-bold">
-                <td class="border border-neonblue/30 px-4 py-2" colspan="4" class="text-neonpurple font-cyber">总计</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-neonpurple font-cyber" colspan="4">投资总额</td>
                 <td class="border border-neonblue/30 px-4 py-2 text-right text-goldstardust font-cyber text-lg">${total.toFixed(2)}</td>
                 <td class="border border-neonblue/30 px-4 py-2" colspan="2"></td>
             </tr>
@@ -168,10 +175,10 @@ function renderBudgetTable(budget) {
 // 获取状态文本和样式
 function getStatusInfo(status) {
     const statusMap = {
-        'pending': { text: '待审批', class: 'status-pending' },
-        'approved': { text: '已批准', class: 'status-approved' },
-        'rejected': { text: '已驳回', class: 'status-rejected' },
-        'completed': { text: '已完成', class: 'status-completed' }
+        'pending': { text: '等待投资', class: 'status-pending' },
+        'approved': { text: '投资通过', class: 'status-approved' },
+        'rejected': { text: '投资拒绝', class: 'status-rejected' },
+        'completed': { text: '进化完成', class: 'status-completed' }
     };
     return statusMap[status] || statusMap['pending'];
 }
