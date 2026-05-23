@@ -130,6 +130,10 @@ function renderDifficultyStars(difficulty) {
 
 // 渲染预算表格
 function renderBudgetTable(budget) {
+    if (typeof budget === 'string') {
+        try { budget = JSON.parse(budget); } catch(e) { budget = []; }
+    }
+    if (!Array.isArray(budget)) budget = [];
     let html = '';
     let total = 0;
     

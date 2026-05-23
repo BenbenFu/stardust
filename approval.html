@@ -236,11 +236,24 @@
         }
 
         // 加载愿望单详情
-        const { data, error } = await supabase
-            .from('wishlists')
-            .select('*')
-            .eq('id', wishId)
-            .single();
+        let data, error;
+        try {
+            const result = await supabase
+                .from('wishlists')
+                .select('*')
+                .eq('id', wishId)
+                .single();
+            data = result.data;
+            error = result.error;
+        } catch (e) {
+            console.error('Supabase查询异常:', e);
+            document.getElementById('loading').innerHTML = `
+                <i class="fa fa-exclamation-triangle text-4xl text-red-400 mb-4"></i>
+                <p class="text-red-400">查询异常：${e.message}</p>
+                <a href="list.html" class="cyber-btn cyber-btn-primary mt-4">返回列表</a>
+            `;
+            return;
+        }
 
         if (error) {
             document.getElementById('loading').innerHTML = `
@@ -264,7 +277,7 @@
         document.getElementById('risk').textContent = data.risk;
         document.getElementById('budgetTable').innerHTML = renderBudgetTable(data.budget);
         document.getElementById('acceptance').textContent = data.acceptance;
-        document.getElementById('phases').textContent = data.phases || '无';
+        document.getElementById('phases').textContent = Array.isArray(data.phases) ? data.phases.join('\n') : (data.phases || '无');
 
         // 显示状态
         const statusInfo = getStatusInfo(data.status);
