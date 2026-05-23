@@ -1,5 +1,5 @@
 // 替换为你的Supabase配置
-const SUPABASE_URL = 'https://supabase.com/dashboard/project/opyeahbzibuupmkmjpkr/editor/17876?schema=public';
+const SUPABASE_URL = 'https://opyeahbzibuupmkmjpkr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9weWVhaGJ6aWJ1dXBta21qcGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjk3MDcsImV4cCI6MjA5MzYwNTcwN30.7kCHwI7lKy1jH5BjI4gOKqw2vEUxpsjRJar_94j4Srk';
 
 // 初始化Supabase客户端
