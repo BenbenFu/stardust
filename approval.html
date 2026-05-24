@@ -258,6 +258,8 @@
     </div>
 
     <script type="module">
+    import { checkAuth, supabase, renderDifficultyStars, renderBudgetTable, getStatusInfo } from './script.js';
+
     document.addEventListener('DOMContentLoaded', async function() {
         // 先检查登录状态
         const isAuthenticated = await checkAuth();

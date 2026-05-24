@@ -167,3 +167,5 @@ window.renderBudgetTable = renderBudgetTable;
 window.getStatusInfo = getStatusInfo;
 window.checkAuth = checkAuth; // 导出认证检查函数
 window.logout = logout; // 导出登出函数
+
+export { supabase, checkAuth, logout, renderDifficultyStars, renderBudgetTable, getStatusInfo };

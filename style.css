@@ -362,6 +362,19 @@ th {
     padding: 4px 6px !important;
 }
 
+/* 覆盖 .text-neonblue 等全局颜色，确保表头文字在深背景上可见 */
+th.text-neonblue,
+th.text-cyanglow,
+th.text-neonpurple,
+th.text-goldstardust,
+th.text-gray-200,
+th.text-gray-400,
+th.text-gray-500,
+th.text-gray-600,
+th[class*="text-"] {
+    color: var(--screen-bg) !important;
+}
+
 td {
     border: 1px dashed var(--pixel-dark) !important;
     color: var(--pixel-dark);
