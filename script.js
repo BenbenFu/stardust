@@ -11,7 +11,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function checkAuth() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        window.location.href = 'login.html?v=20260524-2';
+        window.location.href = 'login.html?v=20260524-5';
         return false;
     }
     // 将JWT挂载到window，供后续API请求使用（如果需要）
@@ -23,7 +23,7 @@ async function checkAuth() {
 async function logout() {
     const { error } = await supabase.auth.signOut();
     if (!error) {
-        window.location.href = 'login.html?v=20260524-2';
+        window.location.href = 'login.html?v=20260524-5';
     } else {
         alert('登出失败：' + error.message);
     }
