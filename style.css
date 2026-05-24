@@ -89,13 +89,9 @@ body::after {
     box-shadow: 0 22px 55px rgba(0,0,0,0.72);
 }
 
-/* 竖向滚动条 */
+/* 滚动条统一样式（竖向 + 水平） */
 .container::-webkit-scrollbar {
     width: 10px;
-}
-
-/* 水平滚动条（预留，理论上不会触发） */
-.container::-webkit-scrollbar:horizontal {
     height: 10px;
 }
 
@@ -624,10 +620,6 @@ tbody tr:hover {
     .data-strip,
     .wish-story > .p-6 {
         grid-template-columns: 1fr;
-    }
-
-    table {
-        min-width: 760px;
     }
 }
 
