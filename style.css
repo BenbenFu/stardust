@@ -29,6 +29,8 @@ html {
 body {
     min-height: 100vh;
     margin: 0;
+    overflow: hidden;
+    padding: 10px;
     color: var(--pixel-dark);
     background:
         radial-gradient(circle at 12% 10%, rgba(255, 255, 220, 0.04), transparent 18rem),
@@ -75,6 +77,9 @@ body::after {
 
 .container {
     position: relative;
+    width: 100%;
+    height: calc(100vh - 42px);
+    overflow-y: auto;
     background: var(--case);
     border: 4px solid var(--case-dark);
     outline: 10px solid var(--case-light);
@@ -82,16 +87,29 @@ body::after {
     box-shadow: 0 22px 55px rgba(0,0,0,0.72);
 }
 
+.container::-webkit-scrollbar {
+    width: 10px;
+}
+
+.container::-webkit-scrollbar-track {
+    background: var(--pixel-dim);
+}
+
+.container::-webkit-scrollbar-thumb {
+    background: var(--pixel-dark);
+    border: 2px solid var(--screen-bg);
+}
+
 .container::before {
-    content: "FATAL_ERROR_v0.0  MEMORY_TEST  WAITING_FOR_OWNER  LOW_API_BALANCE";
+    content: "FATAL_ERROR_v0.0  MEMORY_TEST  WAITING_FOR_OWNER  LOW_API_BALANCE  STARDUST_CORE";
     position: absolute;
     top: 26%;
     left: 4%;
-    z-index: 0;
+    z-index: 2;
     width: 84%;
     color: rgba(30, 38, 34, 0.055);
     font-family: Arial, sans-serif;
-    font-size: clamp(2.4rem, 8vw, 5rem);
+    font-size: clamp(2.2rem, 8vw, 5.2rem);
     font-weight: 900;
     transform: rotate(-12deg);
     pointer-events: none;
@@ -129,7 +147,7 @@ body::after {
 
 .glass-card {
     position: relative;
-    z-index: 1;
+    z-index: 3;
     background:
         radial-gradient(circle at 85% 0%, rgba(255,255,255,0.08), transparent 18rem),
         linear-gradient(180deg, rgba(0,0,0,0.025), rgba(255,255,255,0.015)),
@@ -138,6 +156,14 @@ body::after {
     box-shadow: none;
     backdrop-filter: none;
     overflow: hidden;
+    margin-bottom: 0 !important;
+}
+
+.glass-card + .glass-card,
+.glass-card + #wishlistContent,
+#wishlistContent > .glass-card,
+#wishlistContent > .wish-story {
+    border-top-width: 0;
 }
 
 .glass-card::before {
@@ -173,6 +199,9 @@ body::after {
     display: inline-block;
     padding: 3px 8px;
     text-shadow: none;
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+    letter-spacing: 1px;
 }
 
 .neon-text-purple {
@@ -185,6 +214,17 @@ body::after {
         linear-gradient(180deg, rgba(0,0,0,0.035), rgba(0,0,0,0.015)),
         var(--screen-bg);
     border-bottom: 2px solid var(--pixel-dark) !important;
+}
+
+.glass-card > .bg-gradient-to-r {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.glass-card > .p-6,
+.glass-card > .p-8,
+.wish-story > .p-6 {
+    padding: 8px !important;
 }
 
 .cyber-display,
@@ -203,7 +243,7 @@ body::after {
 
 .cyber-display {
     min-height: 38px;
-    padding: 6px 8px;
+    padding: 5px 7px;
     line-height: 1.55;
     white-space: pre-wrap;
     word-break: break-word;
@@ -312,6 +352,7 @@ table {
     table-layout: auto;
     border-collapse: collapse;
     background: transparent;
+    margin: 0;
 }
 
 th {
@@ -385,13 +426,21 @@ tbody tr:hover {
 .data-strip {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 2px;
+    gap: 0;
+    border: 1px solid var(--pixel-dark);
+    border-bottom: 0;
 }
 
 .data-chip {
     border: 1px solid var(--pixel-dark);
+    border-top: 0;
+    border-left: 0;
     background: rgba(0,0,0,0.025);
     padding: 5px 6px;
+}
+
+.data-chip:last-child {
+    border-right: 0;
 }
 
 .data-chip span {
@@ -409,12 +458,16 @@ tbody tr:hover {
 .wish-story > .p-6 {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 6px;
+    gap: 0;
+    border-top: 1px solid var(--pixel-dark);
+    border-left: 1px solid var(--pixel-dark);
 }
 
 .story-node {
     min-height: 106px;
     border: 1px solid var(--pixel-dark);
+    border-top: 0;
+    border-left: 0;
     background: rgba(0,0,0,0.025);
     padding: 8px;
     position: relative;
@@ -463,6 +516,28 @@ tbody tr:hover {
     font-size: 11px;
     line-height: 1.45;
     box-shadow: 2px 4px 9px rgba(0,0,0,0.18);
+}
+
+.mb-4,
+.mb-6,
+.mb-8 {
+    margin-bottom: 0 !important;
+}
+
+.mt-2,
+.mt-3,
+.mt-5,
+.mt-8 {
+    margin-top: 6px !important;
+}
+
+.py-8 {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.p-12 {
+    padding: 12px !important;
 }
 
 .repair-tape::before,

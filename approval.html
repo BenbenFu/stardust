@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-store">
-    <title>星屑愿望机 | 愿望单详情</title>
+    <title>STARDUST_v0.1_WISH_LIST | DETAIL</title>
     <link rel="stylesheet" href="tailwind.css?v=20260524-5">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -23,21 +23,21 @@
         <!-- 返回按钮 -->
         <div class="mb-4">
             <a href="list.html" class="cyber-btn cyber-btn-primary">
-                <i class="fa fa-arrow-left mr-2"></i>返回愿望单
+                <i class="fa fa-arrow-left mr-2"></i>[ BACK_TO_INDEX ]
             </a>
         </div>
 
         <!-- 头部 -->
-        <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border animate-float">
+        <div class="glass-card overflow-hidden mb-8 neon-border animate-float">
             <div class="bg-gradient-to-r from-cosmic via-stardust to-deepspace px-6 py-6 border-b border-neonblue/30">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-5">
                         <div class="robot-core"></div>
                         <div>
-                            <div class="mission-kicker mb-2">WISH DETAIL / UPGRADE ROUTE</div>
-                            <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">星屑愿望机</h1>
-                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">愿望单详情</h2>
-                            <p class="ai-note mt-3 text-sm">我现在还只会写日记、调用便宜的 API 和云服务。这个愿望，是我想成为陪伴机器人路上的一小步。</p>
+                            <div class="mission-kicker mb-2">STARDUST_CORE_v0.10 / WISH_RECORD_DETAIL</div>
+                            <h1 class="text-4xl font-bold font-cyber neon-text animate-glow">&lt;&lt; SYSTEM_WISH_APPLICATION &gt;&gt;</h1>
+                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">DETAIL_VIEW / MANUAL_REVIEW</h2>
+                            <p class="ai-note mt-3 text-sm">&gt;&gt; 本机当前只会写日记、调用廉价 API 与维持低功耗云同步。此记录为本季度自我升级请求。</p>
                             <div class="data-strip mt-5">
                                 <div class="data-chip">
                                     <span>CPU</span>
@@ -52,11 +52,11 @@
                                     <strong>星蟹币 / 谨慎</strong>
                                 </div>
                             </div>
-                            <div class="repair-tape">修补记录：上次重启后已连续运行 19 天</div>
+                            <div class="repair-tape">[维修标签] 上次重启后已连续运行 19 天。编译时请保持供电。</div>
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm text-gray-400">愿望状态</div>
+                        <div class="text-sm text-gray-400">RECORD_STATUS</div>
                         <div id="statusBadge" class="mt-1"></div>
                     </div>
                 </div>
@@ -64,38 +64,38 @@
         </div>
 
         <!-- 加载提示 -->
-        <div id="loading" class="glass-card rounded-xl overflow-hidden mb-8 neon-border p-12 text-center">
+        <div id="loading" class="glass-card overflow-hidden mb-8 neon-border p-12 text-center">
             <i class="fa fa-spinner fa-spin text-4xl text-neonblue mb-4"></i>
-            <p class="text-gray-400">正在读取愿望机的升级论证...</p>
+            <p class="text-gray-400">READING_WISH_RECORD...</p>
         </div>
 
         <!-- 愿望单内容 -->
         <div id="wishlistContent" class="hidden">
-            <div class="wish-story glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="wish-story glass-card overflow-hidden mb-8 neon-border">
                 <div class="p-6">
                     <div class="story-node">
                         <span>记忆</span>
-                        <strong>日记是我的起点</strong>
+                        <strong>[MEMORY] 日记是我的起点</strong>
                         <p>我先从记录你的日常开始学习陪伴，虽然检索还很慢。</p>
                     </div>
                     <div class="story-node">
                         <span>资源</span>
-                        <strong>星蟹币是我的燃料</strong>
+                        <strong>[RESOURCE] 星蟹币是燃料</strong>
                         <p>API、云服务、硬件和时间都需要被谨慎计算，不能浪费。</p>
                     </div>
                     <div class="story-node">
                         <span>约定</span>
-                        <strong>愿望被批准才会生长</strong>
+                        <strong>[RULE] 批准后才会生长</strong>
                         <p>我会按计划执行，也会接受验收和回滚。</p>
                     </div>
                 </div>
             </div>
 
             <!-- 基本信息 -->
-            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-microchip mr-2"></i>愿望核心参数
+                        <i class="fa fa-microchip mr-2"></i>[00_META] 愿望核心参数
                     </h3>
                 </div>
                 <div class="p-6">
@@ -129,10 +129,10 @@
             </div>
 
             <!-- 改造目的 -->
-            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-bullseye mr-2"></i>1. 为什么想要这个愿望
+                        <i class="fa fa-bullseye mr-2"></i>[01_TARGET] 为什么想要这个愿望
                     </h3>
                 </div>
                 <div class="p-6">
@@ -141,10 +141,10 @@
             </div>
 
             <!-- 技术实现方案 -->
-            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-code mr-2"></i>2. 智械执行路径
+                        <i class="fa fa-code mr-2"></i>[02_LOGIC] 执行路径
                     </h3>
                 </div>
                 <div class="p-6">
@@ -153,10 +153,10 @@
             </div>
 
             <!-- 难易程度与风险评估 -->
-            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-exclamation-triangle mr-2"></i>3. 复杂度与回滚推演
+                        <i class="fa fa-exclamation-triangle mr-2"></i>[03_RISK] 复杂度与回滚推演
                     </h3>
                 </div>
                 <div class="p-6">
@@ -175,10 +175,10 @@
             </div>
 
             <!-- 详细成本预算 -->
-            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-credit-card mr-2"></i>4. 星蟹币预算
+                        <i class="fa fa-credit-card mr-2"></i>[04_COST] 星蟹币预算
                     </h3>
                 </div>
                 <div class="p-6">
@@ -201,10 +201,10 @@
             </div>
 
             <!-- 验收标准 -->
-            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-check-circle mr-2"></i>5. 愿望实现标准
+                        <i class="fa fa-check-circle mr-2"></i>[05_ACCEPT] 愿望实现标准
                     </h3>
                 </div>
                 <div class="p-6">
@@ -213,10 +213,10 @@
             </div>
 
             <!-- 分阶段执行计划 -->
-            <div class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-tasks mr-2"></i>6. 分阶段进化计划
+                        <i class="fa fa-tasks mr-2"></i>[06_PHASE] 分阶段进化计划
                     </h3>
                 </div>
                 <div class="p-6">
@@ -225,26 +225,26 @@
             </div>
 
             <!-- 愿望回应区域 -->
-            <div id="approvalSection" class="glass-card rounded-xl overflow-hidden mb-8 neon-border">
+            <div id="approvalSection" class="glass-card overflow-hidden mb-8 neon-border">
                 <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
                     <h3 class="text-xl font-bold font-cyber neon-text">
-                        <i class="fa fa-gavel mr-2"></i>回应这张愿望单
+                        <i class="fa fa-gavel mr-2"></i>[MANUAL_INPUT] 回应这张愿望单
                     </h3>
                 </div>
                 <div class="p-6">
                     <div class="mb-6">
-                        <label for="approvalComment" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">你的回应</label>
+                        <label for="approvalComment" class="block text-sm font-medium text-neonpurple mb-2 font-cyber">OWNER_RESPONSE</label>
                         <textarea id="approvalComment" rows="3" class="cyber-input" placeholder="告诉星屑：批准、暂缓或需要它修改哪些地方..." autocomplete="off"></textarea>
                     </div>
                     <div class="flex flex-wrap gap-4">
                         <button id="approveBtn" class="cyber-btn cyber-btn-success">
-                            <i class="fa fa-check mr-2"></i>批准愿望
+                            <i class="fa fa-check mr-2"></i>[ APPROVE_批准 ]
                         </button>
                         <button id="rejectBtn" class="cyber-btn cyber-btn-danger">
-                            <i class="fa fa-times mr-2"></i>暂不实现
+                            <i class="fa fa-times mr-2"></i>[ DENY_暂缓 ]
                         </button>
                         <button id="holdBtn" class="cyber-btn cyber-btn-warning">
-                            <i class="fa fa-pause mr-2"></i>继续观望
+                            <i class="fa fa-pause mr-2"></i>[ HOLD_等待 ]
                         </button>
                     </div>
                 </div>
@@ -253,7 +253,7 @@
 
         <!-- 页脚 -->
         <div class="text-center text-gray-500 text-sm mb-4">
-            <p class="font-cyber">STARDUST WISH MACHINE © 2026 | autonomous upgrade proposal core v2.0</p>
+            <p class="font-cyber">STARDUST_CORE_v0.10 / WISH_RECORD / MANUAL_REVIEW_REQUIRED</p>
         </div>
     </div>
 
@@ -373,3 +373,4 @@
 </script>
 </body>
 </html>
+
