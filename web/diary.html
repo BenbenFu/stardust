@@ -182,6 +182,36 @@
         background: rgba(0,0,0,0.01);
     }
 
+    /* LCD 像素风格滚动条 */
+    .diary-list::-webkit-scrollbar,
+    .diary-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .diary-list::-webkit-scrollbar-track,
+    .diary-content::-webkit-scrollbar-track {
+        background: var(--screen-bg);
+        border-left: 1px solid var(--pixel-dim);
+    }
+
+    .diary-list::-webkit-scrollbar-thumb,
+    .diary-content::-webkit-scrollbar-thumb {
+        background: var(--pixel-dim);
+        border: 1px solid var(--pixel-dark);
+    }
+
+    .diary-list::-webkit-scrollbar-thumb:hover,
+    .diary-content::-webkit-scrollbar-thumb:hover {
+        background: var(--pixel-dark);
+    }
+
+    /* Firefox 兼容 */
+    .diary-list,
+    .diary-content {
+        scrollbar-width: thin;
+        scrollbar-color: var(--pixel-dim) var(--screen-bg);
+    }
+
     .diary-controls {
         display: flex;
         gap: 10px;
