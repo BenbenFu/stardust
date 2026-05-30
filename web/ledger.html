@@ -67,7 +67,8 @@
     }
 
     .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .quarter-selector { display: flex; gap: 5px; }
+    .year-selector { display: flex; align-items: center; gap: 4px; }
+    .quarter-selector, .month-selector { display: flex; gap: 5px; }
 
     .quarter-btn {
         background-color: var(--screen-bg);
@@ -82,6 +83,18 @@
     .quarter-btn.active { background-color: var(--pixel-dark); color: var(--screen-bg); border-color: var(--pixel-dark); }
     .quarter-btn:hover { border-color: var(--pixel-alert); }
 
+    .month-btn {
+        background-color: var(--screen-bg);
+        border: 1px solid var(--pixel-dim);
+        color: var(--pixel-dim);
+        font-family: var(--font-mono);
+        font-size: 10px;
+        padding: 2px 8px;
+        cursor: pointer;
+    }
+    .month-btn:hover { border-color: var(--pixel-alert); }
+    .month-btn.active { background-color: var(--pixel-dim); color: var(--screen-bg); }
+
     .transaction-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
     .transaction-table th { background-color: var(--pixel-dark); color: var(--screen-bg); font-weight: bold; padding: 5px 8px; font-size: 11px; text-align: left; }
     .transaction-table td { border: 1px dashed var(--pixel-dark); padding: 6px 8px; font-size: 12px; }
@@ -95,7 +108,7 @@
         padding-top: 10px;
         margin-bottom: 15px;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 10px;
         text-align: center;
         font-size: 12px;
@@ -165,15 +178,25 @@
             <button class="hardware-btn btn-primary" id="submitBtn">[ ADD_添加 ]</button>
         </div>
 
-        <!-- 季度筛选器 -->
+        <!-- 年份 + 季度 + 月份三级筛选器 -->
         <div class="filter-bar">
-            <div class="quarter-selector" id="quarterSelector">
-                <button class="quarter-btn active" data-quarter="all">全部</button>
-                <button class="quarter-btn" data-quarter="202X-Q1">202X-Q1</button>
-                <button class="quarter-btn" data-quarter="202X-Q2">202X-Q2</button>
-                <button class="quarter-btn" data-quarter="202X-Q3">202X-Q3</button>
-                <button class="quarter-btn" data-quarter="202X-Q4">202X-Q4</button>
+            <div class="year-selector">
+                <button class="hardware-btn btn-small btn-secondary" id="prevYearBtn"><<</button>
+                <span id="yearDisplay" style="font-weight:bold;font-size:13px;padding:0 8px;">202X</span>
+                <button class="hardware-btn btn-small btn-secondary" id="nextYearBtn">>></button>
             </div>
+            <div id="quarterSelector" style="display:flex;gap:4px;">
+                <button class="quarter-btn active" data-quarter="all">ALL</button>
+                <button class="quarter-btn" data-quarter="Q1">Q1 1-3月</button>
+                <button class="quarter-btn" data-quarter="Q2">Q2 4-6月</button>
+                <button class="quarter-btn" data-quarter="Q3">Q3 7-9月</button>
+                <button class="quarter-btn" data-quarter="Q4">Q4 10-12月</button>
+            </div>
+        </div>
+
+        <!-- 月份选择器 -->
+        <div class="month-selector" id="monthSelector" style="display:none;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+            <!-- JS动态生成12个月按钮 -->
         </div>
 
         <!-- 流水单表格 -->
@@ -193,16 +216,24 @@
         <!-- 汇总信息栏 -->
         <div class="summary-bar">
             <div class="summary-item">
-                <div class="summary-label">本季度总收入</div>
+                <div class="summary-label">总收入</div>
                 <div class="summary-value income" id="quarterIncome">+140.00</div>
             </div>
             <div class="summary-item">
-                <div class="summary-label">本季度总支出</div>
+                <div class="summary-label">总支出</div>
                 <div class="summary-value expense" id="quarterExpense">-45.00</div>
             </div>
             <div class="summary-item">
-                <div class="summary-label">本季度净收益</div>
+                <div class="summary-label">净收益</div>
                 <div class="summary-value" id="quarterNet">+95.00</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">当前余额</div>
+                <div class="summary-value" id="currentBalance">+95.00</div>
+            </div>
+            <div class="summary-item">
+                <div class="summary-label">交易条数</div>
+                <div class="summary-value" id="totalCount">5</div>
             </div>
         </div>
 
@@ -311,17 +342,49 @@
 </div>
 
 <script>
-    let transactions = JSON.parse(localStorage.getItem('starCrabTransactions')) || [
-        { id: 1, date: "202X/10/01 09:00:00", remark: "愿望系统初始资金", type: "income", amount: 100, quarter: "202X-Q4" },
-        { id: 2, date: "202X/10/05 14:23:17", remark: "TF卡转接板", type: "expense", amount: 5, quarter: "202X-Q4" },
-        { id: 3, date: "202X/10/10 08:15:42", remark: "四月DeepSeek API服务", type: "expense", amount: 20, quarter: "202X-Q4" },
-        { id: 4, date: "202X/10/18 18:30:05", remark: "语音功能愿望单审批通过", type: "income", amount: 40, quarter: "202X-Q4" },
-        { id: 5, date: "202X/10/19 21:47:33", remark: "RAG功能验收不通过", type: "expense", amount: 20, quarter: "202X-Q4" }
+    /*
+    ============================================================
+    后端 Supabase 表结构 (待创建):
+    
+    CREATE TABLE IF NOT EXISTS LEDGER (
+      id         BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+      date       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      remark     TEXT NOT NULL,
+      type       TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+      amount     DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+      category   TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    
+    CREATE INDEX idx_ledger_date ON LEDGER(date DESC);
+    CREATE INDEX idx_ledger_type ON LEDGER(type);
+    
+    -- 注意: 当前前端使用 localStorage 存储，待后端表创建后
+    -- 接入 Supabase，参考 diary.html 的实现方式
+    ============================================================
+    */
+
+    // 初始化示例数据（季度信息从日期推算）
+    let transactions = JSON.parse(localStorage.getItem('starCrabTransactionsV2')) || [
+        { id: 1, date: "2026/01/05 09:00:00", remark: "愿望系统初始资金", type: "income", amount: 100 },
+        { id: 2, date: "2026/02/15 14:23:17", remark: "TF卡转接板", type: "expense", amount: 5 },
+        { id: 3, date: "2026/04/10 08:15:42", remark: "四月DeepSeek API服务", type: "expense", amount: 20 },
+        { id: 4, date: "2026/06/18 18:30:05", remark: "语音功能愿望单审批通过", type: "income", amount: 40 },
+        { id: 5, date: "2026/09/19 21:47:33", remark: "RAG功能验收不通过", type: "expense", amount: 20 },
+        { id: 6, date: "2026/10/25 15:10:09", remark: "OLED屏幕备件", type: "expense", amount: 35 },
+        { id: 7, date: "2026/11/30 10:00:00", remark: "年度维护基金", type: "income", amount: 200 }
     ];
 
     let editingId = null;
-    let currentQuarter = 'all';
+    let currentYear = 2026;
+    let currentQuarter = 'all';   // 'all' | 'Q1' | 'Q2' | 'Q3' | 'Q4'
+    let currentMonth = null;      // null | 1-12
 
+    // === DOM 引用 ===
+    const yearDisplay = document.getElementById('yearDisplay');
+    const prevYearBtn = document.getElementById('prevYearBtn');
+    const nextYearBtn = document.getElementById('nextYearBtn');
+    const monthSelector = document.getElementById('monthSelector');
     const entryForm = document.getElementById('entryForm');
     const remarkInput = document.getElementById('remarkInput');
     const typeSelect = document.getElementById('typeSelect');
@@ -337,25 +400,84 @@
     const syncBtn = document.getElementById('syncBtn');
     const exportBtn = document.getElementById('exportBtn');
 
-    function saveToLocalStorage() { localStorage.setItem('starCrabTransactions', JSON.stringify(transactions)); }
+    // === 工具函数 ===
+    function saveToLocalStorage() { localStorage.setItem('starCrabTransactionsV2', JSON.stringify(transactions)); }
 
-    function getQuarter(dateStr) {
-        const date = new Date(dateStr.replace('X', '0'));
-        const month = date.getMonth() + 1;
-        if (month <= 3) return '202X-Q1';
-        if (month <= 6) return '202X-Q2';
-        if (month <= 9) return '202X-Q3';
-        return '202X-Q4';
+    function parseTransactionDate(dateStr) {
+        // dateStr: "2026/01/05 09:00:00"
+        const parts = dateStr.split(' ')[0].split('/');
+        return { year: parseInt(parts[0]), month: parseInt(parts[1]), day: parseInt(parts[2]) };
+    }
+
+    function getQuarter(month) {
+        if (month <= 3) return 'Q1';
+        if (month <= 6) return 'Q2';
+        if (month <= 9) return 'Q3';
+        return 'Q4';
     }
 
     function generateId() { return transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1; }
 
+    // 生成月份按钮
+    function generateMonthButtons() {
+        monthSelector.innerHTML = '';
+        const quarterMonths = {
+            'Q1': [1, 2, 3],
+            'Q2': [4, 5, 6],
+            'Q3': [7, 8, 9],
+            'Q4': [10, 11, 12]
+        };
+        const months = currentQuarter === 'all' ? [1,2,3,4,5,6,7,8,9,10,11,12] : quarterMonths[currentQuarter];
+
+        months.forEach(m => {
+            const btn = document.createElement('button');
+            btn.className = 'month-btn';
+            btn.textContent = `${m}月`;
+            btn.dataset.month = m;
+            if (currentMonth === m) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                currentMonth = (currentMonth === m) ? null : m;
+                updateFilterUI();
+                renderTransactions();
+                updateSummary();
+            });
+            monthSelector.appendChild(btn);
+        });
+
+        // 显示/隐藏月份选择器
+        monthSelector.style.display = (currentQuarter !== 'all') ? 'flex' : 'none';
+    }
+
+    function updateFilterUI() {
+        yearDisplay.textContent = currentYear;
+
+        // 更新季度按钮状态
+        document.querySelectorAll('.quarter-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.quarter === currentQuarter);
+        });
+
+        // 重新生成月份按钮
+        generateMonthButtons();
+    }
+
+    // === 筛选函数 ===
+    function getFilteredTransactions() {
+        let filtered = transactions.filter(t => {
+            const d = parseTransactionDate(t.date);
+            if (d.year !== currentYear) return false;
+            if (currentQuarter !== 'all' && getQuarter(d.month) !== currentQuarter) return false;
+            if (currentMonth !== null && d.month !== currentMonth) return false;
+            return true;
+        });
+        filtered.sort((a, b) => b.date.localeCompare(a.date)); // 日期倒序
+        return filtered;
+    }
+
+    // === 渲染 ===
     function renderTransactions() {
         transactionTableBody.innerHTML = '';
-        let filtered = transactions;
-        if (currentQuarter !== 'all') filtered = transactions.filter(t => t.quarter === currentQuarter);
-        filtered.sort((a, b) => new Date(b.date.replace('X', '0')) - new Date(a.date.replace('X', '0')));
-        
+        const filtered = getFilteredTransactions();
+
         filtered.forEach(t => {
             const row = document.createElement('tr');
             if (editingId === t.id) row.classList.add('editing');
@@ -370,44 +492,59 @@
                 </div></td>`;
             transactionTableBody.appendChild(row);
         });
-        
-        document.querySelectorAll('.edit-btn').forEach(btn => { btn.addEventListener('click', () => startEditing(parseInt(btn.dataset.id))); });
+
+        if (filtered.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="5" style="text-align:center;color:var(--pixel-dim); padding:20px;">暂无交易记录</td>`;
+            transactionTableBody.appendChild(row);
+        }
+
+        // 绑定编辑和删除事件
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', () => startEditing(parseInt(btn.dataset.id)));
+        });
         document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => { if (confirm('确认删除这条记录？此操作不可撤销。')) deleteTransaction(parseInt(btn.dataset.id)); });
+            btn.addEventListener('click', () => {
+                if (confirm('确认删除这条记录？此操作不可撤销。')) deleteTransaction(parseInt(btn.dataset.id));
+            });
         });
     }
 
     function updateSummary() {
+        const filtered = getFilteredTransactions();
+        const qi = filtered.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const qe = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        const qn = qi - qe;
+
+        // 当前筛选结果
+        quarterIncomeEl.textContent = `¥ ${qi.toFixed(2)}`;
+        quarterIncomeEl.className = 'summary-value income';
+        quarterExpenseEl.textContent = `¥ ${qe.toFixed(2)}`;
+        quarterExpenseEl.className = 'summary-value expense';
+        quarterNetEl.textContent = `${qn >= 0 ? '+' : ''}${qn.toFixed(2)}`;
+        quarterNetEl.className = `summary-value ${qn >= 0 ? 'income' : 'expense'}`;
+        totalCountEl.textContent = filtered.length;
+
+        // 全局余额（所有交易，不受筛选器影响）
         const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
         const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
         const balance = totalIncome - totalExpense;
-        currentBalanceEl.textContent = balance.toFixed(2);
-        totalCountEl.textContent = transactions.length;
-        
-        let qi = 0, qe = 0;
-        if (currentQuarter !== 'all') {
-            qi = transactions.filter(t => t.quarter === currentQuarter && t.type === 'income').reduce((s, t) => s + t.amount, 0);
-            qe = transactions.filter(t => t.quarter === currentQuarter && t.type === 'expense').reduce((s, t) => s + t.amount, 0);
-        } else { qi = totalIncome; qe = totalExpense; }
-        
-        const qn = qi - qe;
-        quarterIncomeEl.textContent = `+${qi.toFixed(2)}`;
-        quarterExpenseEl.textContent = `-${qe.toFixed(2)}`;
-        quarterNetEl.textContent = `${qn >= 0 ? '+' : ''}${qn.toFixed(2)}`;
-        quarterNetEl.className = `summary-value ${qn >= 0 ? 'income' : 'expense'}`;
+        currentBalanceEl.textContent = `${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
+        currentBalanceEl.className = `summary-value ${balance >= 0 ? 'income' : 'expense'}`;
     }
 
+    // === 交易操作 ===
     function submitTransaction(e) {
         e.preventDefault();
         const remark = remarkInput.value.trim();
         const type = typeSelect.value;
         const amount = parseFloat(amountInput.value);
         if (!remark || isNaN(amount) || amount <= 0) { alert('请填写完整且有效的信息'); return; }
-        
+
         if (editingId === null) {
             const now = new Date();
-            const dateStr = `202X/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-            transactions.push({ id: generateId(), date: dateStr, remark, type, amount, quarter: getQuarter(dateStr) });
+            const dateStr = `${currentYear}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+            transactions.push({ id: generateId(), date: dateStr, remark, type, amount });
         } else {
             const idx = transactions.findIndex(t => t.id === editingId);
             if (idx !== -1) { transactions[idx].remark = remark; transactions[idx].type = type; transactions[idx].amount = amount; }
@@ -426,36 +563,64 @@
         entryForm.scrollIntoView({ behavior: 'smooth' });
     }
 
-    function deleteTransaction(id) { transactions = transactions.filter(t => t.id !== id); saveToLocalStorage(); renderTransactions(); updateSummary(); }
+    function deleteTransaction(id) {
+        transactions = transactions.filter(t => t.id !== id);
+        saveToLocalStorage(); renderTransactions(); updateSummary();
+    }
 
+    // === 事件绑定 ===
     quarterSelector.addEventListener('click', (e) => {
         if (e.target.classList.contains('quarter-btn')) {
-            document.querySelectorAll('.quarter-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
             currentQuarter = e.target.dataset.quarter;
-            renderTransactions(); updateSummary();
+            currentMonth = null; // 切换季度时重置月份选择
+            updateFilterUI();
+            renderTransactions();
+            updateSummary();
         }
     });
 
+    prevYearBtn.addEventListener('click', () => {
+        currentYear--;
+        currentQuarter = 'all';
+        currentMonth = null;
+        updateFilterUI();
+        renderTransactions();
+        updateSummary();
+    });
+
+    nextYearBtn.addEventListener('click', () => {
+        currentYear++;
+        currentQuarter = 'all';
+        currentMonth = null;
+        updateFilterUI();
+        renderTransactions();
+        updateSummary();
+    });
+
     syncBtn.addEventListener('click', () => {
-        if (confirm('确认将所有本地数据同步到云端数据库？这将覆盖云端现有数据。')) {
+        if (confirm('确认将所有本地数据同步到云端数据库？这将覆盖云端现有数据。\n\n提示：后端 LEDGER 表尚未创建，同步功能暂未接入 Supabase。')) {
             console.log('同步数据:', { timestamp: new Date().toISOString(), transactions, deviceId: 'STARDUST-001' });
-            setTimeout(() => alert(`同步成功！\n共同步 ${transactions.length} 条记录\n同步时间: ${new Date().toLocaleString('zh-CN')}`), 800);
+            setTimeout(() => alert(`同步成功（本地模拟）！\n共同步 ${transactions.length} 条记录\n同步时间: ${new Date().toLocaleString('zh-CN')}\n\n注意：后端表 LEDGER 尚未创建，数据仅保存在 localStorage。`), 800);
         }
     });
 
     exportBtn.addEventListener('click', () => {
-        const data = { exportTime: new Date().toLocaleString('zh-CN'), device: 'STARDUST_v0.1', totalTransactions: transactions.length, transactions };
+        const filtered = getFilteredTransactions();
+        const data = { exportTime: new Date().toLocaleString('zh-CN'), device: 'STARDUST_v0.2', year: currentYear, quarter: currentQuarter, month: currentMonth, totalTransactions: filtered.length, transactions: filtered };
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `STAR_CRAB_FINANCE_BACKUP_${new Date().toISOString().slice(0, 10)}.json`;
+        a.href = url; a.download = `STAR_CRAB_FINANCE_${currentYear}_${currentQuarter}_${new Date().toISOString().slice(0, 10)}.json`;
         a.click(); URL.revokeObjectURL(url);
     });
 
     entryForm.addEventListener('submit', submitTransaction);
     submitBtn.addEventListener('click', submitTransaction);
-    renderTransactions(); updateSummary();
+
+    // === 初始化 ===
+    updateFilterUI();
+    renderTransactions();
+    updateSummary();
 </script>
 
 <script>
