@@ -38,7 +38,7 @@
         margin-bottom: 15px;
         background: rgba(0,0,0,0.03);
         display: grid;
-        grid-template-columns: 1fr 80px 100px auto;
+        grid-template-columns: 1fr 80px 100px 110px auto;
         gap: 10px;
         align-items: end;
     }
@@ -159,6 +159,12 @@
 
         <h1>&lt;&lt; STAR_CRAB_CURRENCY_LEDGER &gt;&gt;</h1>
 
+        <!-- 星蟹币余额 -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span class="balance-display" id="globalBalanceDisplay">⭐ 星蟹币余额: +0.00</span>
+            <span style="font-size:10px;color:var(--pixel-dim);">BALANCE: ΣINCOME - ΣEXPENSE</span>
+        </div>
+
         <!-- 收支录入表单 -->
         <div class="entry-form" id="entryForm">
             <div class="form-group">
@@ -175,6 +181,18 @@
             <div class="form-group">
                 <label class="form-label">金额 (AMOUNT)</label>
                 <input type="number" class="form-input" id="amountInput" min="0.01" step="0.01" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">分类 (CATEGORY)</label>
+                <select class="form-select" id="categorySelect">
+                    <option value="">未分类</option>
+                    <option value="硬件成本">硬件成本</option>
+                    <option value="软件订阅">软件订阅</option>
+                    <option value="API调用">API调用</option>
+                    <option value="云服务">云服务</option>
+                    <option value="工具购买">工具购买</option>
+                    <option value="人工协助">人工协助</option>
+                </select>
             </div>
             <button class="hardware-btn btn-primary" id="submitBtn">[ ADD_添加 ]</button>
         </div>
@@ -204,11 +222,12 @@
         <table class="transaction-table">
             <thead>
                 <tr>
-                    <th width="15%">日期时间</th>
-                    <th width="40%">备注</th>
-                    <th width="15%">类型</th>
-                    <th width="15%">金额 (¥)</th>
-                    <th width="15%">操作</th>
+                    <th width="14%">日期时间</th>
+                    <th width="28%">备注</th>
+                    <th width="12%">分类</th>
+                    <th width="10%">类型</th>
+                    <th width="12%">金额 (¥)</th>
+                    <th width="14%">操作</th>
                 </tr>
             </thead>
             <tbody id="transactionTableBody"></tbody>
@@ -362,9 +381,11 @@
     const remarkInput = document.getElementById('remarkInput');
     const typeSelect = document.getElementById('typeSelect');
     const amountInput = document.getElementById('amountInput');
+    const categorySelect = document.getElementById('categorySelect');
     const submitBtn = document.getElementById('submitBtn');
     const transactionTableBody = document.getElementById('transactionTableBody');
     const quarterSelector = document.getElementById('quarterSelector');
+    const globalBalanceDisplay = document.getElementById('globalBalanceDisplay');
     const currentBalanceEl = document.getElementById('currentBalance');
     const totalCountEl = document.getElementById('totalCount');
     const quarterIncomeEl = document.getElementById('quarterIncome');
@@ -391,7 +412,7 @@
     }
 
     async function loadTransactionsFromSupabase() {
-        transactionTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--pixel-dim);padding:20px;">>>> LOADING... 正在从云端加载数据... <<<</td></tr>';
+        transactionTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--pixel-dim);padding:20px;">>>> LOADING... 正在从云端加载数据... <<<</td></tr>';
 
         const { data, error } = await supabase
             .from('ledger')
@@ -400,7 +421,7 @@
 
         if (error) {
             console.error('Supabase load error:', error);
-            transactionTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--pixel-alert);padding:20px;">>>> ERROR: 数据加载失败<br>CODE: ${error.code}<br>MSG: ${error.message}</td></tr>`;
+            transactionTableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--pixel-alert);padding:20px;">>>> ERROR: 数据加载失败<br>CODE: ${error.code}<br>MSG: ${error.message}</td></tr>`;
             return false;
         }
 
@@ -452,11 +473,11 @@
     }
 
     // === Supabase CRUD ===
-    async function addTransaction(remark, type, amount) {
+    async function addTransaction(remark, type, amount, category) {
         const now = new Date();
         const { data, error } = await supabase
             .from('ledger')
-            .insert([{ date: now.toISOString(), remark, type, amount }])
+            .insert([{ date: now.toISOString(), remark, type, amount, category }])
             .select()
             .single();
 
@@ -464,10 +485,10 @@
         return { id: data.id, date: formatDateForUI(data.date), dateRaw: data.date, remark: data.remark, type: data.type, amount: parseFloat(data.amount), category: data.category || '' };
     }
 
-    async function updateTransaction(id, remark, type, amount) {
+    async function updateTransaction(id, remark, type, amount, category) {
         const { error } = await supabase
             .from('ledger')
-            .update({ remark, type, amount })
+            .update({ remark, type, amount, category })
             .eq('id', id);
 
         if (error) { alert('更新失败: ' + error.message); return false; }
@@ -524,7 +545,7 @@
         const filtered = getFilteredTransactions();
 
         if (filtered.length === 0) {
-            transactionTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--pixel-dim);padding:20px;">暂无交易记录</td></tr>';
+            transactionTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--pixel-dim);padding:20px;">暂无交易记录</td></tr>';
             return;
         }
 
@@ -534,6 +555,7 @@
             row.innerHTML = `
                 <td><div class="transaction-date">${t.date}</div></td>
                 <td>${t.remark}</td>
+                <td style="font-size:10px;color:var(--pixel-dim);">${t.category || '-'}</td>
                 <td class="${t.type}">${t.type === 'income' ? '+ 收入' : '- 支出'}</td>
                 <td class="${t.type}">${t.type === 'income' ? '+' : '-'}${t.amount.toFixed(2)}</td>
                 <td><div class="action-buttons">
@@ -568,6 +590,11 @@
         const balance = totalIncome - totalExpense;
         currentBalanceEl.textContent = `${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
         currentBalanceEl.className = `summary-value ${balance >= 0 ? 'income' : 'expense'}`;
+
+        // 更新顶部余额显示条
+        globalBalanceDisplay.textContent = `⭐ 星蟹币余额: ${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
+        globalBalanceDisplay.style.color = balance >= 0 ? 'var(--screen-bg)' : 'var(--pixel-alert)';
+        globalBalanceDisplay.style.backgroundColor = balance >= 0 ? 'var(--pixel-dark)' : 'var(--pixel-alert)';
     }
 
     function updateSystemStatus() {
@@ -583,22 +610,24 @@
         const remark = remarkInput.value.trim();
         const type = typeSelect.value;
         const amount = parseFloat(amountInput.value);
+        const category = categorySelect.value;
         if (!remark || isNaN(amount) || amount <= 0) { alert('请填写完整且有效的信息'); return; }
 
         submitBtn.disabled = true;
         submitBtn.textContent = '[ SYNCING... ]';
 
         if (editingId === null) {
-            const newTx = await addTransaction(remark, type, amount);
+            const newTx = await addTransaction(remark, type, amount, category);
             if (newTx) transactions.push(newTx);
         } else {
-            const ok = await updateTransaction(editingId, remark, type, amount);
+            const ok = await updateTransaction(editingId, remark, type, amount, category);
             if (ok) {
                 const idx = transactions.findIndex(t => t.id === editingId);
                 if (idx !== -1) {
                     transactions[idx].remark = remark;
                     transactions[idx].type = type;
                     transactions[idx].amount = amount;
+                    transactions[idx].category = category;
                 }
             }
             editingId = null;
@@ -607,6 +636,7 @@
 
         remarkInput.value = '';
         amountInput.value = '';
+        categorySelect.value = '';
         submitBtn.textContent = '[ ADD_添加 ]';
         submitBtn.disabled = false;
         renderView();
@@ -620,6 +650,7 @@
         remarkInput.value = t.remark;
         typeSelect.value = t.type;
         amountInput.value = t.amount;
+        categorySelect.value = t.category || '';
         submitBtn.textContent = '[ SAVE_保存 ]';
         entryForm.classList.add('editing');
         entryForm.scrollIntoView({ behavior: 'smooth' });
@@ -636,6 +667,7 @@
                 submitBtn.textContent = '[ ADD_添加 ]';
                 remarkInput.value = '';
                 amountInput.value = '';
+                categorySelect.value = '';
             }
             renderView();
             updateSystemStatus();
