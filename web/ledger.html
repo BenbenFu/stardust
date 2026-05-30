@@ -139,10 +139,7 @@
             <div>CPU: 72MHz / <span class="alert-text">76C_WARN</span></div>
             <div style="text-align: right;">STORAGE: 112KB / 256KB</div>
             <div>FINANCE_DB: 0x3A1C | SYNC: 202X/10/20</div>
-            <div style="text-align: right;" id="headerBalance" class="balance-display" title="星蟹币余额 = 总收入 - 总支出">
-                <svg style="display:inline;vertical-align:middle;" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" fill="#f0d060" stroke="#8a6d20" stroke-width="0.5"/></svg>
-                +0.00
-            </div>
+            <div style="text-align: right;">SECTOR_LIFE: 10.79%</div>
         </header>
 
         <!-- 波段指示灯 -->
@@ -160,7 +157,13 @@
 
         <div class="burn-in-ghost">FINANCE_SECTOR_0x0B</div>
 
-        <h1>&lt;&lt; STAR_CRAB_CURRENCY_LEDGER &gt;&gt;</h1>
+        <h1 style="display:flex;justify-content:space-between;align-items:center;">
+            <span>&lt;&lt; STAR_CRAB_CURRENCY_LEDGER &gt;&gt;</span>
+            <span id="headerBalance" class="balance-display" title="星蟹币余额 = 总收入 - 总支出" style="font-size:13px;">
+                <svg style="display:inline;vertical-align:middle;" width="13" height="13" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" fill="currentColor" stroke="none"/></svg>
+                星蟹币余额: +0.00
+            </span>
+        </h1>
 
         <!-- 收支录入表单 -->
         <div class="entry-form" id="entryForm">
@@ -631,8 +634,8 @@
         currentBalanceEl.className = `summary-value ${balance >= 0 ? 'income' : 'expense'}`;
 
         // 更新系统状态栏余额
-        const starSVG = '<svg style="display:inline;vertical-align:middle;" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" fill="#f0d060" stroke="#8a6d20" stroke-width="0.5"/></svg>';
-        headerBalance.innerHTML = `${starSVG} ${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
+        const starSVG = '<svg style="display:inline;vertical-align:middle;" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" fill="currentColor" stroke="none"/></svg>';
+        headerBalance.innerHTML = `${starSVG} 星蟹币余额: ${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
         headerBalance.style.color = balance < 0 ? 'var(--pixel-alert)' : 'var(--screen-bg)';
     }
 
