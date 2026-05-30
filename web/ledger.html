@@ -139,7 +139,10 @@
             <div>CPU: 72MHz / <span class="alert-text">76C_WARN</span></div>
             <div style="text-align: right;">STORAGE: 112KB / 256KB</div>
             <div>FINANCE_DB: 0x3A1C | SYNC: 202X/10/20</div>
-            <div style="text-align: right;">SECTOR_LIFE: 10.79%</div>
+            <div style="text-align: right;" id="headerBalance" class="balance-display" title="星蟹币余额 = 总收入 - 总支出">
+                <svg style="display:inline;vertical-align:middle;" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" fill="#f0d060" stroke="#8a6d20" stroke-width="0.5"/></svg>
+                +0.00
+            </div>
         </header>
 
         <!-- 波段指示灯 -->
@@ -158,12 +161,6 @@
         <div class="burn-in-ghost">FINANCE_SECTOR_0x0B</div>
 
         <h1>&lt;&lt; STAR_CRAB_CURRENCY_LEDGER &gt;&gt;</h1>
-
-        <!-- 星蟹币余额 -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-            <span class="balance-display" id="globalBalanceDisplay">⭐ 星蟹币余额: +0.00</span>
-            <span style="font-size:10px;color:var(--pixel-dim);">BALANCE: ΣINCOME - ΣEXPENSE</span>
-        </div>
 
         <!-- 收支录入表单 -->
         <div class="entry-form" id="entryForm">
@@ -379,7 +376,7 @@
     const submitBtn = document.getElementById('submitBtn');
     const transactionTableBody = document.getElementById('transactionTableBody');
     const quarterSelector = document.getElementById('quarterSelector');
-    const globalBalanceDisplay = document.getElementById('globalBalanceDisplay');
+    const headerBalance = document.getElementById('headerBalance');
     const currentBalanceEl = document.getElementById('currentBalance');
     const totalCountEl = document.getElementById('totalCount');
     const quarterIncomeEl = document.getElementById('quarterIncome');
@@ -391,22 +388,22 @@
     // === 分类体系：按收入/支出双轨联动 ===
     const CATEGORIES = {
         income: [
-            { value: '纪念日奖励',  label: '🎂 纪念日奖励' },
-            { value: '审批拨款',    label: '✅ 审批拨款' },
-            { value: '启动资金',    label: '🚀 启动资金' },
-            { value: '验收奖励',    label: '🏆 验收奖励' },
-            { value: '日常补贴',    label: '💰 日常补贴' },
+            { value: '纪念日奖励',  label: '纪念日奖励' },
+            { value: '审批拨款',    label: '审批拨款' },
+            { value: '启动资金',    label: '启动资金' },
+            { value: '验收奖励',    label: '验收奖励' },
+            { value: '日常补贴',    label: '日常补贴' },
         ],
         expense: [
-            { value: '硬件成本',    label: '🔧 硬件成本' },
-            { value: '软件订阅',    label: '📦 软件订阅' },
-            { value: 'API调用',     label: '🔌 API调用' },
-            { value: '云服务',      label: '☁️ 云服务' },
-            { value: '工具购买',    label: '🛠️ 工具购买' },
-            { value: '人工协助',    label: '👤 人工协助' },
-            { value: '愿望未达成',  label: '❌ 愿望未达成' },
-            { value: '愿望延期',    label: '⏳ 愿望延期' },
-            { value: '验收不通过',  label: '🚫 验收不通过' },
+            { value: '硬件成本',    label: '硬件成本' },
+            { value: '软件订阅',    label: '软件订阅' },
+            { value: 'API调用',     label: 'API调用' },
+            { value: '云服务',      label: '云服务' },
+            { value: '工具购买',    label: '工具购买' },
+            { value: '人工协助',    label: '人工协助' },
+            { value: '愿望未达成',  label: '愿望未达成' },
+            { value: '愿望延期',    label: '愿望延期' },
+            { value: '验收不通过',  label: '验收不通过' },
         ]
     };
 
@@ -633,10 +630,10 @@
         currentBalanceEl.textContent = `${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
         currentBalanceEl.className = `summary-value ${balance >= 0 ? 'income' : 'expense'}`;
 
-        // 更新顶部余额显示条
-        globalBalanceDisplay.textContent = `⭐ 星蟹币余额: ${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
-        globalBalanceDisplay.style.color = balance >= 0 ? 'var(--screen-bg)' : 'var(--pixel-alert)';
-        globalBalanceDisplay.style.backgroundColor = balance >= 0 ? 'var(--pixel-dark)' : 'var(--pixel-alert)';
+        // 更新系统状态栏余额
+        const starSVG = '<svg style="display:inline;vertical-align:middle;" width="14" height="14" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" fill="#f0d060" stroke="#8a6d20" stroke-width="0.5"/></svg>';
+        headerBalance.innerHTML = `${starSVG} ${balance >= 0 ? '+' : ''}${balance.toFixed(2)}`;
+        headerBalance.style.color = balance < 0 ? 'var(--pixel-alert)' : 'var(--screen-bg)';
     }
 
     function updateSystemStatus() {
