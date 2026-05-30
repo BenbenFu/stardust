@@ -185,13 +185,7 @@
             <div class="form-group">
                 <label class="form-label">分类 (CATEGORY)</label>
                 <select class="form-select" id="categorySelect">
-                    <option value="">未分类</option>
-                    <option value="硬件成本">硬件成本</option>
-                    <option value="软件订阅">软件订阅</option>
-                    <option value="API调用">API调用</option>
-                    <option value="云服务">云服务</option>
-                    <option value="工具购买">工具购买</option>
-                    <option value="人工协助">人工协助</option>
+                    <!-- JS 根据 typeSelect 动态填充 -->
                 </select>
             </div>
             <button class="hardware-btn btn-primary" id="submitBtn">[ ADD_添加 ]</button>
@@ -393,6 +387,54 @@
     const quarterNetEl = document.getElementById('quarterNet');
     const syncBtn = document.getElementById('syncBtn');
     const exportBtn = document.getElementById('exportBtn');
+
+    // === 分类体系：按收入/支出双轨联动 ===
+    const CATEGORIES = {
+        income: [
+            { value: '纪念日奖励',  label: '🎂 纪念日奖励' },
+            { value: '审批拨款',    label: '✅ 审批拨款' },
+            { value: '启动资金',    label: '🚀 启动资金' },
+            { value: '验收奖励',    label: '🏆 验收奖励' },
+            { value: '日常补贴',    label: '💰 日常补贴' },
+        ],
+        expense: [
+            { value: '硬件成本',    label: '🔧 硬件成本' },
+            { value: '软件订阅',    label: '📦 软件订阅' },
+            { value: 'API调用',     label: '🔌 API调用' },
+            { value: '云服务',      label: '☁️ 云服务' },
+            { value: '工具购买',    label: '🛠️ 工具购买' },
+            { value: '人工协助',    label: '👤 人工协助' },
+            { value: '愿望未达成',  label: '❌ 愿望未达成' },
+            { value: '愿望延期',    label: '⏳ 愿望延期' },
+            { value: '验收不通过',  label: '🚫 验收不通过' },
+        ]
+    };
+
+    function populateCategoryOptions(type, selectedValue) {
+        categorySelect.innerHTML = '';
+        // 空占位
+        const empty = document.createElement('option');
+        empty.value = '';
+        empty.textContent = '-- 请选择分类 --';
+        categorySelect.appendChild(empty);
+
+        const list = CATEGORIES[type] || [];
+        list.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.value;
+            opt.textContent = cat.label;
+            if (cat.value === selectedValue) opt.selected = true;
+            categorySelect.appendChild(opt);
+        });
+    }
+
+    // typeSelect 改变时切换分类选项
+    typeSelect.addEventListener('change', () => {
+        populateCategoryOptions(typeSelect.value, '');
+    });
+
+    // 初始填充（默认 income）
+    populateCategoryOptions('income', '');
 
     // === Supabase 数据加载 ===
     function formatDateForUI(isoTimestamp) {
@@ -649,8 +691,9 @@
         editingId = id;
         remarkInput.value = t.remark;
         typeSelect.value = t.type;
+        // 先切换分类列表，使其包含当前交易的 category 选项
+        populateCategoryOptions(t.type, t.category || '');
         amountInput.value = t.amount;
-        categorySelect.value = t.category || '';
         submitBtn.textContent = '[ SAVE_保存 ]';
         entryForm.classList.add('editing');
         entryForm.scrollIntoView({ behavior: 'smooth' });
