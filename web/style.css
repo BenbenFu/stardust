@@ -73,7 +73,7 @@ body {
     display: flex;
     gap: 5px;
     width: 100%;
-    max-width: 1040px;
+    max-width: 1200px;
     height: 94vh;
     box-shadow: 0 40px 80px rgba(0,0,0,0.9);
     position: relative;

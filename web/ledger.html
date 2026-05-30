@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STARDUST_v0.1_STAR_CRAB_FINANCE</title>
 <link rel="stylesheet" href="style.css?v=20260530">
+<script type="module" src="script.js"></script>
 <style>
     /* === ledger 页面特有变量 & 组件 === */
 
@@ -341,44 +342,16 @@
     </div>
 </div>
 
-<script>
-    /*
-    ============================================================
-    后端 Supabase 表结构 (待创建):
-    
-    CREATE TABLE IF NOT EXISTS LEDGER (
-      id         BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-      date       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      remark     TEXT NOT NULL,
-      type       TEXT NOT NULL CHECK (type IN ('income', 'expense')),
-      amount     DECIMAL(10,2) NOT NULL CHECK (amount > 0),
-      category   TEXT,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-    
-    CREATE INDEX idx_ledger_date ON LEDGER(date DESC);
-    CREATE INDEX idx_ledger_type ON LEDGER(type);
-    
-    -- 注意: 当前前端使用 localStorage 存储，待后端表创建后
-    -- 接入 Supabase，参考 diary.html 的实现方式
-    ============================================================
-    */
+<script type="module">
+    import { supabase, checkAuth } from './script.js';
 
-    // 初始化示例数据（季度信息从日期推算）
-    let transactions = JSON.parse(localStorage.getItem('starCrabTransactionsV2')) || [
-        { id: 1, date: "2026/01/05 09:00:00", remark: "愿望系统初始资金", type: "income", amount: 100 },
-        { id: 2, date: "2026/02/15 14:23:17", remark: "TF卡转接板", type: "expense", amount: 5 },
-        { id: 3, date: "2026/04/10 08:15:42", remark: "四月DeepSeek API服务", type: "expense", amount: 20 },
-        { id: 4, date: "2026/06/18 18:30:05", remark: "语音功能愿望单审批通过", type: "income", amount: 40 },
-        { id: 5, date: "2026/09/19 21:47:33", remark: "RAG功能验收不通过", type: "expense", amount: 20 },
-        { id: 6, date: "2026/10/25 15:10:09", remark: "OLED屏幕备件", type: "expense", amount: 35 },
-        { id: 7, date: "2026/11/30 10:00:00", remark: "年度维护基金", type: "income", amount: 200 }
-    ];
-
+    // 全局状态
+    let transactions = [];
     let editingId = null;
-    let currentYear = 2026;
-    let currentQuarter = 'all';   // 'all' | 'Q1' | 'Q2' | 'Q3' | 'Q4'
-    let currentMonth = null;      // null | 1-12
+    let currentYear = new Date().getFullYear();
+    let currentQuarter = 'all';
+    let currentMonth = null;
+    let isLoading = true;
 
     // === DOM 引用 ===
     const yearDisplay = document.getElementById('yearDisplay');
@@ -400,12 +373,58 @@
     const syncBtn = document.getElementById('syncBtn');
     const exportBtn = document.getElementById('exportBtn');
 
-    // === 工具函数 ===
-    function saveToLocalStorage() { localStorage.setItem('starCrabTransactionsV2', JSON.stringify(transactions)); }
+    // === Supabase 数据加载 ===
+    function formatDateForUI(isoTimestamp) {
+        if (!isoTimestamp) return '----/--/-- --:--:--';
+        try {
+            const d = new Date(isoTimestamp);
+            const y = d.getFullYear();
+            const m = (d.getMonth() + 1).toString().padStart(2, '0');
+            const day = d.getDate().toString().padStart(2, '0');
+            const h = d.getHours().toString().padStart(2, '0');
+            const min = d.getMinutes().toString().padStart(2, '0');
+            const s = d.getSeconds().toString().padStart(2, '0');
+            return `${y}/${m}/${day} ${h}:${min}:${s}`;
+        } catch (e) {
+            return isoTimestamp;
+        }
+    }
 
-    function parseTransactionDate(dateStr) {
-        // dateStr: "2026/01/05 09:00:00"
-        const parts = dateStr.split(' ')[0].split('/');
+    async function loadTransactionsFromSupabase() {
+        transactionTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--pixel-dim);padding:20px;">>>> LOADING... 正在从云端加载数据... <<<</td></tr>';
+
+        const { data, error } = await supabase
+            .from('ledger')
+            .select('*')
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Supabase load error:', error);
+            transactionTableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--pixel-alert);padding:20px;">>>> ERROR: 数据加载失败<br>CODE: ${error.code}<br>MSG: ${error.message}</td></tr>`;
+            return false;
+        }
+
+        transactions = (data || []).map(row => ({
+            id: row.id,
+            date: formatDateForUI(row.date),
+            dateRaw: row.date,      // 保留原始 ISO 时间戳
+            remark: row.remark || '',
+            type: row.type || 'expense',
+            amount: parseFloat(row.amount) || 0,
+            category: row.category || ''
+        }));
+
+        return true;
+    }
+
+    // === 工具函数 ===
+    function parseTransactionDate(t) {
+        // 从 UI 格式 "2026/01/05 09:00:00" 或原始 ISO 解析
+        if (t.dateRaw) {
+            const d = new Date(t.dateRaw);
+            return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
+        }
+        const parts = t.date.split(' ')[0].split('/');
         return { year: parseInt(parts[0]), month: parseInt(parts[1]), day: parseInt(parts[2]) };
     }
 
@@ -416,17 +435,67 @@
         return 'Q4';
     }
 
-    function generateId() { return transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) + 1 : 1; }
+    function getFilteredTransactions() {
+        let filtered = transactions.filter(t => {
+            const d = parseTransactionDate(t);
+            if (d.year !== currentYear) return false;
+            if (currentQuarter !== 'all' && getQuarter(d.month) !== currentQuarter) return false;
+            if (currentMonth !== null && d.month !== currentMonth) return false;
+            return true;
+        });
+        return filtered.sort((a, b) => {
+            // 按日期倒序
+            const da = a.dateRaw ? new Date(a.dateRaw) : new Date(a.date);
+            const db = b.dateRaw ? new Date(b.dateRaw) : new Date(b.date);
+            return db - da;
+        });
+    }
 
-    // 生成月份按钮
+    // === Supabase CRUD ===
+    async function addTransaction(remark, type, amount) {
+        const now = new Date();
+        const { data, error } = await supabase
+            .from('ledger')
+            .insert([{ date: now.toISOString(), remark, type, amount }])
+            .select()
+            .single();
+
+        if (error) { alert('添加失败: ' + error.message); return null; }
+        return { id: data.id, date: formatDateForUI(data.date), dateRaw: data.date, remark: data.remark, type: data.type, amount: parseFloat(data.amount), category: data.category || '' };
+    }
+
+    async function updateTransaction(id, remark, type, amount) {
+        const { error } = await supabase
+            .from('ledger')
+            .update({ remark, type, amount })
+            .eq('id', id);
+
+        if (error) { alert('更新失败: ' + error.message); return false; }
+        return true;
+    }
+
+    async function deleteTransactionFromDB(id) {
+        const { error } = await supabase
+            .from('ledger')
+            .delete()
+            .eq('id', id);
+
+        if (error) { alert('删除失败: ' + error.message); return false; }
+        return true;
+    }
+
+    // === 渲染 ===
+    function updateFilterUI() {
+        yearDisplay.textContent = currentYear;
+        document.querySelectorAll('.quarter-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.quarter === currentQuarter);
+        });
+        generateMonthButtons();
+    }
+
     function generateMonthButtons() {
         monthSelector.innerHTML = '';
-        const quarterMonths = {
-            'Q1': [1, 2, 3],
-            'Q2': [4, 5, 6],
-            'Q3': [7, 8, 9],
-            'Q4': [10, 11, 12]
-        };
+        const quarterMonths = { 'Q1': [1,2,3], 'Q2': [4,5,6], 'Q3': [7,8,9], 'Q4': [10,11,12] };
         const months = currentQuarter === 'all' ? [1,2,3,4,5,6,7,8,9,10,11,12] : quarterMonths[currentQuarter];
 
         months.forEach(m => {
@@ -438,45 +507,26 @@
             btn.addEventListener('click', () => {
                 currentMonth = (currentMonth === m) ? null : m;
                 updateFilterUI();
-                renderTransactions();
-                updateSummary();
+                renderView();
             });
             monthSelector.appendChild(btn);
         });
-
-        // 显示/隐藏月份选择器
         monthSelector.style.display = (currentQuarter !== 'all') ? 'flex' : 'none';
     }
 
-    function updateFilterUI() {
-        yearDisplay.textContent = currentYear;
-
-        // 更新季度按钮状态
-        document.querySelectorAll('.quarter-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.quarter === currentQuarter);
-        });
-
-        // 重新生成月份按钮
-        generateMonthButtons();
+    function renderView() {
+        renderTransactions();
+        updateSummary();
     }
 
-    // === 筛选函数 ===
-    function getFilteredTransactions() {
-        let filtered = transactions.filter(t => {
-            const d = parseTransactionDate(t.date);
-            if (d.year !== currentYear) return false;
-            if (currentQuarter !== 'all' && getQuarter(d.month) !== currentQuarter) return false;
-            if (currentMonth !== null && d.month !== currentMonth) return false;
-            return true;
-        });
-        filtered.sort((a, b) => b.date.localeCompare(a.date)); // 日期倒序
-        return filtered;
-    }
-
-    // === 渲染 ===
     function renderTransactions() {
         transactionTableBody.innerHTML = '';
         const filtered = getFilteredTransactions();
+
+        if (filtered.length === 0) {
+            transactionTableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--pixel-dim);padding:20px;">暂无交易记录</td></tr>';
+            return;
+        }
 
         filtered.forEach(t => {
             const row = document.createElement('tr');
@@ -493,20 +543,11 @@
             transactionTableBody.appendChild(row);
         });
 
-        if (filtered.length === 0) {
-            const row = document.createElement('tr');
-            row.innerHTML = `<td colspan="5" style="text-align:center;color:var(--pixel-dim); padding:20px;">暂无交易记录</td>`;
-            transactionTableBody.appendChild(row);
-        }
-
-        // 绑定编辑和删除事件
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', () => startEditing(parseInt(btn.dataset.id)));
         });
         document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (confirm('确认删除这条记录？此操作不可撤销。')) deleteTransaction(parseInt(btn.dataset.id));
-            });
+            btn.addEventListener('click', () => handleDelete(parseInt(btn.dataset.id)));
         });
     }
 
@@ -516,16 +557,12 @@
         const qe = filtered.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
         const qn = qi - qe;
 
-        // 当前筛选结果
         quarterIncomeEl.textContent = `¥ ${qi.toFixed(2)}`;
-        quarterIncomeEl.className = 'summary-value income';
         quarterExpenseEl.textContent = `¥ ${qe.toFixed(2)}`;
-        quarterExpenseEl.className = 'summary-value expense';
         quarterNetEl.textContent = `${qn >= 0 ? '+' : ''}${qn.toFixed(2)}`;
         quarterNetEl.className = `summary-value ${qn >= 0 ? 'income' : 'expense'}`;
         totalCountEl.textContent = filtered.length;
 
-        // 全局余额（所有交易，不受筛选器影响）
         const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
         const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
         const balance = totalIncome - totalExpense;
@@ -533,49 +570,120 @@
         currentBalanceEl.className = `summary-value ${balance >= 0 ? 'income' : 'expense'}`;
     }
 
-    // === 交易操作 ===
-    function submitTransaction(e) {
+    function updateSystemStatus() {
+        const cells = document.querySelectorAll('.screen-header-stats div');
+        if (cells.length >= 5) {
+            cells[4].textContent = `FINANCE_DB: 0x${transactions.length.toString(16).toUpperCase().padStart(4,'0')} | SYNC: ${new Date().toISOString().slice(0,10)}`;
+        }
+    }
+
+    // === 事件处理 ===
+    async function handleSubmit(e) {
         e.preventDefault();
         const remark = remarkInput.value.trim();
         const type = typeSelect.value;
         const amount = parseFloat(amountInput.value);
         if (!remark || isNaN(amount) || amount <= 0) { alert('请填写完整且有效的信息'); return; }
 
+        submitBtn.disabled = true;
+        submitBtn.textContent = '[ SYNCING... ]';
+
         if (editingId === null) {
-            const now = new Date();
-            const dateStr = `${currentYear}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-            transactions.push({ id: generateId(), date: dateStr, remark, type, amount });
+            const newTx = await addTransaction(remark, type, amount);
+            if (newTx) transactions.push(newTx);
         } else {
-            const idx = transactions.findIndex(t => t.id === editingId);
-            if (idx !== -1) { transactions[idx].remark = remark; transactions[idx].type = type; transactions[idx].amount = amount; }
-            editingId = null; submitBtn.textContent = '[ ADD_添加 ]'; entryForm.classList.remove('editing');
+            const ok = await updateTransaction(editingId, remark, type, amount);
+            if (ok) {
+                const idx = transactions.findIndex(t => t.id === editingId);
+                if (idx !== -1) {
+                    transactions[idx].remark = remark;
+                    transactions[idx].type = type;
+                    transactions[idx].amount = amount;
+                }
+            }
+            editingId = null;
+            entryForm.classList.remove('editing');
         }
-        remarkInput.value = ''; amountInput.value = '';
-        saveToLocalStorage(); renderTransactions(); updateSummary();
+
+        remarkInput.value = '';
+        amountInput.value = '';
+        submitBtn.textContent = '[ ADD_添加 ]';
+        submitBtn.disabled = false;
+        renderView();
+        updateSystemStatus();
     }
 
     function startEditing(id) {
         const t = transactions.find(t => t.id === id);
         if (!t) return;
         editingId = id;
-        remarkInput.value = t.remark; typeSelect.value = t.type; amountInput.value = t.amount;
-        submitBtn.textContent = '[ SAVE_保存 ]'; entryForm.classList.add('editing');
+        remarkInput.value = t.remark;
+        typeSelect.value = t.type;
+        amountInput.value = t.amount;
+        submitBtn.textContent = '[ SAVE_保存 ]';
+        entryForm.classList.add('editing');
         entryForm.scrollIntoView({ behavior: 'smooth' });
     }
 
-    function deleteTransaction(id) {
-        transactions = transactions.filter(t => t.id !== id);
-        saveToLocalStorage(); renderTransactions(); updateSummary();
+    async function handleDelete(id) {
+        if (!confirm('确认删除这条记录？此操作不可撤销。')) return;
+        const ok = await deleteTransactionFromDB(id);
+        if (ok) {
+            transactions = transactions.filter(t => t.id !== id);
+            if (editingId === id) {
+                editingId = null;
+                entryForm.classList.remove('editing');
+                submitBtn.textContent = '[ ADD_添加 ]';
+                remarkInput.value = '';
+                amountInput.value = '';
+            }
+            renderView();
+            updateSystemStatus();
+        }
     }
 
-    // === 事件绑定 ===
+    async function handleSync() {
+        if (!confirm('确认从云端重新加载数据？本地筛选状态将重置。')) return;
+        syncBtn.disabled = true;
+        syncBtn.textContent = '[ SYNCING... ]';
+        const ok = await loadTransactionsFromSupabase();
+        if (ok) {
+            currentQuarter = 'all';
+            currentMonth = null;
+            updateFilterUI();
+            renderView();
+            updateSystemStatus();
+            alert(`同步成功！共加载 ${transactions.length} 条记录。`);
+        }
+        syncBtn.textContent = '[ SYNC_同步数据库 ]';
+        syncBtn.disabled = false;
+    }
+
+    function handleExport() {
+        const filtered = getFilteredTransactions();
+        const data = {
+            exportTime: new Date().toLocaleString('zh-CN'),
+            device: 'STARDUST_v0.2',
+            year: currentYear, quarter: currentQuarter, month: currentMonth,
+            totalTransactions: filtered.length,
+            transactions: filtered
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `STAR_CRAB_FINANCE_${currentYear}_${currentQuarter}_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // === 筛选器事件 ===
     quarterSelector.addEventListener('click', (e) => {
         if (e.target.classList.contains('quarter-btn')) {
             currentQuarter = e.target.dataset.quarter;
-            currentMonth = null; // 切换季度时重置月份选择
+            currentMonth = null;
             updateFilterUI();
-            renderTransactions();
-            updateSummary();
+            renderView();
         }
     });
 
@@ -584,8 +692,7 @@
         currentQuarter = 'all';
         currentMonth = null;
         updateFilterUI();
-        renderTransactions();
-        updateSummary();
+        renderView();
     });
 
     nextYearBtn.addEventListener('click', () => {
@@ -593,34 +700,36 @@
         currentQuarter = 'all';
         currentMonth = null;
         updateFilterUI();
-        renderTransactions();
-        updateSummary();
+        renderView();
     });
 
-    syncBtn.addEventListener('click', () => {
-        if (confirm('确认将所有本地数据同步到云端数据库？这将覆盖云端现有数据。\n\n提示：后端 LEDGER 表尚未创建，同步功能暂未接入 Supabase。')) {
-            console.log('同步数据:', { timestamp: new Date().toISOString(), transactions, deviceId: 'STARDUST-001' });
-            setTimeout(() => alert(`同步成功（本地模拟）！\n共同步 ${transactions.length} 条记录\n同步时间: ${new Date().toLocaleString('zh-CN')}\n\n注意：后端表 LEDGER 尚未创建，数据仅保存在 localStorage。`), 800);
-        }
-    });
-
-    exportBtn.addEventListener('click', () => {
-        const filtered = getFilteredTransactions();
-        const data = { exportTime: new Date().toLocaleString('zh-CN'), device: 'STARDUST_v0.2', year: currentYear, quarter: currentQuarter, month: currentMonth, totalTransactions: filtered.length, transactions: filtered };
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `STAR_CRAB_FINANCE_${currentYear}_${currentQuarter}_${new Date().toISOString().slice(0, 10)}.json`;
-        a.click(); URL.revokeObjectURL(url);
-    });
-
-    entryForm.addEventListener('submit', submitTransaction);
-    submitBtn.addEventListener('click', submitTransaction);
+    entryForm.addEventListener('submit', handleSubmit);
+    submitBtn.addEventListener('click', handleSubmit);
+    syncBtn.addEventListener('click', handleSync);
+    exportBtn.addEventListener('click', handleExport);
 
     // === 初始化 ===
-    updateFilterUI();
-    renderTransactions();
-    updateSummary();
+    async function init() {
+        const authed = await checkAuth();
+        if (!authed) return;
+
+        const ok = await loadTransactionsFromSupabase();
+        if (!ok) return;
+
+        isLoading = false;
+
+        // 根据最新交易设置年份
+        if (transactions.length > 0) {
+            const latest = parseTransactionDate(transactions[0]);
+            currentYear = latest.year;
+        }
+
+        updateFilterUI();
+        renderView();
+        updateSystemStatus();
+    }
+
+    init();
 </script>
 
 <script>
