@@ -1,0 +1,1179 @@
+/* =====================================================================
+   STARDUST 统一复古单色液晶屏 + 硬核工业外壳
+   引用: login, list, approval, diary, ledger
+   版本: 20260530
+   ===================================================================== */
+
+/* ================================================================
+   1. CSS 变量 — 合并自外壳参考 + 旧 style.css + shared-lcd.css
+   ================================================================ */
+:root {
+    /* 外壳色彩 */
+    --case-bg: #2d312a;
+    --case-border: #141613;
+    --case-text: #7d8577;
+
+    /* 液晶屏色彩 */
+    --screen-bg: #b0b99a;
+    --screen-bg-2: #a8b18f;
+    --pixel-dark: #1e2622;
+    --pixel-blue: #26313a;
+    --pixel-dim: #5c6654;
+    --pixel-faint: rgba(30, 38, 34, 0.13);
+    --pixel-alert: #8f341d;
+
+    /* 旧 style.css 保留 */
+    --case: #30342e;
+    --case-dark: #171a16;
+    --case-light: #42483f;
+    --tape-bg: #d2c89f;
+    --paper-worn: #c8c099;
+
+    /* 字体 */
+    --font-mono: "MS Gothic", "SimSun", "Courier New", Courier, monospace;
+}
+
+/* ================================================================
+   2. 全局重置
+   ================================================================ */
+* {
+    box-sizing: border-box;
+    border-radius: 0 !important;
+    image-rendering: pixelated;
+    text-rendering: geometricPrecision;
+}
+
+/* ================================================================
+   3. Body — 暗色背景 + 居中
+   ================================================================ */
+body {
+    background-color: #0b0c0a;
+    color: var(--pixel-dark);
+    font-family: var(--font-mono);
+    font-weight: bold;
+    font-size: 13px;
+    line-height: 1.42;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 15px;
+    overflow-x: hidden;
+}
+
+/* ================================================================
+   4. 硬件设备外壳
+   ================================================================ */
+.hardware-device {
+    background-color: var(--case-bg);
+    border: 6px solid var(--case-border);
+    outline: 14px solid #3c4238;
+    padding: 25px;
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    max-width: 1040px;
+    height: 94vh;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.9);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ================================================================
+   5. 外壳边角固定螺丝
+   ================================================================ */
+.case-screw {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #555c4f;
+    border: 1px solid var(--case-border);
+    border-radius: 50% !important;
+}
+.case-screw::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 2px;
+    background-color: var(--case-border);
+    top: 3px;
+    left: 1px;
+}
+.screw-tl { top: 6px; left: 6px; transform: rotate(35deg); }
+.screw-tr { top: 6px; right: 6px; transform: rotate(145deg); }
+.screw-bl { bottom: 6px; left: 6px; transform: rotate(75deg); }
+.screw-br { bottom: 6px; right: 6px; transform: rotate(-15deg); }
+
+/* ================================================================
+   6. LCD 屏幕（左面板）
+   ================================================================ */
+.embedded-lcd {
+    flex: 1.2;
+    background-color: var(--screen-bg);
+    border: 5px solid var(--case-border);
+    padding: 15px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 像素网格纹理 */
+.embedded-lcd::before {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* 电压闪烁 + 边缘老化噪点 */
+.embedded-lcd::after {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.12) 100%);
+    z-index: 101;
+    pointer-events: none;
+    animation: micro-flicker 0.4s infinite steps(2);
+}
+
+/* 工业滚动条 */
+.embedded-lcd::-webkit-scrollbar { width: 10px; }
+.embedded-lcd::-webkit-scrollbar-track { background: var(--pixel-dim); }
+.embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dark); border: 2px solid var(--screen-bg); }
+
+/* ================================================================
+   7. 右侧物理控制面板
+   ================================================================ */
+.physical-control-panel {
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-left: 4px double var(--case-border);
+    padding-left: 15px;
+    user-select: none;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 右侧边缘物理提手槽装饰线 */
+.physical-control-panel::after {
+    content: "";
+    position: absolute;
+    right: -12px;
+    top: 10%;
+    bottom: 10%;
+    width: 4px;
+    background-color: var(--case-border);
+    border-left: 1px solid #42483d;
+}
+
+/* 外壳表面印刷白字 */
+.case-print-text {
+    color: var(--case-text);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-shadow: -1px -1px 0 #121411;
+    margin-bottom: 2px;
+    text-align: center;
+    width: 100%;
+}
+
+/* 面板分隔线 */
+.panel-divider {
+    width: 100%;
+    height: 2px;
+    background-color: var(--case-border);
+    margin: 10px 0;
+    border-bottom: 1px solid #3c4238;
+}
+
+/* ================================================================
+   8. 散热格栅
+   ================================================================ */
+.ventilation-slits {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 10px;
+}
+.slit {
+    width: 100%;
+    height: 4px;
+    background-color: var(--case-border);
+    border-bottom: 1px solid #42483d;
+}
+
+/* ================================================================
+   9. 波段开关（巨型旋钮）
+   ================================================================ */
+.knob-housing {
+    position: relative;
+    width: 150px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.case-scale {
+    position: absolute;
+    font-size: 10px;
+    color: #555c4f;
+    top: 50%;
+    left: 50%;
+    cursor: pointer;
+}
+.c-pos-1 { transform: translate(-40px, -56px); }
+.c-pos-2 { transform: translate(-50%, -64px); }
+.c-pos-3 { transform: translate( 38px, -56px); }
+
+.physical-knob {
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+    transform: rotate(-45deg);
+    transform-origin: center;
+    transition: transform 0.25s ease;
+}
+
+/* ================================================================
+   10. 双调节旋钮组（音量 + 亮度）
+   ================================================================ */
+.dual-potentiometer-row {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 5px 0;
+}
+.sub-knob-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 45%;
+}
+.sub-knob-dial {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sub-knob-dial::before {
+    content: "";
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border: 1px dashed #42483d;
+    border-radius: 50% !important;
+}
+.potentiometer-axis {
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    transform: rotate(-30deg);
+}
+
+/* ================================================================
+   11. 圆形扬声器网罩
+   ================================================================ */
+.circular-speaker-grille {
+    width: 120px;
+    height: 120px;
+    background-color: var(--case-border);
+    border: 2px solid #3c4238;
+    border-radius: 50% !important;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.6);
+}
+.circular-mesh {
+    width: 100%;
+    height: 100%;
+    border-radius: 50% !important;
+    background-image: radial-gradient(var(--case-bg) 35%, transparent 38%);
+    background-size: 6px 6px;
+    background-repeat: repeat;
+}
+
+/* ================================================================
+   12. 电源模块（闸刀开关 + LED）
+   ================================================================ */
+.power-module {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    padding: 4px 10px;
+    background-color: #1e201c;
+    border: 2px solid var(--case-border);
+}
+.toggle-switch {
+    width: 24px;
+    height: 34px;
+    background-color: #121310;
+    border: 1px solid #3c4238;
+    position: relative;
+    cursor: pointer;
+}
+.toggle-switch::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 14px;
+    background-color: #838b7d;
+    border: 2px solid #121310;
+    top: 2px;
+    left: 5px;
+    box-shadow: 0 4px 0 #4c5246;
+}
+.hardware-led-lamp {
+    width: 10px;
+    height: 10px;
+    background-color: #9e782f;
+    border: 2px solid #121310;
+    box-shadow: 0 0 4px #9e782f;
+    animation: led-flicker 2s infinite alternate;
+}
+@keyframes led-flicker {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* ================================================================
+   13. 万用表接线柱（香蕉插头槽）
+   ================================================================ */
+.banana-terminals-row {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 5px 10px;
+}
+.terminal-post {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 8px;
+    color: #4b5246;
+}
+.jack-hole {
+    width: 22px;
+    height: 22px;
+    border-radius: 50% !important;
+    border: 2px solid var(--case-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    color: #121310;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+.jack-red  { background-color: #59251d; border-color: #7a3126; color: #8f341d; }
+.jack-black { background-color: #1a1c19; }
+
+/* ================================================================
+   14. Reset 键 + 合格证贴纸
+   ================================================================ */
+.reset-and-info {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+}
+.reset-button-hole {
+    width: 26px;
+    height: 26px;
+    background-color: #121310;
+    border: 2px solid var(--case-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.reset-red-dot {
+    width: 12px;
+    height: 12px;
+    background-color: #6e251a;
+    border: 1px solid #121310;
+}
+.case-sticker {
+    width: 100%;
+    background-color: #9c9475;
+    border: 1px solid #5a5542;
+    color: #2b281e;
+    font-size: 8px;
+    padding: 4px;
+    line-height: 1.2;
+    margin-top: auto;
+    position: relative;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+}
+.case-sticker::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent var(--case-bg) var(--case-bg) transparent;
+}
+
+/* ================================================================
+   15. 屏幕内公共组件
+   ================================================================ */
+
+/* 系统状态栏 */
+.screen-header-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    font-size: 11px;
+    border-bottom: 1px solid var(--pixel-dark);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+/* 硬件警告闪烁文字 */
+.alert-text {
+    background-color: var(--pixel-dark);
+    color: var(--screen-bg);
+    padding: 0 3px;
+    animation: hardware-blink 1s infinite steps(1);
+}
+
+/* 波段指示灯 */
+.band-indicator {
+    border: 2px solid var(--pixel-dark);
+    padding: 6px;
+    margin-bottom: 15px;
+    background-color: rgba(0,0,0,0.02);
+}
+.band-label {
+    font-size: 10px;
+    color: var(--pixel-dim);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+.band-matrix {
+    display: flex;
+    border: 1px solid var(--pixel-dark);
+    padding: 2px;
+}
+.segment {
+    flex: 1;
+    height: 18px;
+    margin: 0 1px;
+    border: 1px solid var(--pixel-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--pixel-dim);
+}
+.segment.active {
+    background-color: var(--pixel-dark);
+    color: var(--screen-bg);
+    border-color: var(--pixel-dark);
+}
+
+/* 烧屏残影 */
+.burn-in-ghost {
+    position: absolute;
+    color: rgba(0, 0, 0, 0.05);
+    user-select: none;
+    pointer-events: none;
+    font-family: sans-serif;
+}
+
+/* ================================================================
+   16. Tailwind 颜色覆盖（list / approval 兼容层）
+   ================================================================ */
+#stars,
+#stars2,
+#stars3 {
+    display: none;
+}
+
+.text-neonblue,
+.text-cyanglow,
+.text-neonpurple,
+.text-goldstardust,
+.text-gray-200,
+.text-gray-400,
+.text-gray-500,
+.text-gray-600 {
+    color: var(--pixel-dark) !important;
+}
+
+.text-red-400 {
+    color: var(--pixel-alert) !important;
+}
+
+.font-cyber {
+    font-family: var(--font-mono);
+}
+
+/* 霓虹边框 → 移除发光 */
+.neon-border {
+    box-shadow: none;
+}
+
+/* 霓虹文字 → 反白显示 */
+.neon-text {
+    color: var(--screen-bg) !important;
+    background: var(--pixel-dark);
+    display: inline-block;
+    padding: 3px 8px;
+    text-shadow: none;
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+    letter-spacing: 1px;
+}
+
+.neon-text-purple {
+    color: var(--pixel-dim) !important;
+    text-shadow: none;
+}
+
+/* 禁用浮动/发光动画 */
+.animate-float,
+.animate-glow {
+    animation: none !important;
+}
+
+/* 渐变背景 → LCD 屏底色 */
+.bg-gradient-to-r {
+    background:
+        linear-gradient(180deg, rgba(0,0,0,0.035), rgba(0,0,0,0.015)),
+        var(--screen-bg);
+    border-bottom: 2px solid var(--pixel-dark) !important;
+}
+
+/* 星空背景隐藏 */
+.bg-nebula,
+.bg-deepspace\/80 {
+    background-color: transparent;
+}
+
+/* circuit-bg 隔离 */
+.circuit-bg {
+    isolation: isolate;
+}
+
+/* ================================================================
+   17. 卡片组件 (.glass-card)
+   ================================================================ */
+.glass-card {
+    position: relative;
+    z-index: 3;
+    background:
+        radial-gradient(circle at 85% 0%, rgba(255,255,255,0.08), transparent 18rem),
+        linear-gradient(180deg, rgba(0,0,0,0.025), rgba(255,255,255,0.015)),
+        var(--screen-bg);
+    border: 3px solid var(--case-dark);
+    box-shadow: none;
+    backdrop-filter: none;
+    overflow: hidden;
+    margin-bottom: 0 !important;
+}
+
+.glass-card + .glass-card,
+.glass-card + #wishlistContent,
+#wishlistContent > .glass-card,
+#wishlistContent > .wish-story {
+    border-top-width: 0;
+}
+
+.glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background:
+        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+}
+
+.glass-card::after {
+    content: "CAL: BAD_PIXEL_MAP / LCD_AGE_09Y / DO_NOT_TOUCH_CONTRAST";
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    z-index: 21;
+    color: rgba(30, 38, 34, 0.22);
+    font-size: 10px;
+    pointer-events: none;
+}
+
+.glass-card > .bg-gradient-to-r {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.glass-card > .p-6,
+.glass-card > .p-8,
+.wish-story > .p-6 {
+    padding: 8px !important;
+}
+
+/* ================================================================
+   18. 按钮 — .hardware-btn（基础） + .cyber-btn（Tailwind 兼容）
+   ================================================================ */
+
+/* 硬件按钮（diary/ledger 使用） */
+.hardware-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background-color: var(--screen-bg);
+    border: 2px solid var(--pixel-dark);
+    box-shadow: 2px 2px 0px var(--pixel-dark);
+    color: var(--pixel-dark);
+    font-family: var(--font-mono);
+    font-weight: bold;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
+    min-height: 31px;
+}
+
+.hardware-btn:active {
+    box-shadow: 0px 0px 0px transparent;
+    transform: translate(2px, 2px);
+}
+
+.hardware-btn:hover {
+    background: var(--paper-worn);
+}
+
+/* cyber-btn 别名（list/approval 的 Tailwind 兼容） */
+.cyber-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 31px;
+    padding: 6px 14px;
+    border: 2px solid var(--pixel-dark);
+    color: var(--pixel-dark);
+    background: var(--screen-bg);
+    box-shadow:
+        2px 2px 0 var(--pixel-dark),
+        inset 1px 1px 0 rgba(255,255,255,0.32),
+        inset -1px -1px 0 rgba(0,0,0,0.18);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.cyber-btn:hover {
+    background: var(--paper-worn);
+}
+
+.cyber-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow:
+        0 0 0 transparent,
+        inset 1px 1px 0 rgba(0,0,0,0.2);
+}
+
+/* 按钮颜色变体 */
+.hardware-btn.btn-primary:hover,
+.cyber-btn-success:hover {
+    background-color: var(--pixel-dark);
+    color: var(--screen-bg);
+}
+
+.hardware-btn.btn-secondary:hover,
+.cyber-btn-danger:hover {
+    color: var(--pixel-alert);
+    border-color: var(--pixel-alert);
+}
+
+.cyber-btn-warning:hover {
+    background: #c0b68f;
+}
+
+.hardware-btn.btn-small {
+    padding: 2px 6px;
+    font-size: 10px;
+    min-height: auto;
+}
+
+/* 危险按钮变体 */
+.btn-danger:hover {
+    background-color: var(--pixel-alert);
+    color: var(--screen-bg);
+    border-color: var(--pixel-alert);
+}
+
+/* ================================================================
+   19. 状态徽章
+   ================================================================ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 1px 5px;
+    border: 1px solid var(--pixel-dark);
+    background: rgba(0,0,0,0.035);
+    color: var(--pixel-dark);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-badge::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-right: 5px;
+    background: var(--pixel-dim);
+}
+
+.status-pending::before {
+    animation: hardware-blink 1.2s infinite steps(1);
+}
+
+.status-approved,
+.status-completed {
+    background: var(--pixel-dark);
+    color: var(--screen-bg);
+}
+
+.status-rejected {
+    color: var(--pixel-alert);
+    border-color: var(--pixel-alert);
+}
+
+/* ================================================================
+   20. 表格
+   ================================================================ */
+table {
+    width: 100% !important;
+    table-layout: auto;
+    border-collapse: collapse;
+    background: transparent;
+    margin: 0;
+}
+
+th {
+    background: var(--pixel-dark);
+    color: var(--screen-bg) !important;
+    font-size: 11px;
+    padding: 4px 6px !important;
+}
+
+/* 确保表头文字在深色背景上可见 */
+th.text-neonblue,
+th.text-cyanglow,
+th.text-neonpurple,
+th.text-goldstardust,
+th.text-gray-200,
+th.text-gray-400,
+th.text-gray-500,
+th.text-gray-600,
+th[class*="text-"] {
+    color: var(--screen-bg) !important;
+}
+
+td {
+    border: 1px dashed var(--pixel-dark) !important;
+    color: var(--pixel-dark);
+    padding: 5px 6px !important;
+    vertical-align: top;
+}
+
+tbody tr:hover {
+    background: rgba(0,0,0,0.045);
+}
+
+/* 防止表格水平溢出 */
+th, td {
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+/* ================================================================
+   21. 表单控件
+   ================================================================ */
+.cyber-display,
+.cyber-input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--pixel-dark);
+    background:
+        linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.032) 1px, transparent 1px),
+        rgba(0,0,0,0.025);
+    background-size: 3px 3px, 3px 3px, auto;
+    color: var(--pixel-blue);
+    box-shadow: inset 1px 1px 0 rgba(0,0,0,0.22);
+}
+
+.cyber-display {
+    min-height: 38px;
+    padding: 5px 7px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.cyber-input {
+    padding: 7px 9px;
+    outline: none;
+}
+
+.cyber-input::placeholder {
+    color: rgba(38, 49, 58, 0.48);
+}
+
+.cyber-input:focus {
+    background-color: rgba(255,255,255,0.08);
+    outline: 1px dashed var(--pixel-dark);
+    outline-offset: 2px;
+}
+
+/* ================================================================
+   22. 机器人核心（ASCII 风眼睛）
+   ================================================================ */
+.robot-core {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 auto;
+    border: 2px solid var(--pixel-dark);
+    background:
+        radial-gradient(circle at 32% 32%, #8f341d 0 4px, transparent 5px),
+        radial-gradient(circle at 64% 32%, #26313a 0 3px, transparent 4px),
+        var(--screen-bg);
+    box-shadow: 2px 2px 0 var(--pixel-dark);
+    position: relative;
+}
+
+.robot-core::before,
+.robot-core::after {
+    content: "";
+    position: absolute;
+    bottom: 12px;
+    width: 7px;
+    height: 7px;
+    border: 1px solid var(--pixel-dark);
+    background: transparent;
+}
+
+.robot-core::before { left: 13px; }
+.robot-core::after  { right: 13px; }
+
+/* ================================================================
+   23. 数据面板 + 故事节点
+   ================================================================ */
+.mission-kicker {
+    display: inline-block;
+    color: var(--screen-bg);
+    background: var(--pixel-dark);
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.ai-note {
+    color: var(--pixel-dark);
+    max-width: 46rem;
+    line-height: 1.55;
+}
+
+.data-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid var(--pixel-dark);
+    border-bottom: 0;
+}
+
+.data-chip {
+    border: 1px solid var(--pixel-dark);
+    border-top: 0;
+    border-left: 0;
+    background: rgba(0,0,0,0.025);
+    padding: 5px 6px;
+}
+
+.data-chip:last-child {
+    border-right: 0;
+}
+
+.data-chip span {
+    display: block;
+    color: var(--pixel-dim);
+    font-size: 11px;
+}
+
+.data-chip strong {
+    color: var(--pixel-dark);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.wish-story > .p-6 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--pixel-dark);
+    border-left: 1px solid var(--pixel-dark);
+}
+
+.story-node {
+    min-height: 106px;
+    border: 1px solid var(--pixel-dark);
+    border-top: 0;
+    border-left: 0;
+    background: rgba(0,0,0,0.025);
+    padding: 8px;
+    position: relative;
+}
+
+.story-node::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 7px;
+    height: 7px;
+    background: var(--pixel-dim);
+}
+
+.story-node span {
+    display: inline-block;
+    color: var(--screen-bg);
+    background: var(--pixel-dim);
+    padding: 1px 5px;
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.story-node strong {
+    display: block;
+    color: var(--pixel-dark);
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.story-node p {
+    color: var(--pixel-dark);
+    font-size: 12px;
+    line-height: 1.48;
+}
+
+/* ================================================================
+   24. 纸胶带贴纸（外壳标准版 — absolute 定位）
+   ================================================================ */
+.repair-tape {
+    position: absolute;
+    background-color: var(--tape-bg);
+    border-left: 1px solid rgba(0,0,0,0.1);
+    border-right: 1px solid rgba(0,0,0,0.1);
+    color: #403d30;
+    padding: 8px;
+    font-size: 11px;
+    width: 170px;
+    right: 25px;
+    bottom: 20px;
+    transform: rotate(-2deg);
+    box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+    z-index: 105;
+    line-height: 1.45;
+}
+
+.repair-tape::before,
+.repair-tape::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-size: 4px 4px;
+}
+
+.repair-tape::before {
+    top: -4px;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--tape-bg) 50%),
+        linear-gradient(-45deg, transparent 50%, var(--tape-bg) 50%);
+}
+
+.repair-tape::after {
+    bottom: -4px;
+    background-image:
+        linear-gradient(135deg, transparent 50%, var(--tape-bg) 50%),
+        linear-gradient(-135deg, transparent 50%, var(--tape-bg) 50%);
+}
+
+/* ================================================================
+   25. 免责声明
+   ================================================================ */
+.disclaimer {
+    font-size: 10px;
+    color: var(--pixel-dim);
+    text-align: right;
+    margin: 0;
+}
+
+/* ================================================================
+   26. 间距覆盖（压制 Tailwind 的宽松间距）
+   ================================================================ */
+.mb-4, .mb-6, .mb-8 {
+    margin-bottom: 0 !important;
+}
+
+.mt-2, .mt-3, .mt-5, .mt-8 {
+    margin-top: 6px !important;
+}
+
+.py-8 {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.p-12 {
+    padding: 12px !important;
+}
+
+/* ================================================================
+   27. 动画
+   ================================================================ */
+@keyframes micro-flicker {
+    0%   { opacity: 0.96; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.98; }
+}
+
+@keyframes hardware-blink {
+    0%, 49%  { background-color: var(--pixel-dark); color: var(--screen-bg); }
+    50%, 100% { background-color: transparent; color: var(--pixel-alert); }
+}
+
+/* ================================================================
+   28. 响应式
+   ================================================================ */
+@media (max-width: 760px) {
+    body {
+        padding: 0;
+    }
+
+    .hardware-device {
+        outline-width: 6px;
+        padding: 12px;
+        max-width: 100%;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* 小屏隐藏右侧物理面板 */
+    .physical-control-panel {
+        display: none;
+    }
+
+    .embedded-lcd {
+        flex: 1;
+    }
+
+    .glass-card .flex.items-center.justify-between {
+        align-items: flex-start;
+        gap: 1rem;
+        flex-direction: column;
+    }
+
+    .glass-card .text-right {
+        text-align: left;
+    }
+
+    .data-strip,
+    .wish-story > .p-6 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 761px) and (max-width: 1024px) {
+    .hardware-device {
+        max-width: 96vw;
+    }
+
+    .physical-control-panel {
+        width: 220px;
+    }
+
+    .wish-story > .p-6 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ================================================================
+   29. 打印样式
+   ================================================================ */
+@media print {
+    body {
+        background: white !important;
+    }
+
+    .hardware-device {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        background: white !important;
+    }
+
+    .physical-control-panel {
+        display: none !important;
+    }
+
+    .embedded-lcd {
+        background: white !important;
+        border: none !important;
+        color: black !important;
+    }
+
+    .embedded-lcd::before,
+    .embedded-lcd::after {
+        display: none !important;
+    }
+
+    .glass-card {
+        background: white !important;
+        border-color: #333 !important;
+    }
+
+    .glass-card::before,
+    .glass-card::after {
+        display: none !important;
+    }
+
+    .hardware-btn,
+    .cyber-btn {
+        display: none !important;
+    }
+}

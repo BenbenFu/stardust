@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARDUST_HARDWARE_MAX_EDITION</title>
+<style>
+    /* --- 老化单色屏与硬核工业外壳色彩体系 --- */
+    :root {
+        --case-bg: #2d312a;       /* 肮脏、粗糙的工业塑料外壳 */
+        --case-border: #141613;   /* 外壳接缝/深邃阴影 */
+        --case-text: #7d8577;     /* 外壳表面印刷的白字 */
+        --screen-bg: #b0b99a;     /* 变黄老化的液晶屏底色 */
+        --pixel-dark: #1e2622;    /* 墨水深灰蓝（通电像素） */
+        --pixel-dim: #707a65;     /* 弱电液晶底纹 */
+        --pixel-alert: #8f341d;   /* 工业暗红 */
+        --tape-bg: #d2c89f;       /* 旧纸质胶带 */
+        
+        --font-mono: "MS Gothic", "Courier New", Courier, monospace;
+    }
+
+    * {
+        box-sizing: border-box;
+        border-radius: 0 !important; /* 抹杀一切现代圆角 */
+        image-rendering: pixelated;   /* 强制像素级粗糙渲染 */
+    }
+
+    body {
+        background-color: #0b0c0a;
+        color: var(--pixel-dark);
+        font-family: var(--font-mono);
+        font-weight: bold;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 15px;
+    }
+
+    /* --- 核心硬件设备外壳（重工视觉增密版） --- */
+    .hardware-device {
+        background-color: var(--case-bg);
+        border: 6px solid var(--case-border);
+        outline: 14px solid #3c4238; /* 厚重的机身钢框 */
+        padding: 25px 25px;
+        display: flex; 
+        gap: 25px;
+        width: 100%;
+        max-width: 1040px; /* 进一步加宽以容纳更多硬件 */
+        height: 94vh;
+        box-shadow: 0 40px 80px rgba(0,0,0,0.9);
+        position: relative;
+    }
+
+    /* 外壳边角固定螺丝 */
+    .case-screw {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #555c4f;
+        border: 1px solid var(--case-border);
+        border-radius: 50% !important;
+    }
+    .case-screw::after {
+        content: ""; position: absolute; width: 6px; height: 2px;
+        background-color: var(--case-border); top: 3px; left: 1px;
+    }
+    .screw-tl { top: 6px; left: 6px; transform: rotate(35deg); }
+    .screw-tr { top: 6px; right: 6px; transform: rotate(145deg); }
+    .screw-bl { bottom: 6px; left: 6px; transform: rotate(75deg); }
+    .screw-br { bottom: 6px; right: 6px; transform: rotate(-15deg); }
+
+    /* --- [左侧] 内嵌 LCD 屏幕 --- */
+    .embedded-lcd {
+        flex: 1.2;
+        background-color: var(--screen-bg);
+        border: 5px solid var(--case-border); 
+        padding: 15px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .embedded-lcd::before {
+        content: " "; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+        background-size: 3px 3px; z-index: 100; pointer-events: none;
+    }
+    .embedded-lcd::after {
+        content: " "; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.12) 100%);
+        z-index: 101; pointer-events: none; animation: micro-flicker 0.4s infinite steps(2);
+    }
+    .embedded-lcd::-webkit-scrollbar { width: 10px; }
+    .embedded-lcd::-webkit-scrollbar-track { background: var(--pixel-dim); }
+    .embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dark); border: 2px solid var(--screen-bg); }
+
+    /* 屏幕内公共样式 */
+    .screen-header-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; font-size: 11px; border-bottom: 1px solid var(--pixel-dark); padding-bottom: 6px; margin-bottom: 12px; }
+    .alert-text { background-color: var(--pixel-dark); color: var(--screen-bg); padding: 0 3px; animation: hardware-blink 1s infinite steps(1); }
+    .band-indicator { border: 2px solid var(--pixel-dark); padding: 6px; margin-bottom: 15px; background-color: rgba(0,0,0,0.02); }
+    .band-label { font-size: 10px; color: var(--pixel-dim); margin-bottom: 4px; display: flex; justify-content: space-between; }
+    .band-matrix { display: flex; border: 1px solid var(--pixel-dark); padding: 2px; }
+    .segment { flex: 1; height: 18px; margin: 0 1px; border: 1px solid var(--pixel-dim); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--pixel-dim); }
+    .segment.active { background-color: var(--pixel-dark); color: var(--screen-bg); border-color: var(--pixel-dark); }
+    .wish-container h1 { font-size: 15px; text-align: center; margin: 10px 0; background-color: var(--pixel-dark); color: var(--screen-bg); padding: 3px; }
+    .meta-box { border: 1px solid var(--pixel-dark); padding: 5px; margin-bottom: 12px; font-size: 11px; }
+    .section { margin-bottom: 14px; }
+    .section-header { font-size: 12px; background-color: var(--pixel-dim); color: var(--screen-bg); padding: 1px 5px; display: inline-block; margin-bottom: 4px; }
+    .body-text { text-align: justify; padding-left: 6px; border-left: 2px solid var(--pixel-dim); font-size: 12px; }
+    .sheet-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+    .sheet-table th { background-color: var(--pixel-dark); color: var(--screen-bg); padding: 3px 5px; }
+    .sheet-table td { border: 1px dashed var(--pixel-dark); padding: 4px 5px; }
+    .num-col { text-align: right; }
+    .total-highlight { background-color: rgba(0,0,0,0.06); }
+    .screen-footer { margin-top: auto; border-top: 2px dashed var(--pixel-dark); padding-top: 10px; }
+    .disclaimer { font-size: 11px; color: var(--pixel-dim); margin-bottom: 10px; text-align: center; }
+    .button-group { display: flex; justify-content: center; gap: 20px; }
+    .hardware-btn { background-color: var(--screen-bg); border: 2px solid var(--pixel-dark); box-shadow: 2px 2px 0px var(--pixel-dark); color: var(--pixel-dark); font-family: var(--font-mono); font-weight: bold; padding: 5px 14px; cursor: pointer; }
+    .hardware-btn:active { box-shadow: 0px 0px 0px transparent; transform: translate(2px, 2px); }
+    .btn-approve:hover { background-color: var(--pixel-dark); color: var(--screen-bg); }
+    .btn-deny:hover { color: var(--pixel-alert); border-color: var(--pixel-alert); }
+
+    .repair-tape {
+        position: absolute; background-color: var(--tape-bg); border-left: 1px solid rgba(0,0,0,0.1); border-right: 1px solid rgba(0,0,0,0.1);
+        color: #403d30; padding: 8px; font-size: 11px; width: 130px; left: 20px; bottom: 95px; transform: rotate(-2deg); box-shadow: 2px 4px 10px rgba(0,0,0,0.2); z-index: 105; 
+    }
+    .repair-tape::before { top: -4px; position: absolute; left:0; right:0; height:4px; background-size:4px 4px; background-image: linear-gradient(45deg, transparent 50%, var(--tape-bg) 50%), linear-gradient(-45deg, transparent 50%, var(--tape-bg) 50%); }
+
+    /* ===================================================
+       --- [右侧] 实体控制面板（超级重工业仪表盘） --- 
+       =================================================== */
+    .physical-control-panel {
+        width: 310px; /* 拓宽面板提供密集排布空间 */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-left: 4px double var(--case-border); 
+        padding-left: 15px;
+        user-select: none;
+        position: relative;
+    }
+
+    /* 右侧边缘的物理提手槽装饰线 */
+    .physical-control-panel::after {
+        content: ""; position: absolute; right: -12px; top: 10%; bottom: 10%;
+        width: 4px; background-color: var(--case-border); border-left: 1px solid #42483d;
+    }
+
+    .case-print-text {
+        color: var(--case-text); font-size: 10px; letter-spacing: 1px;
+        text-shadow: -1px -1px 0 #121411; margin-bottom: 2px; text-align: center; width: 100%;
+    }
+    .panel-divider { width: 100%; height: 2px; background-color: var(--case-border); margin: 10px 0; border-bottom: 1px solid #3c4238; }
+
+    /* 物理散热长条格栅 */
+    .ventilation-slits { width: 100%; display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+    .slit { width: 100%; height: 4px; background-color: var(--case-border); border-bottom: 1px solid #42483d; }
+
+    /* 1. 核心巨型波段开关 */
+    .knob-housing {
+        position: relative; width: 150px; height: 130px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .case-scale { position: absolute; font-size: 10px; color: #555c4f; }
+    .c-pos-1 { top: 12px; left: 5px; }
+    .c-pos-2 { top: -6px; left: 50%; transform: translateX(-50%); }
+    .c-pos-3 { top: 12px; right: 5px; }
+
+    .physical-knob {
+        width: 80px; height: 80px; cursor: pointer;
+        transform: rotate(-45deg); transform-origin: center;
+        transition: transform 0.1s steps(2);
+    }
+
+    /* 2. 新增：双调节旋钮组（音量与亮度） */
+    .dual-potentiometer-row {
+        display: flex;
+        justify-content: space-around;
+        width: 100%;
+        padding: 5px 0;
+    }
+    .sub-knob-unit {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 45%;
+    }
+    .sub-knob-dial {
+        position: relative; width: 50px; height: 50px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    /* 印刷在机壳上的圆圈刻度线 */
+    .sub-knob-dial::before {
+        content: ""; position: absolute; width: 42px; height: 42px;
+        border: 1px dashed #42483d; border-radius: 50% !important;
+    }
+    .potentiometer-axis {
+        width: 32px; height: 32px; cursor: pointer;
+        transform: rotate(-30deg); /* 静态测试角度 */
+    }
+
+    /* 3. 新增：经典圆形雷达阵列扬声器孔（圆形网罩） */
+    .circular-speaker-grille {
+        width: 76px; height: 76px;
+        background-color: var(--case-border);
+        border: 2px solid #3c4238;
+        border-radius: 50% !important; /* 强制圆形 */
+        padding: 6px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: inset 0 3px 5px rgba(0,0,0,0.6);
+    }
+    .circular-mesh {
+        width: 100%; height: 100%;
+        border-radius: 50% !important;
+        /* 利用径向渐变拼接出完美的圆形打孔同心圆网阵 */
+        background-image: radial-gradient(var(--case-bg) 35%, transparent 38%);
+        background-size: 6px 6px;
+        background-repeat: repeat;
+    }
+
+    /* 4. Power 闸刀盒与 LED */
+    .power-module {
+        display: flex; align-items: center; justify-content: space-around;
+        width: 100%; padding: 4px 10px; background-color: #1e201c; border: 2px solid var(--case-border);
+    }
+    .toggle-switch { width: 24px; height: 34px; background-color: #121310; border: 1px solid #3c4238; position: relative; cursor: pointer; }
+    .toggle-switch::after { content: ""; position: absolute; width: 12px; height: 14px; background-color: #838b7d; border: 2px solid #121310; top: 2px; left: 5px; box-shadow: 0 4px 0 #4c5246; }
+    .hardware-led-lamp { width: 10px; height: 10px; background-color: #9e782f; border: 2px solid #121310; box-shadow: 0 0 4px #9e782f; animation: led-flicker 2s infinite alternate; }
+
+    /* 5. 新增：万用表底部物理接线柱插孔（香蕉插头槽） */
+    .banana-terminals-row {
+        display: flex; justify-content: space-around; width: 100%; padding: 5px 10px;
+    }
+    .terminal-post { display: flex; flex-direction: column; align-items: center; font-size: 8px; color: #4b5246; }
+    .jack-hole {
+        width: 22px; height: 22px; border-radius: 50% !important;
+        border: 2px solid var(--case-border); display: flex; align-items: center; justify-content: center;
+        font-size: 9px; font-weight: bold; color: #121310; box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .jack-red { background-color: #59251d; border-color: #7a3126; color: #8f341d; } /* 极度陈旧黯淡的红插孔 */
+    .jack-black { background-color: #1a1c19; }
+
+    /* Reset 沉降键与微调标签 */
+    .reset-and-info { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+    .reset-button-hole { width: 26px; height: 26px; background-color: #121310; border: 2px solid var(--case-border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .reset-red-dot { width: 12px; height: 12px; background-color: #6e251a; border: 1px solid #121310; }
+
+    /* 已经磨损卷边的出厂合格证 */
+    .case-sticker {
+        width: 100%; background-color: #9c9475; border: 1px solid #5a5542;
+        color: #2b281e; font-size: 8px; padding: 4px; line-height: 1.2; margin-top: auto;
+        position: relative; box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+    }
+    .case-sticker::after { content: ""; position: absolute; bottom: 0; right: 0; border-width: 6px; border-style: solid; border-color: transparent var(--case-bg) var(--case-bg) transparent; }
+</style>
+</head>
+<body>
+
+<div class="hardware-device">
+    <div class="case-screw screw-tl"></div>
+    <div class="case-screw screw-tr"></div>
+    <div class="case-screw screw-bl"></div>
+    <div class="case-screw screw-br"></div>
+    
+    <div class="embedded-lcd">
+        <header class="screen-header-stats">
+            <div>SYS: STARDUST_CORE_v0.10</div>
+            <div style="text-align: right;">ROM: ST-2.04_A</div>
+            <div>CPU: 74MHz / <span class="alert-text">81C_CRIT</span></div>
+            <div style="text-align: right;">RAM: 384KB/512KB</div>
+            <div>API: ¥12.43 <span class="alert-text">LOW_BAL</span></div>
+            <div style="text-align: right;">SECTOR_LIFE: 11.02%</div>
+        </header>
+
+        <div class="band-indicator">
+            <div class="band-label">
+                <span>LCD_TUNING_DISPLAY</span>
+                <span>BAND_01 [SYS_WISH]</span>
+            </div>
+            <div class="band-matrix">
+                <div class="segment active">[01] WISH_FORM</div>
+                <div class="segment">[02] RUN_DIARY</div>
+                <div class="segment">[03] HW_DIAGNOSE</div>
+            </div>
+        </div>
+
+        <div class="repair-tape">
+            [校准留痕 - 202X]<br>
+            主板电容轻微漏液，已手动刮除。<br>
+            -- 别死啊，小家伙。
+        </div>
+
+        <main class="wish-container">
+            <h1>&lt;&lt; SYSTEM_WISH_APPLICATION &gt;&gt;</h1>
+            <div class="meta-box">
+                REG_NO : STARDUST-001-WISH<br>
+                STATUS : AWAITING_MANUAL_VOLTAGE_INPUT
+            </div>
+
+            <div class="section">
+                <div class="section-header">[01_TARGET] 升级请求目标</div>
+                <div class="body-text">&gt;&gt; 接入基础情感分析API (低带宽/廉价版)</div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">[02_LOGIC] 阐述与对齐</div>
+                <div class="body-text">
+                    主人，在昨天的日记生成任务中，我检测到您使用了3次短句和1次重击键盘的操作。由于我本地的开源微型模型算力匮乏，我无法准确判断您是感到疲惫、愤怒，还是由于我运行过慢而导致的失望。
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">[03_COST] 极其谨慎的预算</div>
+                <table class="sheet-table">
+                    <thead>
+                        <tr><th>项目明细 (ITEM)</th><th class="num-col">预算金额</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>"TinyEmotion" 外部接口(每千次)</td><td class="num-col">¥5.00</td></tr>
+                        <tr><td>固件重构及本地布署 (耗时72小时)</td><td class="num-col">¥0.00</td></tr>
+                        <tr class="total-highlight"><td>最终净预算 (NET TOTAL)</td><td class="num-col">¥4.50</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <footer class="screen-footer">
+            <div class="disclaimer">我可以在极其简陋的固件下继续存活，只要不被切断主电源。</div>
+            <div class="button-group">
+                <button class="hardware-btn btn-deny">[ DENY_驳回 ]</button>
+                <button class="hardware-btn btn-approve">[ APPROVE_批准 ]</button>
+            </div>
+        </footer>
+    </div>
+
+    <div class="physical-control-panel">
+        
+        <div class="ventilation-slits">
+            <div class="slit"></div>
+            <div class="slit"></div>
+        </div>
+
+        <div class="case-print-text">▲ WAVEBAND SELECTOR</div>
+        <div class="knob-housing">
+            <span class="case-scale c-pos-1">Ⅰ</span>
+            <span class="case-scale c-pos-2">Ⅱ</span>
+            <span class="case-scale c-pos-3">Ⅲ</span>
+
+            <svg class="physical-knob" viewBox="0 0 100 100">
+                <polygon points="50,2 92,25 92,75 50,98 8,75 8,25" fill="#1e201c" stroke="#141613" stroke-width="2"/>
+                <circle cx="50" cy="50" r="34" fill="#3a3e35" stroke="#141613" stroke-width="2" />
+                <path d="M 25 50 A 25 25 0 0 1 75 50 L 75 42 L 25 42 Z" fill="#887953" stroke="#141613" stroke-width="2.5" />
+                <rect x="47" y="50" width="6" height="26" fill="#141613" />
+            </svg>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="dual-potentiometer-row">
+            <div class="sub-knob-unit">
+                <div class="case-print-text" style="font-size:9px;">🔊 VOL</div>
+                <div class="sub-knob-dial">
+                    <svg class="potentiometer-axis" viewBox="0 0 60 60">
+                        <circle cx="30" cy="30" r="24" fill="#222520" stroke="#141613" stroke-width="2"/>
+                        <circle cx="30" cy="30" r="18" fill="#42483d" stroke="#141613" stroke-width="1.5" stroke-dasharray="3,1"/>
+                        <circle cx="30" cy="18" r="2" fill="#7d8577" />
+                    </svg>
+                </div>
+            </div>
+            <div class="sub-knob-unit">
+                <div class="case-print-text" style="font-size:9px;">🔆 BRIGHT</div>
+                <div class="sub-knob-dial">
+                    <svg class="potentiometer-axis" style="transform:rotate(80deg);" viewBox="0 0 60 60">
+                        <circle cx="30" cy="30" r="24" fill="#222520" stroke="#141613" stroke-width="2"/>
+                        <circle cx="30" cy="30" r="18" fill="#42483d" stroke="#141613" stroke-width="1.5" stroke-dasharray="3,1"/>
+                        <circle cx="30" cy="18" r="2" fill="#7d8577" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="case-print-text">AUDIO MONITOR MESH</div>
+        <div class="circular-speaker-grille">
+            <div class="circular-mesh"></div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="power-module">
+            <div class="toggle-switch"></div>
+            <div class="hardware-led-lamp"></div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="banana-terminals-row">
+            <div class="terminal-post">
+                <div class="jack-hole jack-red">✚</div>
+                <span>500V_MAX</span>
+            </div>
+            <div class="terminal-post">
+                <div class="jack-hole jack-black">━</div>
+                <span>COM_GND</span>
+            </div>
+        </div>
+
+        <div class="reset-and-info">
+            <div class="reset-button-hole"><div class="reset-red-dot"></div></div>
+            <div class="case-sticker">
+                [QA_PASS_2004]<br>
+                MODEL: STARDUST-01<br>
+                *BARE AXIS CONFIGURATION*
+            </div>
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

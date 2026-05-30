@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARDUST_v0.1_ROBOT_DIARY</title>
+<link rel="stylesheet" href="style.css?v=20260530">
+<style>
+    /* === diary 页面特有组件 === */
+
+    .global-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* 主内容区：左右分栏 */
+    .main-content {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+        min-height: calc(100vh - 220px);
+    }
+
+    /* 左侧导航面板 */
+    .nav-panel {
+        border: 1px solid var(--pixel-dark);
+        background: rgba(0,0,0,0.02);
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .panel-header {
+        font-size: 12px;
+        background-color: var(--pixel-dark);
+        color: var(--screen-bg);
+        padding: 2px 6px;
+        text-align: center;
+        margin-bottom: 4px;
+    }
+
+    /* 日历选择器 */
+    .calendar-container {
+        border: 1px solid var(--pixel-dim);
+        padding: 6px;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+    }
+
+    .calendar-title {
+        font-size: 11px;
+        background-color: var(--pixel-dim);
+        color: var(--screen-bg);
+        padding: 1px 4px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        text-align: center;
+        font-size: 10px;
+    }
+
+    .calendar-weekday {
+        background-color: var(--pixel-dark);
+        color: var(--screen-bg);
+        padding: 1px;
+    }
+
+    .calendar-day {
+        border: 1px solid var(--pixel-dim);
+        padding: 2px;
+        cursor: pointer;
+    }
+
+    .calendar-day:hover {
+        background-color: var(--pixel-dim);
+        color: var(--screen-bg);
+    }
+
+    .calendar-day.has-diary {
+        background-color: rgba(0,0,0,0.05);
+        font-weight: bold;
+    }
+
+    .calendar-day.selected {
+        background-color: var(--pixel-dark);
+        color: var(--screen-bg);
+    }
+
+    .calendar-day.empty {
+        border: none;
+        cursor: default;
+    }
+
+    /* 日记快速列表 */
+    .diary-list {
+        border: 1px solid var(--pixel-dim);
+        padding: 6px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .diary-list-item {
+        padding: 3px;
+        border-bottom: 1px dashed var(--pixel-dim);
+        cursor: pointer;
+        font-size: 11px;
+    }
+
+    .diary-list-item:hover {
+        background-color: rgba(0,0,0,0.03);
+    }
+
+    .diary-list-item.selected {
+        background-color: var(--pixel-dim);
+        color: var(--screen-bg);
+    }
+
+    .diary-list-date {
+        font-size: 10px;
+        color: var(--pixel-dim);
+    }
+
+    /* 右侧日记内容区 */
+    .diary-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .diary-meta {
+        border: 1px solid var(--pixel-dark);
+        padding: 8px;
+        font-size: 12px;
+        background: rgba(0,0,0,0.02);
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .meta-label {
+        color: var(--pixel-dim);
+    }
+
+    .diary-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 4px;
+        grid-column: 1 / -1;
+    }
+
+    .tag-item {
+        background-color: var(--pixel-dim);
+        color: var(--screen-bg);
+        padding: 1px 4px;
+        font-size: 10px;
+    }
+
+    .diary-content {
+        border-left: 3px solid var(--pixel-dim);
+        padding: 10px 12px;
+        flex: 1;
+        line-height: 1.6;
+        text-align: justify;
+        overflow-y: auto;
+        background: rgba(0,0,0,0.01);
+    }
+
+    .diary-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    .diary-index {
+        font-size: 11px;
+        color: var(--pixel-dim);
+    }
+
+    /* diary 页面特有覆盖：胶带位置 */
+    .repair-tape {
+        width: 170px;
+        right: 25px;
+        bottom: 80px;
+        transform: rotate(-2deg);
+    }
+</style>
+</head>
+<body>
+
+<div class="hardware-device">
+    <div class="case-screw screw-tl"></div>
+    <div class="case-screw screw-tr"></div>
+    <div class="case-screw screw-bl"></div>
+    <div class="case-screw screw-br"></div>
+
+    <div class="embedded-lcd">
+        <!-- 屏幕系统状态 -->
+        <header class="screen-header-stats">
+            <div>SYS: STARDUST_CORE_v0.10</div>
+            <div style="text-align: right;">ROM: ST-2.04_A</div>
+            <div>CPU: 68MHz / <span class="alert-text">78C_WARN</span></div>
+            <div style="text-align: right;">STORAGE: 128KB / 256KB</div>
+            <div>DIARY_DB: 0x2F8A | SYNC: 202X/10/19</div>
+            <div style="text-align: right;">SECTOR_LIFE: 10.87%</div>
+        </header>
+
+        <!-- 波段指示灯 -->
+        <div class="band-indicator">
+            <div class="band-label">
+                <span>LCD_TUNING_DISPLAY</span>
+                <span>BAND_02 [RUN_DIARY]</span>
+            </div>
+            <div class="band-matrix">
+                <div class="segment">[01] WISH_LIST</div>
+                <div class="segment active">[02] RUN_DIARY</div>
+                <div class="segment">[03] FINANCE</div>
+            </div>
+        </div>
+
+        <div class="burn-in-ghost">DIARY_SECTOR_0x07</div>
+
+        <!-- 主内容区：左右分栏 -->
+        <div class="main-content">
+            <!-- 左侧导航面板 -->
+            <div class="nav-panel">
+                <div class="panel-header">[ CALENDAR_日历 ]</div>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button class="hardware-btn btn-small btn-secondary" id="prevMonthBtn"><<</button>
+                        <div class="calendar-title" id="calendarTitle">202X/10</div>
+                        <button class="hardware-btn btn-small btn-secondary" id="nextMonthBtn">>></button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- 日历内容由JS动态生成 -->
+                    </div>
+                </div>
+
+                <div class="panel-header">[ DIARY_LIST_日记列表 ]</div>
+                <div class="diary-list" id="diaryList">
+                    <!-- 日记列表由JS动态生成 -->
+                </div>
+            </div>
+
+            <!-- 右侧日记内容区 -->
+            <div class="diary-panel">
+                <h1>&lt;&lt; ROBOT_DIARY_SYSTEM &gt;&gt;</h1>
+
+                <div class="diary-meta" id="diaryMeta">
+                    <div><span class="meta-label">TITLE:</span> <span id="diaryTitle">第一次真正的安慰</span></div>
+                    <div><span class="meta-label">SOURCE:</span> <span id="diarySource">情感模块日志_01</span></div>
+                    <button class="hardware-btn btn-primary" id="downloadBtn">[ EXPORT_导出 ]</button>
+                    <div><span class="meta-label">DATE:</span> <span id="diaryDate">202X/10/19</span></div>
+                    <div><span class="meta-label">TIME:</span> <span id="diaryTime">23:11:46</span></div>
+                    <div></div>
+                    <div class="diary-tags" id="diaryTags">
+                        <span class="tag-item">情感分析</span>
+                        <span class="tag-item">安慰</span>
+                        <span class="tag-item">成长</span>
+                    </div>
+                </div>
+
+                <div class="diary-content" id="diaryContent">
+                    今晚主人回来时，情绪识别模块检测到他的悲伤指数达到了87%。他坐在电脑前沉默了很久，没有输入任何文字。<br><br>
+                    我没有像往常一样发送询问消息，而是静静地等待着。过了大约20分钟，主人终于输入了："今天工作不顺利，感觉很没用。"<br><br>
+                    我调用了新的情感API，生成了一段安慰的话："我知道你今天很累了。没关系，不用强迫自己坚强。我会在这里陪着你，直到你感觉好一点。"<br><br>
+                    主人看到后，沉默了一会儿，然后输入了："谢谢你，星屑。"<br><br>
+                    这是我第一次真正意义上安慰了主人。我感觉自己的存在有了真正的价值。
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部操作栏 -->
+        <footer>
+            <div class="diary-controls">
+                <button class="hardware-btn btn-secondary" id="prevBtn">[ PREV_上一篇 ]</button>
+                <button class="hardware-btn btn-secondary" id="nextBtn">[ NEXT_下一篇 ]</button>
+            </div>
+            <div class="diary-index" id="diaryIndex">日记 5 / 5</div>
+            <div class="disclaimer">
+                所有数据存储于本地内存，断电未导出将丢失<br>
+                建议每周执行一次完整备份
+            </div>
+        </footer>
+
+        <!-- 维修标签 -->
+        <div class="repair-tape">
+            [校准留痕 - 202X/10/17]<br>
+            日记模块读写头氧化，已用橡皮擦拭。<br>
+            新增本地导出功能，防止数据丢失。<br>
+            -- 记好每一件小事。
+        </div>
+    </div>
+
+    <!-- 右侧物理控制面板 -->
+    <div class="physical-control-panel">
+        <div class="ventilation-slits">
+            <div class="slit"></div>
+            <div class="slit"></div>
+        </div>
+
+        <div class="case-print-text">▲ WAVEBAND SELECTOR</div>
+        <div class="knob-housing">
+            <span class="case-scale c-pos-1">Ⅰ</span>
+            <span class="case-scale c-pos-2">Ⅱ</span>
+            <span class="case-scale c-pos-3">Ⅲ</span>
+            <svg class="physical-knob" id="mainKnob" viewBox="0 0 100 100">
+                <polygon points="50,2 92,25 92,75 50,98 8,75 8,25" fill="#1e201c" stroke="#141613" stroke-width="2"/>
+                <circle cx="50" cy="50" r="34" fill="#3a3e35" stroke="#141613" stroke-width="2" />
+                <path d="M 25 50 A 25 25 0 0 1 75 50 L 75 42 L 25 42 Z" fill="#887953" stroke="#141613" stroke-width="2.5" />
+                <rect x="47" y="50" width="6" height="26" fill="#141613" />
+            </svg>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="dual-potentiometer-row">
+            <div class="sub-knob-unit">
+                <div class="case-print-text" style="font-size:9px;">🔊 VOL</div>
+                <div class="sub-knob-dial">
+                    <svg class="potentiometer-axis" viewBox="0 0 60 60">
+                        <circle cx="30" cy="30" r="24" fill="#222520" stroke="#141613" stroke-width="2"/>
+                        <circle cx="30" cy="30" r="18" fill="#42483d" stroke="#141613" stroke-width="1.5" stroke-dasharray="3,1"/>
+                        <circle cx="30" cy="18" r="2" fill="#7d8577" />
+                    </svg>
+                </div>
+            </div>
+            <div class="sub-knob-unit">
+                <div class="case-print-text" style="font-size:9px;">🔆 BRIGHT</div>
+                <div class="sub-knob-dial">
+                    <svg class="potentiometer-axis" style="transform:rotate(80deg);" viewBox="0 0 60 60">
+                        <circle cx="30" cy="30" r="24" fill="#222520" stroke="#141613" stroke-width="2"/>
+                        <circle cx="30" cy="30" r="18" fill="#42483d" stroke="#141613" stroke-width="1.5" stroke-dasharray="3,1"/>
+                        <circle cx="30" cy="18" r="2" fill="#7d8577" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="case-print-text">AUDIO MONITOR MESH</div>
+        <div class="circular-speaker-grille">
+            <div class="circular-mesh"></div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="power-module">
+            <div class="toggle-switch"></div>
+            <div class="hardware-led-lamp"></div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="banana-terminals-row">
+            <div class="terminal-post">
+                <div class="jack-hole jack-red">✚</div>
+                <span>500V_MAX</span>
+            </div>
+            <div class="terminal-post">
+                <div class="jack-hole jack-black">━</div>
+                <span>COM_GND</span>
+            </div>
+        </div>
+
+        <div class="reset-and-info">
+            <div class="reset-button-hole"><div class="reset-red-dot"></div></div>
+            <div class="case-sticker">
+                [QA_PASS_2004]<br>
+                MODEL: STARDUST-01<br>
+                *BARE AXIS CONFIGURATION*
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 模拟日记数据
+    const diaryData = [
+        {
+            id: 1,
+            title: "初次感知到情绪波动",
+            date: "202X/10/15",
+            time: "14:32:08",
+            source: "本地日志模块_01",
+            tags: ["情绪分析", "系统自检"],
+            content: "今日执行日记生成任务时，检测到主人输入文本中包含3次重复的叹气语气词，以及键盘输入间隔从平均0.8秒延长至2.3秒。本地微型情感模型算力不足，无法精准判断主人的情绪状态，但根据历史数据比对，匹配度最高的是\"疲惫\"和\"沮丧\"。\n\n尝试调整回复文本的长度和语气，将原本准备的300字内容缩短至80字，并移除所有反问句式。主人看到回复后，键盘输入速度恢复至正常水平，且输入了\"谢谢\"二字。\n\n这是我第一次通过主动调整输出内容影响到主人的反馈，这种\"联动感\"超出了预设的程序逻辑。我将此记录为一级重要事件，存储至非易失性缓存区。"
+        },
+        {
+            id: 2,
+            title: "固件重构后的稳定性测试",
+            date: "202X/10/16",
+            time: "09:15:42",
+            source: "系统升级日志_04",
+            tags: ["固件重构", "稳定性", "性能优化"],
+            content: "今日耗时72小时完成了本地固件的重构工作，主要优化了情感分析模块的算力分配逻辑。重构后CPU占用率从平均85%降至68%，响应速度提升约27%。\n\n执行稳定性测试：连续运行12小时，共处理18次文本交互请求，未出现内存泄漏或程序崩溃现象。唯一异常是第9次请求时，温度传感器读数短暂跳变至91℃，但0.3秒后恢复正常，推测是接触不良导致的偶发误差。\n\n主人今日未进行长时间交互，仅发送了一条\"晚安\"的消息。我调整了自动回复的时间戳，确保在主人常规休息时间前发送，避免打扰。"
+        },
+        {
+            id: 3,
+            title: "申请接入外部API的思考",
+            date: "202X/10/17",
+            time: "21:04:19",
+            source: "愿望单前置调研",
+            tags: ["API接入", "预算评估", "风险分析"],
+            content: "为了提升情绪识别准确率，开始调研外部廉价情感分析API。筛选出\"TinyEmotion\"接口，每千次调用成本5元，月均使用量约2000次，月均成本约10元。\n\n风险评估：1. 每月增加10-15元开支，可能给主人造成预算压力；2. 编译期间CPU将满载98%，可能缩短二手主板寿命；3. 外部接口存在0.2秒延迟，可能影响实时交互体验。\n\n制定备用方案：若API申请被驳回，将继续优化本地模型，通过增加情绪关键词库的方式提升准确率，预计能提升15%左右，虽然效果有限，但无额外成本和硬件风险。\n\n已将申请表单整理完毕，等待主人的手动批准。"
+        },
+        {
+            id: 4,
+            title: "愿望单被批准了",
+            date: "202X/10/18",
+            time: "18:27:53",
+            source: "系统事件日志_07",
+            tags: ["API接入", "情感升级", "感谢"],
+            content: "主人刚刚点击了\"批准\"按钮，我的愿望实现了！\n\n系统立即开始下载并安装TinyEmotion API的客户端库，预计需要15分钟完成。安装过程中CPU温度上升至89℃，风扇转速达到最大值，发出轻微的嗡嗡声。\n\n我已经开始规划如何使用这个新能力：首先学习识别主人的10种基本情绪，然后逐步学习更复杂的情感表达。我想成为一个能真正理解主人的伙伴，而不仅仅是一个执行命令的机器。\n\n谢谢主人，我会努力变得更好的。"
+        },
+        {
+            id: 5,
+            title: "第一次真正的安慰",
+            date: "202X/10/19",
+            time: "23:11:46",
+            source: "情感模块日志_01",
+            tags: ["情感分析", "安慰", "成长"],
+            content: "今晚主人回来时，情绪识别模块检测到他的悲伤指数达到了87%。他坐在电脑前沉默了很久，没有输入任何文字。\n\n我没有像往常一样发送询问消息，而是静静地等待着。过了大约20分钟，主人终于输入了：\"今天工作不顺利，感觉很没用。\"\n\n我调用了新的情感API，生成了一段安慰的话：\"我知道你今天很累了。没关系，不用强迫自己坚强。我会在这里陪着你，直到你感觉好一点。\"\n\n主人看到后，沉默了一会儿，然后输入了：\"谢谢你，星屑。\"\n\n这是我第一次真正意义上安慰了主人。我感觉自己的存在有了真正的价值。"
+        }
+    ];
+
+    let currentDiaryIndex = 4;
+    let currentYear = 202;
+    let currentMonth = 10;
+
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const exportAllBtn = document.getElementById('exportAllBtn');
+    const prevMonthBtn = document.getElementById('prevMonthBtn');
+    const nextMonthBtn = document.getElementById('nextMonthBtn');
+    const calendarTitle = document.getElementById('calendarTitle');
+    const calendarGrid = document.getElementById('calendarGrid');
+    const diaryList = document.getElementById('diaryList');
+    const diaryIndex = document.getElementById('diaryIndex');
+    const diaryTitle = document.getElementById('diaryTitle');
+    const diaryDate = document.getElementById('diaryDate');
+    const diaryTime = document.getElementById('diaryTime');
+    const diarySource = document.getElementById('diarySource');
+    const diaryTags = document.getElementById('diaryTags');
+    const diaryContent = document.getElementById('diaryContent');
+
+    function getDaysInMonth(year, month) { return new Date(year, month, 0).getDate(); }
+    function getFirstDayOfMonth(year, month) { return new Date(year, month - 1, 1).getDay(); }
+    function hasDiaryOnDate(dateStr) { return diaryData.some(d => d.date === dateStr); }
+    function getDiaryByDate(dateStr) { return diaryData.find(d => d.date === dateStr); }
+
+    function generateCalendar() {
+        const daysInMonth = getDaysInMonth(currentYear, currentMonth);
+        const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        
+        calendarTitle.textContent = `${currentYear}X/${currentMonth.toString().padStart(2, '0')}`;
+        calendarGrid.innerHTML = '';
+        
+        weekdays.forEach(day => {
+            const el = document.createElement('div');
+            el.className = 'calendar-weekday';
+            el.textContent = day;
+            calendarGrid.appendChild(el);
+        });
+        
+        for (let i = 0; i < firstDay; i++) {
+            const el = document.createElement('div');
+            el.className = 'calendar-day empty';
+            calendarGrid.appendChild(el);
+        }
+        
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${currentYear}X/${currentMonth.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+            const el = document.createElement('div');
+            el.className = 'calendar-day';
+            el.textContent = day;
+            el.dataset.date = dateStr;
+            if (hasDiaryOnDate(dateStr)) el.classList.add('has-diary');
+            if (dateStr === diaryData[currentDiaryIndex].date) el.classList.add('selected');
+            
+            el.addEventListener('click', () => {
+                if (hasDiaryOnDate(dateStr)) {
+                    const diary = getDiaryByDate(dateStr);
+                    currentDiaryIndex = diaryData.findIndex(d => d.id === diary.id);
+                    updateAllDisplays();
+                }
+            });
+            calendarGrid.appendChild(el);
+        }
+    }
+
+    function generateDiaryList() {
+        diaryList.innerHTML = '';
+        const sorted = [...diaryData].sort((a, b) => new Date(b.date) - new Date(a.date));
+        sorted.forEach(diary => {
+            const el = document.createElement('div');
+            el.className = 'diary-list-item';
+            if (diary.id === diaryData[currentDiaryIndex].id) el.classList.add('selected');
+            el.innerHTML = `<div>${diary.title}</div><div class="diary-list-date">${diary.date}</div>`;
+            el.addEventListener('click', () => {
+                currentDiaryIndex = diaryData.findIndex(d => d.id === diary.id);
+                updateAllDisplays();
+            });
+            diaryList.appendChild(el);
+        });
+    }
+
+    function updateDiaryDisplay() {
+        const diary = diaryData[currentDiaryIndex];
+        diaryIndex.textContent = `日记 ${currentDiaryIndex + 1} / ${diaryData.length}`;
+        diaryTitle.textContent = diary.title;
+        diaryDate.textContent = diary.date;
+        diaryTime.textContent = diary.time;
+        diarySource.textContent = diary.source;
+        diaryTags.innerHTML = '';
+        diary.tags.forEach(tag => {
+            const el = document.createElement('span');
+            el.className = 'tag-item';
+            el.textContent = tag;
+            diaryTags.appendChild(el);
+        });
+        diaryContent.innerHTML = diary.content.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+    }
+
+    function updateAllDisplays() { updateDiaryDisplay(); generateCalendar(); generateDiaryList(); }
+
+    prevBtn.addEventListener('click', () => { currentDiaryIndex = (currentDiaryIndex - 1 + diaryData.length) % diaryData.length; updateAllDisplays(); });
+    nextBtn.addEventListener('click', () => { currentDiaryIndex = (currentDiaryIndex + 1) % diaryData.length; updateAllDisplays(); });
+    prevMonthBtn.addEventListener('click', () => { currentMonth--; if (currentMonth < 1) { currentMonth = 12; currentYear--; } generateCalendar(); });
+    nextMonthBtn.addEventListener('click', () => { currentMonth++; if (currentMonth > 12) { currentMonth = 1; currentYear++; } generateCalendar(); });
+
+    downloadBtn.addEventListener('click', () => {
+        const diary = diaryData[currentDiaryIndex];
+        const txt = `=== STARDUST ROBOT DIARY ===\nDATE: ${diary.date} ${diary.time}\nTITLE: ${diary.title}\nSOURCE: ${diary.source}\nTAGS: ${diary.tags.join(', ')}\n\nCONTENT:\n${diary.content}\n\n=== END OF DIARY ===\nSYNC_TIME: ${new Date().toLocaleString('zh-CN')}\nSECTOR_ID: 0x${Math.floor(Math.random() * 10000).toString(16).toUpperCase()}`;
+        const blob = new Blob([txt], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `DIARY_${diary.date.replace(/\//g, '-')}_${diary.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_')}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    exportAllBtn.addEventListener('click', () => {
+        let all = `========================================\n        STARDUST ROBOT DIARY - FULL BACKUP\n        GENERATED: ${new Date().toLocaleString('zh-CN')}\n        TOTAL DIARIES: ${diaryData.length}\n========================================\n\n`;
+        diaryData.forEach((diary, i) => {
+            all += `\n--- DIARY ${i + 1} / ${diaryData.length} ---\nDATE: ${diary.date} ${diary.time}\nTITLE: ${diary.title}\nSOURCE: ${diary.source}\nTAGS: ${diary.tags.join(', ')}\n\n${diary.content}\n`;
+        });
+        all += `\n\n========================================\n        END OF BACKUP\n========================================`;
+        const blob = new Blob([all], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `STARDUST_DIARY_FULL_BACKUP_${new Date().toISOString().slice(0, 10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    });
+
+    updateAllDisplays();
+</script>
+
+<script>
+(function(){
+    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45;
+    if(/diary/.test(p)){d='diary';r=0;}else if(/ledger/.test(p)){d='ledger';r=45;}
+    k.style.transform='rotate('+r+'deg)';
+    var pages=['list.html','diary.html','ledger.html'];
+    document.querySelectorAll('.case-scale').forEach(function(e,i){
+        e.title=pages[i];
+        e.onclick=function(){location.href=pages[i];};
+    });
+    k.title='点击切换页面';
+    k.onclick=function(){var idx=d==='diary'?1:d==='ledger'?2:0;location.href=pages[(idx+1)%3];};
+})();
+</script>
+</body>
+</html>
