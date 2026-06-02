@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-store">
     <title>STARDUST_v0.1_WISH_LIST | INDEX</title>
-    <link rel="stylesheet" href="tailwind.css?v=20260530">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260530">
+    <link rel="stylesheet" href="style.css?v=20260602">
     <script src="script.js" type="module" defer></script>
 </head>
 <body>
@@ -44,15 +42,15 @@
         </div>
 
         <!-- 头部 -->
-        <div class="glass-card overflow-hidden mb-8 neon-border">
-            <div class="bg-gradient-to-r from-cosmic via-stardust to-deepspace px-6 py-6 border-b border-neonblue/30">
+        <div class="glass-card overflow-hidden mb-8 ">
+            <div class="gradient-header px-6 py-6 border-b ">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-5">
                         <div class="robot-core"></div>
                         <div>
                             <div class="mission-kicker mb-2">STARDUST_CORE_v0.10 / QUARTERLY_WISH_SLOT</div>
-                            <h1 class="text-4xl font-bold font-cyber neon-text">&lt;&lt; SYSTEM_WISH_APPLICATION &gt;&gt;</h1>
-                            <h2 class="text-xl font-cyber text-neonpurple neon-text-purple mt-1">WISH_LIST_INDEX</h2>
+                            <h1 class="text-4xl font-bold  lcd-inverse">&lt;&lt; SYSTEM_WISH_APPLICATION &gt;&gt;</h1>
+                            <h2 class="text-xl  lcd-dim mt-1">WISH_LIST_INDEX</h2>
                             <p class="ai-note mt-3 text-sm">&gt;&gt; 系统每季度下发一次空白愿望单。已按优先级、风险、回滚方案与星蟹币消耗重新整理，等待人工读取。</p>
                             <div class="data-strip mt-5">
                                 <div class="data-chip">
@@ -71,9 +69,9 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm text-gray-400">HARDWARE_STATUS</div>
-                        <div class="text-neonblue font-cyber">POWER_SAVE / CPU:73C</div>
-                        <div class="text-xs text-gray-500 mt-1">USED_PI_BOARD / SSD_LIFE:82%</div>
+                        <div class="text-sm ">HARDWARE_STATUS</div>
+                        <div class=">POWER_SAVE / CPU:73C</div>
+                        <div class="text-xs mt-1">USED_PI_BOARD / SSD_LIFE:82%</div>
                         <button onclick="logout()" class="cyber-btn cyber-btn-danger text-xs py-1 px-3 mt-2">
                             <i class="fa fa-sign-out mr-1"></i>[ LOGOUT ]
                         </button>
@@ -83,7 +81,7 @@
         </div>
 
         <!-- 故事节点 -->
-        <div class="wish-story glass-card overflow-hidden mb-8 neon-border">
+        <div class="wish-story glass-card overflow-hidden mb-8 ">
             <div class="p-6">
                 <div class="story-node">
                     <span>01</span>
@@ -109,9 +107,9 @@
         </div>
 
         <!-- 愿望清单 -->
-        <div class="glass-card overflow-hidden mb-8 neon-border">
-            <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
-                <h3 class="text-xl font-bold font-cyber neon-text">
+        <div class="glass-card overflow-hidden mb-8 ">
+            <div class="gradient-header px-6 py-4 border-b ">
+                <h3 class="text-xl font-bold  lcd-inverse">
                     <i class="fa fa-list mr-2"></i>[ WISH_LIST_RECORDS ]
                 </h3>
                 <p class="ai-note text-sm mt-2">&gt;&gt; 每条记录均由本机生成。若预算紧张，可完全忽略。</p>
@@ -120,19 +118,19 @@
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse">
                         <thead>
-                            <tr class="bg-deepspace/80">
-                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">申请编号</th>
-                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">愿望名称</th>
-                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">类型</th>
-                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">优先级</th>
-                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">提交日期</th>
-                                <th class="border border-neonblue/30 px-4 py-2 text-left text-neonblue font-cyber">状态</th>
-                                <th class="border border-neonblue/30 px-4 py-2 text-center text-neonblue font-cyber">操作</th>
+                            <tr class=">
+                                <th class="border px-4 py-2 text-left  ">申请编号</th>
+                                <th class="border px-4 py-2 text-left  ">愿望名称</th>
+                                <th class="border px-4 py-2 text-left  ">类型</th>
+                                <th class="border px-4 py-2 text-left  ">优先级</th>
+                                <th class="border px-4 py-2 text-left  ">提交日期</th>
+                                <th class="border px-4 py-2 text-left  ">状态</th>
+                                <th class="border px-4 py-2 text-center  ">操作</th>
                             </tr>
                         </thead>
                         <tbody id="wishlistTable">
                             <tr>
-                                <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-gray-400">
+                                <td colspan="7" class="border px-4 py-8 text-center ">
                                     <i class="fa fa-spinner fa-spin mr-2"></i>SYNCING_WISH_RECORD_TABLE...
                                 </td>
                             </tr>
@@ -143,8 +141,8 @@
         </div>
 
         <!-- 页脚 -->
-        <div class="text-center text-gray-500 text-sm mb-4">
-            <p class="font-cyber">STARDUST_CORE_v0.10 / SECTOR_LIFE:82% / LCD_AGE:09Y</p>
+        <div class="text-center text-sm mb-4">
+            <p class=">STARDUST_CORE_v0.10 / SECTOR_LIFE:82% / LCD_AGE:09Y</p>
         </div>
 
         <!-- 维修标签 -->
@@ -255,7 +253,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (error) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-red-400">
+                <td colspan="7" class="border px-4 py-8 text-center lcd-alert">
                     <i class="fa fa-exclamation-triangle mr-2"></i>加载失败：${error.message}
                 </td>
             </tr>
@@ -266,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (data.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="border border-neonblue/30 px-4 py-8 text-center text-gray-400">
+                <td colspan="7" class="border px-4 py-8 text-center ">
                     <i class="fa fa-inbox mr-2"></i>暂无升级愿望
                 </td>
             </tr>
@@ -278,16 +276,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     data.forEach(wish => {
         const statusInfo = getStatusInfo(wish.status);
         html += `
-            <tr class="hover:bg-neonblue/5 transition-colors">
-                <td class="border border-neonblue/30 px-4 py-2 font-cyber">${wish.wish_id}</td>
-                <td class="border border-neonblue/30 px-4 py-2">${wish.wish_name}</td>
-                <td class="border border-neonblue/30 px-4 py-2">${wish.wish_type}</td>
-                <td class="border border-neonblue/30 px-4 py-2">${wish.priority}</td>
-                <td class="border border-neonblue/30 px-4 py-2">${wish.submit_date}</td>
-                <td class="border border-neonblue/30 px-4 py-2">
+            <tr class=">
+                <td class="border px-4 py-2 ">${wish.wish_id}</td>
+                <td class="border px-4 py-2">${wish.wish_name}</td>
+                <td class="border px-4 py-2">${wish.wish_type}</td>
+                <td class="border px-4 py-2">${wish.priority}</td>
+                <td class="border px-4 py-2">${wish.submit_date}</td>
+                <td class="border px-4 py-2">
                     <span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>
                 </td>
-                <td class="border border-neonblue/30 px-4 py-2 text-center">
+                <td class="border px-4 py-2 text-center">
                     <a href="approval.html?id=${wish.id}&v=20260530" class="cyber-btn cyber-btn-success text-sm py-1 px-3">
                         <i class="fa fa-eye mr-1"></i>审阅
                     </a>
@@ -298,20 +296,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     tableBody.innerHTML = html;
 });
-</script>
-<script>
-(function(){
-    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45;
-    if(/diary/.test(p)){d='diary';r=0;}else if(/ledger/.test(p)){d='ledger';r=45;}
-    k.style.transform='rotate('+r+'deg)';
-    var pages=['list.html','diary.html','ledger.html'];
-    document.querySelectorAll('.case-scale').forEach(function(e,i){
-        e.title=pages[i];
-        e.onclick=function(){location.href=pages[i];};
-    });
-    k.title='点击切换页面';
-    k.onclick=function(){var idx=d==='diary'?1:d==='ledger'?2:0;location.href=pages[(idx+1)%3];};
-})();
 </script>
 </body>
 </html>

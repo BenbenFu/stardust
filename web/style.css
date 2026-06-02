@@ -1,7 +1,7 @@
 /* =====================================================================
    STARDUST 统一复古单色液晶屏 + 硬核工业外壳
    引用: login, list, approval, diary, ledger
-   版本: 20260530
+   版本: 20260602 (清理赛博/霓虹残余，合并Tailwind兼容层)
    ===================================================================== */
 
 /* ================================================================
@@ -31,6 +31,22 @@
 
     /* 字体 */
     --font-mono: "MS Gothic", "SimSun", "Courier New", Courier, monospace;
+
+    /* 像素网格（复用纹理） */
+    --pixel-grid-light:  linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    --pixel-grid-medium: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+    --pixel-grid-form:   linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+                          linear-gradient(90deg, rgba(0,0,0,0.032) 1px, transparent 1px);
+
+    /* 滚动条 */
+    --scrollbar-width: 8px;
+    --scrollbar-track: var(--screen-bg);
+    --scrollbar-thumb: var(--pixel-dim);
+
+    /* 按钮阴影 */
+    --btn-shadow: 2px 2px 0 var(--pixel-dark);
 }
 
 /* ================================================================
@@ -125,9 +141,7 @@ body {
     content: " ";
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background:
-        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background: var(--pixel-grid-light);
     background-size: 3px 3px;
     z-index: 100;
     pointer-events: none;
@@ -148,6 +162,13 @@ body {
 .embedded-lcd::-webkit-scrollbar { width: 10px; }
 .embedded-lcd::-webkit-scrollbar-track { background: var(--pixel-dim); }
 .embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dark); border: 2px solid var(--screen-bg); }
+
+/* 通用 LCD 细滚动条（diary/list/content 面板用） */
+.lcd-scrollbar::-webkit-scrollbar { width: var(--scrollbar-width); }
+.lcd-scrollbar::-webkit-scrollbar-track { background: var(--scrollbar-track); border-left: 1px solid var(--pixel-dim); }
+.lcd-scrollbar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border: 1px solid var(--pixel-dark); }
+.lcd-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
+.lcd-scrollbar { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
 
 /* ================================================================
    7. 右侧物理控制面板
@@ -501,40 +522,11 @@ body {
 }
 
 /* ================================================================
-   16. Tailwind 颜色覆盖（list / approval 兼容层）
+   16. LCD 反白/低调文字（替代旧 neon 风格）
    ================================================================ */
-#stars,
-#stars2,
-#stars3 {
-    display: none;
-}
 
-.text-neonblue,
-.text-cyanglow,
-.text-neonpurple,
-.text-goldstardust,
-.text-gray-200,
-.text-gray-400,
-.text-gray-500,
-.text-gray-600 {
-    color: var(--pixel-dark) !important;
-}
-
-.text-red-400 {
-    color: var(--pixel-alert) !important;
-}
-
-.font-cyber {
-    font-family: var(--font-mono);
-}
-
-/* 霓虹边框 → 移除发光 */
-.neon-border {
-    box-shadow: none;
-}
-
-/* 霓虹文字 → 反白显示 */
-.neon-text {
+/* 反白显示（深底浅字，用于标题） */
+.lcd-inverse {
     color: var(--screen-bg) !important;
     background: var(--pixel-dark);
     display: inline-block;
@@ -545,34 +537,23 @@ body {
     letter-spacing: 1px;
 }
 
-.neon-text-purple {
+/* 低调灰色文字 */
+.lcd-dim {
     color: var(--pixel-dim) !important;
     text-shadow: none;
 }
 
-/* 禁用浮动/发光动画 */
-.animate-float,
-.animate-glow {
-    animation: none !important;
+/* 告警红色文字 */
+.lcd-alert {
+    color: var(--pixel-alert) !important;
 }
 
-/* 渐变背景 → LCD 屏底色 */
-.bg-gradient-to-r {
+/* 渐变标题条（卡片头部） */
+.gradient-header {
     background:
         linear-gradient(180deg, rgba(0,0,0,0.035), rgba(0,0,0,0.015)),
         var(--screen-bg);
     border-bottom: 2px solid var(--pixel-dark) !important;
-}
-
-/* 星空背景隐藏 */
-.bg-nebula,
-.bg-deepspace\/80 {
-    background-color: transparent;
-}
-
-/* circuit-bg 隔离 */
-.circuit-bg {
-    isolation: isolate;
 }
 
 /* ================================================================
@@ -604,9 +585,7 @@ body {
     position: absolute;
     inset: 0;
     z-index: 20;
-    background:
-        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+    background: var(--pixel-grid-medium);
     background-size: 3px 3px;
     pointer-events: none;
 }
@@ -622,7 +601,7 @@ body {
     pointer-events: none;
 }
 
-.glass-card > .bg-gradient-to-r {
+.glass-card > .gradient-header {
     padding-top: 8px !important;
     padding-bottom: 8px !important;
 }
@@ -634,10 +613,9 @@ body {
 }
 
 /* ================================================================
-   18. 按钮 — .hardware-btn（基础） + .cyber-btn（Tailwind 兼容）
+   18. 按钮 — .hardware-btn（统一按钮系统）
    ================================================================ */
 
-/* 硬件按钮（diary/ledger 使用） */
 .hardware-btn {
     display: inline-flex;
     align-items: center;
@@ -645,7 +623,7 @@ body {
     gap: 0.35rem;
     background-color: var(--screen-bg);
     border: 2px solid var(--pixel-dark);
-    box-shadow: 2px 2px 0px var(--pixel-dark);
+    box-shadow: var(--btn-shadow);
     color: var(--pixel-dark);
     font-family: var(--font-mono);
     font-weight: bold;
@@ -665,7 +643,7 @@ body {
     background: var(--paper-worn);
 }
 
-/* cyber-btn 别名（list/approval 的 Tailwind 兼容） */
+/* cyber-btn = hardware-btn 别名（向后兼容） */
 .cyber-btn {
     display: inline-flex;
     align-items: center;
@@ -677,7 +655,7 @@ body {
     color: var(--pixel-dark);
     background: var(--screen-bg);
     box-shadow:
-        2px 2px 0 var(--pixel-dark),
+        var(--btn-shadow),
         inset 1px 1px 0 rgba(255,255,255,0.32),
         inset -1px -1px 0 rgba(0,0,0,0.18);
     font-family: var(--font-mono);
@@ -786,19 +764,6 @@ th {
     padding: 4px 6px !important;
 }
 
-/* 确保表头文字在深色背景上可见 */
-th.text-neonblue,
-th.text-cyanglow,
-th.text-neonpurple,
-th.text-goldstardust,
-th.text-gray-200,
-th.text-gray-400,
-th.text-gray-500,
-th.text-gray-600,
-th[class*="text-"] {
-    color: var(--screen-bg) !important;
-}
-
 td {
     border: 1px dashed var(--pixel-dark) !important;
     color: var(--pixel-dark);
@@ -825,8 +790,7 @@ th, td {
     min-width: 0;
     border: 1px solid var(--pixel-dark);
     background:
-        linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.032) 1px, transparent 1px),
+        var(--pixel-grid-form),
         rgba(0,0,0,0.025);
     background-size: 3px 3px, 3px 3px, auto;
     color: var(--pixel-blue);

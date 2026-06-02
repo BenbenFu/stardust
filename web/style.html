@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-store">
     <title>STARDUST_v0.1_STYLE_PICKER</title>
-    <link rel="stylesheet" href="style.css?v=20260530">
+    <link rel="stylesheet" href="style.css?v=20260602">
     <style>
         /* === style-pool 页面特有 === */
 
@@ -112,17 +112,6 @@
             max-height: 400px;
             overflow-y: auto;
         }
-        .styles-scroll::-webkit-scrollbar { width: 8px; }
-        .styles-scroll::-webkit-scrollbar-track {
-            background: var(--screen-bg);
-            border-left: 1px solid var(--pixel-dim);
-        }
-        .styles-scroll::-webkit-scrollbar-thumb {
-            background: var(--pixel-dim);
-            border: 1px solid var(--pixel-dark);
-        }
-        .styles-scroll::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
-        .styles-scroll { scrollbar-width: thin; scrollbar-color: var(--pixel-dim) var(--screen-bg); }
 
         /* 模态框 */
         .modal-overlay {
@@ -269,7 +258,7 @@
                     <p class="ai-note">&gt;&gt; 点击风格标签查看详细约束描述。</p>
                 </div>
                 <div class="section-card-body">
-                    <div id="styles-container" class="styles-scroll">
+                    <div id="styles-container" class="styles-scroll lcd-scrollbar">
                         <!-- 风格标签将在这里动态生成 -->
                     </div>
                 </div>
