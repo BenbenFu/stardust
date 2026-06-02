@@ -29,6 +29,64 @@ async function logout() {
     }
 }
 
+// 动态星空背景生成
+function createStars() {
+    const stars1 = document.getElementById('stars');
+    const stars2 = document.getElementById('stars2');
+    const stars3 = document.getElementById('stars3');
+    
+    for (let i = 0; i < 200; i++) {
+        const star = document.createElement('div');
+        star.style.position = 'absolute';
+        star.style.backgroundColor = 'white';
+        star.style.borderRadius = '50%';
+        star.style.animation = `pulse-slow ${Math.random() * 3 + 2}s infinite`;
+        
+        const size = Math.random() * 2;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.opacity = Math.random() * 0.8 + 0.2;
+        
+        stars1.appendChild(star);
+    }
+    
+    for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.style.position = 'absolute';
+        star.style.backgroundColor = '#00d4ff';
+        star.style.borderRadius = '50%';
+        star.style.animation = `pulse-slow ${Math.random() * 4 + 3}s infinite`;
+        
+        const size = Math.random() * 3;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.opacity = Math.random() * 0.6 + 0.2;
+        
+        stars2.appendChild(star);
+    }
+    
+    for (let i = 0; i < 50; i++) {
+        const star = document.createElement('div');
+        star.style.position = 'absolute';
+        star.style.backgroundColor = '#a855f7';
+        star.style.borderRadius = '50%';
+        star.style.animation = `pulse-slow ${Math.random() * 5 + 4}s infinite`;
+        
+        const size = Math.random() * 4;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.opacity = Math.random() * 0.5 + 0.2;
+        
+        stars3.appendChild(star);
+    }
+}
+
 // 渲染难度星级
 function renderDifficultyStars(difficulty) {
     let stars = '';
@@ -96,6 +154,11 @@ function getStatusInfo(status) {
     };
     return statusMap[status] || statusMap['pending'];
 }
+
+// 页面初始化
+document.addEventListener('DOMContentLoaded', function() {
+    createStars();
+});
 
 // 导出供其他页面使用
 window.supabase = supabase;
