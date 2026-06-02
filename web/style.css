@@ -1177,3 +1177,28 @@ th, td {
         display: none !important;
     }
 }
+
+/* ================================================================
+   通用标签组件 (diary, style-pool 共用)
+   ================================================================ */
+.tag-item {
+    background-color: var(--pixel-dim);
+    color: var(--screen-bg);
+    padding: 1px 6px;
+    font-size: 10px;
+    cursor: default;
+}
+
+.tag-item.clickable {
+    cursor: pointer;
+}
+
+.tag-item.clickable:hover {
+    background-color: var(--pixel-dark);
+}
+
+.diary-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
