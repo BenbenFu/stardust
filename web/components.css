@@ -229,8 +229,28 @@
     background: var(--pixel-dim);
 }
 
+/* 等待 — 琥珀色闪烁（硬件LED同款色） */
 .status-pending::before {
+    background: #9e782f;
     animation: hardware-blink 1.2s infinite steps(1);
+}
+
+/* 批准 — 亮绿色常亮 */
+.status-approved::before {
+    background: #6b8c42;
+    box-shadow: 0 0 3px #6b8c42;
+}
+
+/* 拒绝 — 红色常亮 */
+.status-rejected::before {
+    background: var(--pixel-alert);
+    box-shadow: 0 0 3px var(--pixel-alert);
+}
+
+/* 完成 — 蓝色常亮 */
+.status-completed::before {
+    background: var(--pixel-blue);
+    box-shadow: 0 0 3px var(--pixel-blue);
 }
 
 .status-approved,
