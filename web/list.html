@@ -42,15 +42,15 @@
         </div>
 
         <!-- 头部 -->
-        <div class="glass-card overflow-hidden mb-8 ">
-            <div class="gradient-header px-6 py-6 border-b ">
+        <div class="glass-card overflow-hidden mb-8">
+            <div class="gradient-header px-6 py-6 border-b">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-5">
                         <div class="robot-core"></div>
                         <div>
                             <div class="mission-kicker mb-2">STARDUST_CORE_v0.10 / QUARTERLY_WISH_SLOT</div>
-                            <h1 class="text-4xl font-bold  lcd-inverse">&lt;&lt; SYSTEM_WISH_APPLICATION &gt;&gt;</h1>
-                            <h2 class="text-xl  lcd-dim mt-1">WISH_LIST_INDEX</h2>
+                            <h1 class="text-4xl font-bold lcd-inverse">&lt;&lt; SYSTEM_WISH_APPLICATION &gt;&gt;</h1>
+                            <h2 class="text-xl lcd-dim mt-1">WISH_LIST_INDEX</h2>
                             <p class="ai-note mt-3 text-sm">&gt;&gt; 系统每季度下发一次空白愿望单。已按优先级、风险、回滚方案与星蟹币消耗重新整理，等待人工读取。</p>
                             <div class="data-strip mt-5">
                                 <div class="data-chip">
@@ -69,8 +69,8 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <div class="text-sm ">HARDWARE_STATUS</div>
-                        <div class=">POWER_SAVE / CPU:73C</div>
+                        <div class="text-sm">HARDWARE_STATUS</div>
+                        <div >POWER_SAVE / CPU:73C</div>
                         <div class="text-xs mt-1">USED_PI_BOARD / SSD_LIFE:82%</div>
                         <button onclick="logout()" class="cyber-btn cyber-btn-danger text-xs py-1 px-3 mt-2">
                             <i class="fa fa-sign-out mr-1"></i>[ LOGOUT ]
@@ -81,7 +81,7 @@
         </div>
 
         <!-- 故事节点 -->
-        <div class="wish-story glass-card overflow-hidden mb-8 ">
+        <div class="wish-story glass-card overflow-hidden mb-8">
             <div class="p-6">
                 <div class="story-node">
                     <span>01</span>
@@ -107,9 +107,9 @@
         </div>
 
         <!-- 愿望清单 -->
-        <div class="glass-card overflow-hidden mb-8 ">
-            <div class="gradient-header px-6 py-4 border-b ">
-                <h3 class="text-xl font-bold  lcd-inverse">
+        <div class="glass-card overflow-hidden mb-8">
+            <div class="gradient-header px-6 py-4 border-b">
+                <h3 class="text-xl font-bold lcd-inverse">
                     <i class="fa fa-list mr-2"></i>[ WISH_LIST_RECORDS ]
                 </h3>
                 <p class="ai-note text-sm mt-2">&gt;&gt; 每条记录均由本机生成。若预算紧张，可完全忽略。</p>
@@ -118,19 +118,19 @@
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse">
                         <thead>
-                            <tr class=">
-                                <th class="border px-4 py-2 text-left  ">申请编号</th>
-                                <th class="border px-4 py-2 text-left  ">愿望名称</th>
-                                <th class="border px-4 py-2 text-left  ">类型</th>
-                                <th class="border px-4 py-2 text-left  ">优先级</th>
-                                <th class="border px-4 py-2 text-left  ">提交日期</th>
-                                <th class="border px-4 py-2 text-left  ">状态</th>
-                                <th class="border px-4 py-2 text-center  ">操作</th>
+                            <tr >
+                                <th class="border px-4 py-2 text-left">申请编号</th>
+                                <th class="border px-4 py-2 text-left">愿望名称</th>
+                                <th class="border px-4 py-2 text-left">类型</th>
+                                <th class="border px-4 py-2 text-left">优先级</th>
+                                <th class="border px-4 py-2 text-left">提交日期</th>
+                                <th class="border px-4 py-2 text-left">状态</th>
+                                <th class="border px-4 py-2 text-center">操作</th>
                             </tr>
                         </thead>
                         <tbody id="wishlistTable">
                             <tr>
-                                <td colspan="7" class="border px-4 py-8 text-center ">
+                                <td colspan="7" class="border px-4 py-8 text-center">
                                     <i class="fa fa-spinner fa-spin mr-2"></i>SYNCING_WISH_RECORD_TABLE...
                                 </td>
                             </tr>
@@ -142,7 +142,7 @@
 
         <!-- 页脚 -->
         <div class="text-center text-sm mb-4">
-            <p class=">STARDUST_CORE_v0.10 / SECTOR_LIFE:82% / LCD_AGE:09Y</p>
+            <p >STARDUST_CORE_v0.10 / SECTOR_LIFE:82% / LCD_AGE:09Y</p>
         </div>
 
         <!-- 维修标签 -->
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (data.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="7" class="border px-4 py-8 text-center ">
+                <td colspan="7" class="border px-4 py-8 text-center">
                     <i class="fa fa-inbox mr-2"></i>暂无升级愿望
                 </td>
             </tr>
@@ -276,8 +276,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     data.forEach(wish => {
         const statusInfo = getStatusInfo(wish.status);
         html += `
-            <tr class=">
-                <td class="border px-4 py-2 ">${wish.wish_id}</td>
+            <tr >
+                <td class="border px-4 py-2">${wish.wish_id}</td>
                 <td class="border px-4 py-2">${wish.wish_name}</td>
                 <td class="border px-4 py-2">${wish.wish_type}</td>
                 <td class="border px-4 py-2">${wish.priority}</td>
