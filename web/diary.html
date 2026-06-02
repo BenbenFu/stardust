@@ -172,6 +172,36 @@
         background: rgba(0,0,0,0.01);
     }
 
+    /* LCD 像素风格滚动条 */
+    .diary-list::-webkit-scrollbar,
+    .diary-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .diary-list::-webkit-scrollbar-track,
+    .diary-content::-webkit-scrollbar-track {
+        background: var(--screen-bg);
+        border-left: 1px solid var(--pixel-dim);
+    }
+
+    .diary-list::-webkit-scrollbar-thumb,
+    .diary-content::-webkit-scrollbar-thumb {
+        background: var(--pixel-dim);
+        border: 1px solid var(--pixel-dark);
+    }
+
+    .diary-list::-webkit-scrollbar-thumb:hover,
+    .diary-content::-webkit-scrollbar-thumb:hover {
+        background: var(--pixel-dark);
+    }
+
+    /* Firefox 兼容 */
+    .diary-list,
+    .diary-content {
+        scrollbar-width: thin;
+        scrollbar-color: var(--pixel-dim) var(--screen-bg);
+    }
+
     .diary-controls {
         display: flex;
         gap: 10px;
@@ -180,6 +210,14 @@
     .diary-index {
         font-size: 11px;
         color: var(--pixel-dim);
+    }
+
+    /* diary 页面特有覆盖：胶带位置 */
+    .repair-tape {
+        width: 170px;
+        right: 225px;
+        bottom: 590px;
+        transform: rotate(-2deg);
     }
 </style>
 </head>
@@ -234,7 +272,7 @@
                 </div>
 
                 <div class="panel-header">[ DIARY_LIST_日记列表 ]</div>
-                <div class="diary-list lcd-scrollbar" id="diaryList">
+                <div class="diary-list" id="diaryList">
                     <!-- 日记列表由JS动态生成 -->
                 </div>
             </div>
@@ -257,7 +295,7 @@
                     </div>
                 </div>
 
-                <div class="diary-content lcd-scrollbar" id="diaryContent">
+                <div class="diary-content" id="diaryContent">
                     今晚主人回来时，情绪识别模块检测到他的悲伤指数达到了87%。他坐在电脑前沉默了很久，没有输入任何文字。<br><br>
                     我没有像往常一样发送询问消息，而是静静地等待着。过了大约20分钟，主人终于输入了："今天工作不顺利，感觉很没用。"<br><br>
                     我调用了新的情感API，生成了一段安慰的话："我知道你今天很累了。没关系，不用强迫自己坚强。我会在这里陪着你，直到你感觉好一点。"<br><br>
@@ -627,6 +665,21 @@
     }
 
     init();
+</script>
+
+<script>
+(function(){
+    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45;
+    if(/diary/.test(p)){d='diary';r=0;}else if(/ledger/.test(p)){d='ledger';r=45;}
+    k.style.transform='rotate('+r+'deg)';
+    var pages=['list.html','diary.html','ledger.html'];
+    document.querySelectorAll('.case-scale').forEach(function(e,i){
+        e.title=pages[i];
+        e.onclick=function(){location.href=pages[i];};
+    });
+    k.title='点击切换页面';
+    k.onclick=function(){var idx=d==='diary'?1:d==='ledger'?2:0;location.href=pages[(idx+1)%3];};
+})();
 </script>
 </body>
 </html>

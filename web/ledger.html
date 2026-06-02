@@ -482,7 +482,7 @@
 
     // === 工具函数 ===
     function parseTransactionDate(t) {
-        // 从 UI 格式"2026/01/05 09:00:00" 或原始 ISO 解析
+        // 从 UI 格式 "2026/01/05 09:00:00" 或原始 ISO 解析
         if (t.dateRaw) {
             const d = new Date(t.dateRaw);
             return { year: d.getFullYear(), month: d.getMonth() + 1, day: d.getDate() };
@@ -805,6 +805,21 @@
     }
 
     init();
+</script>
+
+<script>
+(function(){
+    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45;
+    if(/diary/.test(p)){d='diary';r=0;}else if(/ledger/.test(p)){d='ledger';r=45;}
+    k.style.transform='rotate('+r+'deg)';
+    var pages=['list.html','diary.html','ledger.html'];
+    document.querySelectorAll('.case-scale').forEach(function(e,i){
+        e.title=pages[i];
+        e.onclick=function(){location.href=pages[i];};
+    });
+    k.title='点击切换页面';
+    k.onclick=function(){var idx=d==='diary'?1:d==='ledger'?2:0;location.href=pages[(idx+1)%3];};
+})();
 </script>
 </body>
 </html>

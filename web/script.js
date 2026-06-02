@@ -29,14 +29,72 @@ async function logout() {
     }
 }
 
+// 动态星空背景生成
+function createStars() {
+    const stars1 = document.getElementById('stars');
+    const stars2 = document.getElementById('stars2');
+    const stars3 = document.getElementById('stars3');
+    
+    for (let i = 0; i < 200; i++) {
+        const star = document.createElement('div');
+        star.style.position = 'absolute';
+        star.style.backgroundColor = 'white';
+        star.style.borderRadius = '50%';
+        star.style.animation = `pulse-slow ${Math.random() * 3 + 2}s infinite`;
+        
+        const size = Math.random() * 2;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.opacity = Math.random() * 0.8 + 0.2;
+        
+        stars1.appendChild(star);
+    }
+    
+    for (let i = 0; i < 100; i++) {
+        const star = document.createElement('div');
+        star.style.position = 'absolute';
+        star.style.backgroundColor = '#00d4ff';
+        star.style.borderRadius = '50%';
+        star.style.animation = `pulse-slow ${Math.random() * 4 + 3}s infinite`;
+        
+        const size = Math.random() * 3;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.opacity = Math.random() * 0.6 + 0.2;
+        
+        stars2.appendChild(star);
+    }
+    
+    for (let i = 0; i < 50; i++) {
+        const star = document.createElement('div');
+        star.style.position = 'absolute';
+        star.style.backgroundColor = '#a855f7';
+        star.style.borderRadius = '50%';
+        star.style.animation = `pulse-slow ${Math.random() * 5 + 4}s infinite`;
+        
+        const size = Math.random() * 4;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.left = `${Math.random() * 100}%`;
+        star.style.top = `${Math.random() * 100}%`;
+        star.style.opacity = Math.random() * 0.5 + 0.2;
+        
+        stars3.appendChild(star);
+    }
+}
+
 // 渲染难度星级
 function renderDifficultyStars(difficulty) {
     let stars = '';
     for (let i = 1; i <= 5; i++) {
         if (i <= difficulty) {
-            stars += '<i class="fa fa-star" style="color:var(--pixel-dark);"></i>';
+            stars += '<i class="fa fa-star text-goldstardust" style="text-shadow: 0 0 5px #fbbf24;"></i>';
         } else {
-            stars += '<i class="fa fa-star" style="color:var(--pixel-dim);"></i>';
+            stars += '<i class="fa fa-star text-gray-600"></i>';
         }
     }
     return stars;
@@ -62,23 +120,23 @@ function renderBudgetTable(budget) {
         const subtotal = price * quantity;
         total += subtotal;
         html += `
-            <tr>
-                <td class="px-4 py-2">${item.category || ''}</td>
-                <td class="px-4 py-2">${item.detail || ''}</td>
-                <td class="px-4 py-2 text-right">${price.toFixed(2)}</td>
-                <td class="px-4 py-2 text-right">${quantity}</td>
-                <td class="px-4 py-2 text-right">${subtotal.toFixed(2)}</td>
-                <td class="px-4 py-2">${item.billing || '一次性'}</td>
+            <tr class="hover:bg-neonblue/5 transition-colors">
+                <td class="border border-neonblue/30 px-4 py-2">${item.category || ''}</td>
+                <td class="border border-neonblue/30 px-4 py-2">${item.detail || ''}</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-right">${price.toFixed(2)}</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-right">${quantity}</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-right text-cyanglow">${subtotal.toFixed(2)}</td>
+                <td class="border border-neonblue/30 px-4 py-2">${item.billing || '一次性'}</td>
             </tr>
         `;
     });
     
     html += `
         <tfoot>
-            <tr class="font-bold">
-                <td class="px-4 py-2" colspan="4">星蟹币合计</td>
-                <td class="px-4 py-2 text-right text-lg">${total.toFixed(2)}</td>
-                <td class="px-4 py-2" colspan="2"></td>
+            <tr class="bg-deepspace/80 font-bold">
+                <td class="border border-neonblue/30 px-4 py-2 text-neonpurple font-cyber" colspan="4">星蟹币合计</td>
+                <td class="border border-neonblue/30 px-4 py-2 text-right text-goldstardust font-cyber text-lg">${total.toFixed(2)}</td>
+                <td class="border border-neonblue/30 px-4 py-2" colspan="2"></td>
             </tr>
         </tfoot>
     `;
@@ -97,29 +155,17 @@ function getStatusInfo(status) {
     return statusMap[status] || statusMap['pending'];
 }
 
-// 页面导航旋钮初始化
-function initNavigation() {
-    var p = location.pathname, k = document.getElementById('mainKnob'), d = 'list', r = -45;
-    if (/diary/.test(p)) { d = 'diary'; r = 0; }
-    else if (/ledger/.test(p)) { d = 'ledger'; r = 45; }
-    else if (/list|approval/.test(p)) { d = 'list'; r = -45; }
-    if (k) k.style.transform = 'rotate(' + r + 'deg)';
-    var pages = ['list.html', 'diary.html', 'ledger.html'];
-    document.querySelectorAll('.case-scale').forEach(function(e, i) {
-        e.title = pages[i];
-        e.onclick = function() { location.href = pages[i]; };
-    });
-    if (k) {
-        k.title = '点击切换页面';
-        k.onclick = function() { var idx = d === 'diary' ? 1 : d === 'ledger' ? 2 : 0; location.href = pages[(idx + 1) % 3]; };
-    }
-}
-
+// 页面初始化
 document.addEventListener('DOMContentLoaded', function() {
-    initNavigation();
+    createStars();
 });
 
-// 导出供其他页面使用（list.html 用 onclick="logout()" 需要 window.logout）
-window.logout = logout;
+// 导出供其他页面使用
+window.supabase = supabase;
+window.renderDifficultyStars = renderDifficultyStars;
+window.renderBudgetTable = renderBudgetTable;
+window.getStatusInfo = getStatusInfo;
+window.checkAuth = checkAuth; // 导出认证检查函数
+window.logout = logout; // 导出登出函数
 
 export { supabase, checkAuth, logout, renderDifficultyStars, renderBudgetTable, getStatusInfo };
