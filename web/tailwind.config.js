@@ -1,28 +1,20 @@
 module.exports = {
-    content: [
-        "./*.html",
-        "./script.js"
-    ],
+    content: ["./*.html", "./script.js"],
     theme: {
         extend: {
             colors: {
-                nebula: "#090d22",
-                deepspace: "#11172d",
-                stardust: "#16213e",
-                cosmic: "#0f3460",
-                neonblue: "#35d8ff",
-                neonpurple: "#b678ff",
-                neonpink: "#ff5cc8",
-                cyanglow: "#42ffe0",
-                goldstardust: "#ffd166"
+                nebula:      "#b0b99a",
+                deepspace:   "#a8b18f",
+                stardust:    "#5c6654",
+                cosmic:      "#1e2622",
+                neonblue:    "#1e2622",
+                neonpurple:  "#1e2622",
+                neonpink:    "#8f341d",
+                cyanglow:    "#1e2622",
+                goldstardust:"#1e2622",
             },
             fontFamily: {
-                cyber: ["Orbitron", "Rajdhani", "Microsoft YaHei", "system-ui", "sans-serif"]
-            },
-            animation: {
-                "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                "float": "float 7s ease-in-out infinite",
-                "glow": "glow 2.6s ease-in-out infinite alternate"
+                cyber: ["MS Gothic", "SimSun", "Courier New", "Courier", "monospace"]
             }
         }
     }

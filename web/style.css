@@ -515,12 +515,9 @@ body {
 }
 
 /* ================================================================
-   16. Tailwind 颜色覆盖（list / approval 兼容层）
+   16. Tailwind 内置颜色覆盖
+   自定义色（neon*/gold*等）已由 tailwind.config.js 输出 LCD 色
    ================================================================ */
-.text-neonblue,
-.text-cyanglow,
-.text-neonpurple,
-.text-goldstardust,
 .text-gray-200,
 .text-gray-400,
 .text-gray-500,
@@ -530,10 +527,6 @@ body {
 
 .text-red-400 {
     color: var(--pixel-alert) !important;
-}
-
-.font-cyber {
-    font-family: var(--font-mono);
 }
 
 /* 霓虹边框 → 移除发光 */
@@ -783,19 +776,6 @@ th {
     color: var(--screen-bg) !important;
     font-size: 11px;
     padding: 4px 6px !important;
-}
-
-/* 确保表头文字在深色背景上可见 */
-th.text-neonblue,
-th.text-cyanglow,
-th.text-neonpurple,
-th.text-goldstardust,
-th.text-gray-200,
-th.text-gray-400,
-th.text-gray-500,
-th.text-gray-600,
-th[class*="text-"] {
-    color: var(--screen-bg) !important;
 }
 
 td {
