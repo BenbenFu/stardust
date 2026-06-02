@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-store">
     <title>STARDUST_v0.1_WISH_LIST | DETAIL</title>
-    <link rel="stylesheet" href="tailwind.css?v=20260530">
+    <link rel="stylesheet" href="tailwind.css?v=20260603">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=20260530">
-    <script src="script.js?v=20260602" type="module" defer></script>
+    <link rel="stylesheet" href="style.css?v=20260603">
+    <script src="script.js?v=20260603" type="module" defer></script>
 </head>
 <body>
 
@@ -445,14 +445,17 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
             </div>
         `;
-    } else {
-        document.getElementById('approveBtn').addEventListener('click', () => updateStatus('approved'));
-        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus('rejected'));
-        document.getElementById('holdBtn').addEventListener('click', () => updateStatus('pending'));
     }
 
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('wishlistContent').classList.remove('hidden');
+
+    // 仅在 pending 状态时绑定审批按钮（否则按钮DOM已被替换）
+    if (data.status === 'pending') {
+        document.getElementById('approveBtn').addEventListener('click', () => updateStatus('approved'));
+        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus('rejected'));
+        document.getElementById('holdBtn').addEventListener('click', () => updateStatus('pending'));
+    }
 
     async function updateStatus(status) {
         const comment = document.getElementById('approvalComment').value;
@@ -478,7 +481,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 <script>
 (function(){
-    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45; 
+    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45;
     if(/diary/.test(p)){d='diary';r=0;}else if(/ledger/.test(p)){d='ledger';r=45;}
     k.style.transform='rotate('+r+'deg)';
     var pages=['list.html','diary.html','ledger.html'];
