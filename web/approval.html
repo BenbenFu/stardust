@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 </script>
 <script>
 (function(){
-    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45;
+    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45; 
     if(/diary/.test(p)){d='diary';r=0;}else if(/ledger/.test(p)){d='ledger';r=45;}
     k.style.transform='rotate('+r+'deg)';
     var pages=['list.html','diary.html','ledger.html'];
