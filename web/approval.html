@@ -449,6 +449,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('loading').classList.add('hidden');
     document.getElementById('wishlistContent').classList.remove('hidden');
+    // 防止数据加载后页面滚偏导致 title card 不可见
+    document.querySelector('.embedded-lcd').scrollTop = 0;
 
     // 仅在 pending 状态时绑定审批按钮（否则按钮DOM已被替换）
     if (data.status === 'pending') {

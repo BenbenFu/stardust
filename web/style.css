@@ -588,6 +588,7 @@ body {
     backdrop-filter: none;
     overflow: hidden;
     margin-bottom: 0 !important;
+    flex-shrink: 0;
 }
 
 .glass-card + .glass-card,
