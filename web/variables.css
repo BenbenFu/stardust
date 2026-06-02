@@ -1,0 +1,34 @@
+/* STARDUST CSS 变量 */
+:root {
+    /* 外壳色彩 */
+    --case-bg: #2d312a;
+    --case-border: #141613;
+    --case-text: #7d8577;
+
+    /* 液晶屏色彩 */
+    --screen-bg: #b0b99a;
+    --screen-bg-2: #a8b18f;
+    --pixel-dark: #1e2622;
+    --pixel-blue: #26313a;
+    --pixel-dim: #5c6654;
+    --pixel-faint: rgba(30, 38, 34, 0.13);
+    --pixel-alert: #8f341d;
+
+    /* 旧 style.css 保留 */
+    --case: #30342e;
+    --case-dark: #171a16;
+    --case-light: #42483f;
+    --tape-bg: #d2c89f;
+    --paper-worn: #c8c099;
+
+    /* 字体 */
+    --font-mono: "MS Gothic", "SimSun", "Courier New", Courier, monospace;
+
+    --pixel-grid-light:  linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    --pixel-grid-medium: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+    --pixel-grid-form:   linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.032) 1px, transparent 1px);
+    --scrollbar-width: 8px;
+    --scrollbar-track: var(--screen-bg);
+    --scrollbar-thumb: var(--pixel-dim);
+    --btn-shadow: 2px 2px 0 var(--pixel-dark);
+}
