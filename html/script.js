@@ -34,9 +34,9 @@ function renderDifficultyStars(difficulty) {
     let stars = '';
     for (let i = 1; i <= 5; i++) {
         if (i <= difficulty) {
-            stars += '<i class="fa fa-star text-goldstardust" style="text-shadow: 0 0 5px #fbbf24;"></i>';
+            stars += '<svg width="24" height="24" viewBox="0 0 12 12" style="display:inline;vertical-align:middle;"><path d="M6 1L7 5 11 5 8 8 9 12 6 9 3 12 4 8 1 5 5 5Z" fill="#1e2622"/></svg>';
         } else {
-            stars += '<i class="fa fa-star text-gray-600"></i>';
+            stars += '<svg width="24" height="24" viewBox="0 0 12 12" style="display:inline;vertical-align:middle;"><path d="M6 1L7 5 11 5 8 8 9 12 6 9 3 12 4 8 1 5 5 5Z" fill="none" stroke="#1e2622" stroke-width="1"/></svg>';
         }
     }
     return stars;
