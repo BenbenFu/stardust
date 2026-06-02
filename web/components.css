@@ -1,0 +1,612 @@
+/* STARDUST 设计组件 */
+
+   16. Tailwind 内置颜色覆盖（自定义色已由 config 提供）
+   ================================================================ */
+.text-gray-200,
+.text-gray-400,
+.text-gray-500,
+.text-gray-600 {
+    color: var(--pixel-dark) !important;
+}
+
+.text-red-400 {
+    color: var(--pixel-alert) !important;
+}
+
+
+/* 霓虹边框 → 移除发光 */
+.neon-border {
+    box-shadow: none;
+}
+
+/* 霓虹文字 → 反白显示 */
+.neon-text {
+    color: var(--screen-bg) !important;
+    background: var(--pixel-dark);
+    display: inline-block;
+    padding: 3px 8px;
+    text-shadow: none;
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+    letter-spacing: 1px;
+}
+
+.neon-text-purple {
+    color: var(--pixel-dim) !important;
+    text-shadow: none;
+}
+
+/* 渐变背景 → LCD 屏底色 */
+.bg-gradient-to-r {
+    background:
+        linear-gradient(180deg, rgba(0,0,0,0.035), rgba(0,0,0,0.015)),
+        var(--screen-bg);
+    border-bottom: 2px solid var(--pixel-dark) !important;
+}
+
+/* 星空背景隐藏 */
+.bg-nebula,
+.bg-deepspace\/80 {
+    background-color: transparent;
+}
+
+
+/* ================================================================
+   17. 卡片组件 (.glass-card)
+   ================================================================ */
+.glass-card {
+    position: relative;
+    z-index: 3;
+    background:
+        radial-gradient(circle at 85% 0%, rgba(255,255,255,0.08), transparent 18rem),
+        linear-gradient(180deg, rgba(0,0,0,0.025), rgba(255,255,255,0.015)),
+        var(--screen-bg);
+    border: 3px solid var(--case-dark);
+    box-shadow: none;
+    backdrop-filter: none;
+    overflow: hidden;
+    margin-bottom: 0 !important;
+    flex-shrink: 0;
+}
+
+.glass-card + .glass-card,
+.glass-card + #wishlistContent,
+#wishlistContent > .glass-card,
+#wishlistContent > .wish-story {
+    border-top-width: 0;
+}
+
+.glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    background:
+        linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px);
+    background-size: 3px 3px;
+    pointer-events: none;
+}
+
+.glass-card::after {
+    content: "CAL: BAD_PIXEL_MAP / LCD_AGE_09Y / DO_NOT_TOUCH_CONTRAST";
+    position: absolute;
+    right: 8px;
+    bottom: 4px;
+    z-index: 21;
+    color: rgba(30, 38, 34, 0.22);
+    font-size: 10px;
+    pointer-events: none;
+}
+
+.glass-card > .bg-gradient-to-r {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.glass-card > .p-6,
+.glass-card > .p-8,
+.wish-story > .p-6 {
+    padding: 8px !important;
+}
+
+/* ================================================================
+   18. 按钮 — .hardware-btn（基础） + .cyber-btn（Tailwind 兼容）
+   ================================================================ */
+
+/* 硬件按钮（diary/ledger 使用） */
+.hardware-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background-color: var(--screen-bg);
+    border: 2px solid var(--pixel-dark);
+    box-shadow: var(--btn-shadow);
+    color: var(--pixel-dark);
+    font-family: var(--font-mono);
+    font-weight: bold;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    text-decoration: none;
+    min-height: 31px;
+}
+
+.hardware-btn:active {
+    box-shadow: 0px 0px 0px transparent;
+    transform: translate(2px, 2px);
+}
+
+.hardware-btn:hover {
+    background: var(--paper-worn);
+}
+
+/* cyber-btn 别名（list/approval 的 Tailwind 兼容） */
+.cyber-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 31px;
+    padding: 6px 14px;
+    border: 2px solid var(--pixel-dark);
+    color: var(--pixel-dark);
+    background: var(--screen-bg);
+    box-shadow:
+        var(--btn-shadow),
+        inset 1px 1px 0 rgba(255,255,255,0.32),
+        inset -1px -1px 0 rgba(0,0,0,0.18);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.cyber-btn:hover {
+    background: var(--paper-worn);
+}
+
+.cyber-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow:
+        0 0 0 transparent,
+        inset 1px 1px 0 rgba(0,0,0,0.2);
+}
+
+/* 按钮颜色变体 */
+.hardware-btn.btn-primary:hover,
+.cyber-btn-success:hover {
+    background-color: var(--pixel-dark);
+    color: var(--screen-bg);
+}
+
+.hardware-btn.btn-secondary:hover,
+.cyber-btn-danger:hover {
+    color: var(--pixel-alert);
+    border-color: var(--pixel-alert);
+}
+
+.cyber-btn-warning:hover {
+    background: #c0b68f;
+}
+
+.hardware-btn.btn-small {
+    padding: 2px 6px;
+    font-size: 10px;
+    min-height: auto;
+}
+
+/* 危险按钮变体 */
+.btn-danger:hover {
+    background-color: var(--pixel-alert);
+    color: var(--screen-bg);
+    border-color: var(--pixel-alert);
+}
+
+/* ================================================================
+   19. 状态徽章
+   ================================================================ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 1px 5px;
+    border: 1px solid var(--pixel-dark);
+    background: rgba(0,0,0,0.035);
+    color: var(--pixel-dark);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status-badge::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-right: 5px;
+    background: var(--pixel-dim);
+}
+
+.status-pending::before {
+    animation: hardware-blink 1.2s infinite steps(1);
+}
+
+.status-approved,
+.status-completed {
+    background: var(--pixel-dark);
+    color: var(--screen-bg);
+}
+
+.status-rejected {
+    color: var(--pixel-alert);
+    border-color: var(--pixel-alert);
+}
+
+/* ================================================================
+   20. 表格
+   ================================================================ */
+table {
+    width: 100% !important;
+    table-layout: auto;
+    border-collapse: collapse;
+    background: transparent;
+    margin: 0;
+}
+
+th {
+    background: var(--pixel-dark);
+    color: var(--screen-bg) !important;
+    font-size: 11px;
+    padding: 4px 6px !important;
+}
+
+td {
+    border: 1px dashed var(--pixel-dark) !important;
+    color: var(--pixel-dark);
+    padding: 5px 6px !important;
+    vertical-align: top;
+}
+
+tbody tr:hover {
+    background: rgba(0,0,0,0.045);
+}
+
+/* 防止表格水平溢出 */
+th, td {
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+/* ================================================================
+   21. 表单控件
+   ================================================================ */
+.cyber-display,
+.cyber-input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--pixel-dark);
+    background:
+        linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.032) 1px, transparent 1px),
+        rgba(0,0,0,0.025);
+    background-size: 3px 3px, 3px 3px, auto;
+    color: var(--pixel-blue);
+    box-shadow: inset 1px 1px 0 rgba(0,0,0,0.22);
+}
+
+.cyber-display {
+    min-height: 38px;
+    padding: 5px 7px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.cyber-input {
+    padding: 7px 9px;
+    outline: none;
+}
+
+.cyber-input::placeholder {
+    color: rgba(38, 49, 58, 0.48);
+}
+
+.cyber-input:focus {
+    background-color: rgba(255,255,255,0.08);
+    outline: 1px dashed var(--pixel-dark);
+    outline-offset: 2px;
+}
+
+/* ================================================================
+   22. 机器人核心（ASCII 风眼睛）
+   ================================================================ */
+.robot-core {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 auto;
+    border: 2px solid var(--pixel-dark);
+    background:
+        radial-gradient(circle at 32% 32%, #8f341d 0 4px, transparent 5px),
+        radial-gradient(circle at 64% 32%, #26313a 0 3px, transparent 4px),
+        var(--screen-bg);
+    box-shadow: 2px 2px 0 var(--pixel-dark);
+    position: relative;
+}
+
+.robot-core::before,
+.robot-core::after {
+    content: "";
+    position: absolute;
+    bottom: 12px;
+    width: 7px;
+    height: 7px;
+    border: 1px solid var(--pixel-dark);
+    background: transparent;
+}
+
+.robot-core::before { left: 13px; }
+.robot-core::after  { right: 13px; }
+
+/* ================================================================
+   23. 数据面板 + 故事节点
+   ================================================================ */
+.mission-kicker {
+    display: inline-block;
+    color: var(--screen-bg);
+    background: var(--pixel-dark);
+    padding: 1px 5px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.ai-note {
+    color: var(--pixel-dark);
+    max-width: 46rem;
+    line-height: 1.55;
+}
+
+.data-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    border: 1px solid var(--pixel-dark);
+    border-bottom: 0;
+}
+
+.data-chip {
+    border: 1px solid var(--pixel-dark);
+    border-top: 0;
+    border-left: 0;
+    background: rgba(0,0,0,0.025);
+    padding: 5px 6px;
+}
+
+.data-chip:last-child {
+    border-right: 0;
+}
+
+.data-chip span {
+    display: block;
+    color: var(--pixel-dim);
+    font-size: 11px;
+}
+
+.data-chip strong {
+    color: var(--pixel-dark);
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.wish-story > .p-6 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    border-top: 1px solid var(--pixel-dark);
+    border-left: 1px solid var(--pixel-dark);
+}
+
+.story-node {
+    min-height: 106px;
+    border: 1px solid var(--pixel-dark);
+    border-top: 0;
+    border-left: 0;
+    background: rgba(0,0,0,0.025);
+    padding: 8px;
+    position: relative;
+}
+
+.story-node::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 7px;
+    height: 7px;
+    background: var(--pixel-dim);
+}
+
+.story-node span {
+    display: inline-block;
+    color: var(--screen-bg);
+    background: var(--pixel-dim);
+    padding: 1px 5px;
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.story-node strong {
+    display: block;
+    color: var(--pixel-dark);
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.story-node p {
+    color: var(--pixel-dark);
+    font-size: 12px;
+    line-height: 1.48;
+}
+
+/* ================================================================
+
+   25. 免责声明
+   ================================================================ */
+.disclaimer {
+    font-size: 10px;
+    color: var(--pixel-dim);
+    text-align: right;
+    margin: 0;
+}
+
+/* ================================================================
+   26. 间距覆盖（压制 Tailwind 的宽松间距）
+   ================================================================ */
+.mb-4, .mb-6, .mb-8 {
+    margin-bottom: 0 !important;
+}
+
+.mt-2, .mt-3, .mt-5, .mt-8 {
+    margin-top: 6px !important;
+}
+
+.py-8 {
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+}
+
+.p-12 {
+    padding: 12px !important;
+}
+
+/* ================================================================
+
+   28. 响应式
+   ================================================================ */
+@media (max-width: 760px) {
+    body {
+        padding: 0;
+    }
+
+    .hardware-device {
+        outline-width: 6px;
+        padding: 12px;
+        max-width: 100%;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* 小屏隐藏右侧物理面板 */
+    .physical-control-panel {
+        display: none;
+    }
+
+    .embedded-lcd {
+        flex: 1;
+    }
+
+    .glass-card .flex.items-center.justify-between {
+        align-items: flex-start;
+        gap: 1rem;
+        flex-direction: column;
+    }
+
+    .glass-card .text-right {
+        text-align: left;
+    }
+
+    .data-strip,
+    .wish-story > .p-6 {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 761px) and (max-width: 1024px) {
+    .hardware-device {
+        max-width: 96vw;
+    }
+
+    .physical-control-panel {
+        width: 220px;
+    }
+
+    .wish-story > .p-6 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* ================================================================
+   29. 打印样式
+   ================================================================ */
+@media print {
+    body {
+        background: white !important;
+    }
+
+    .hardware-device {
+        border: none !important;
+        outline: none !important;
+        box-shadow: none !important;
+        background: white !important;
+    }
+
+    .physical-control-panel {
+        display: none !important;
+    }
+
+    .embedded-lcd {
+        background: white !important;
+        border: none !important;
+        color: black !important;
+    }
+
+    .embedded-lcd::before,
+    .embedded-lcd::after {
+        display: none !important;
+    }
+
+    .glass-card {
+        background: white !important;
+        border-color: #333 !important;
+    }
+
+    .glass-card::before,
+    .glass-card::after {
+        display: none !important;
+    }
+
+    .hardware-btn,
+    .cyber-btn {
+        display: none !important;
+    }
+}
+
+/* ================================================================
+   通用标签组件 (diary, style-pool 共用)
+   ================================================================ */
+.tag-item {
+    background-color: var(--pixel-dim);
+    color: var(--screen-bg);
+    padding: 1px 6px;
+    font-size: 10px;
+    cursor: default;
+}
+
+.tag-item.clickable {
+    cursor: pointer;
+}
+
+.tag-item.clickable:hover {
+    background-color: var(--pixel-dark);
+}
+
+.diary-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}

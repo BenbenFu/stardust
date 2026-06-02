@@ -1,0 +1,423 @@
+/* STARDUST 硬件外壳 */
+
+   4. 硬件设备外壳
+   ================================================================ */
+.hardware-device {
+    background-color: var(--case-bg);
+    border: 6px solid var(--case-border);
+    outline: 14px solid #3c4238;
+    padding: 25px;
+    display: flex;
+    gap: 5px;
+    width: 100%;
+    max-width: 1200px;
+    height: 94vh;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.9);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ================================================================
+   5. 外壳边角固定螺丝
+   ================================================================ */
+.case-screw {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #555c4f;
+    border: 1px solid var(--case-border);
+    border-radius: 50% !important;
+}
+.case-screw::after {
+    content: "";
+    position: absolute;
+    width: 6px;
+    height: 2px;
+    background-color: var(--case-border);
+    top: 3px;
+    left: 1px;
+}
+.screw-tl { top: 6px; left: 6px; transform: rotate(35deg); }
+.screw-tr { top: 6px; right: 6px; transform: rotate(145deg); }
+.screw-bl { bottom: 6px; left: 6px; transform: rotate(75deg); }
+.screw-br { bottom: 6px; right: 6px; transform: rotate(-15deg); }
+
+/* ================================================================
+   6. LCD 屏幕（左面板）
+   ================================================================ */
+.embedded-lcd {
+    flex: 1.2;
+    background-color: var(--screen-bg);
+    border: 5px solid var(--case-border);
+    padding: 15px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 像素网格纹理 */
+.embedded-lcd::before {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* 电压闪烁 + 边缘老化噪点 */
+.embedded-lcd::after {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.12) 100%);
+    z-index: 101;
+    pointer-events: none;
+    animation: micro-flicker 0.4s infinite steps(2);
+}
+
+/* 工业滚动条 */
+.embedded-lcd::-webkit-scrollbar { width: 10px; }
+.embedded-lcd::-webkit-scrollbar-track { background: var(--pixel-dim); }
+.embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dark); border: 2px solid var(--screen-bg); }
+
+.lcd-scrollbar::-webkit-scrollbar { width: var(--scrollbar-width); }
+.lcd-scrollbar::-webkit-scrollbar-track { background: var(--scrollbar-track); border-left: 1px solid var(--pixel-dim); }
+.lcd-scrollbar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border: 1px solid var(--pixel-dark); }
+.lcd-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
+.lcd-scrollbar { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+
+/* ================================================================
+   7. 右侧物理控制面板
+   ================================================================ */
+.physical-control-panel {
+    width: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-left: 4px double var(--case-border);
+    padding-left: 15px;
+    user-select: none;
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 右侧边缘物理提手槽装饰线 */
+.physical-control-panel::after {
+    content: "";
+    position: absolute;
+    right: -12px;
+    top: 10%;
+    bottom: 10%;
+    width: 4px;
+    background-color: var(--case-border);
+    border-left: 1px solid #42483d;
+}
+
+/* 外壳表面印刷白字 */
+.case-print-text {
+    color: var(--case-text);
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-shadow: -1px -1px 0 #121411;
+    margin-bottom: 2px;
+    text-align: center;
+    width: 100%;
+}
+
+/* 面板分隔线 */
+.panel-divider {
+    width: 100%;
+    height: 2px;
+    background-color: var(--case-border);
+    margin: 10px 0;
+    border-bottom: 1px solid #3c4238;
+}
+
+/* ================================================================
+   8. 散热格栅
+   ================================================================ */
+.ventilation-slits {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 10px;
+}
+.slit {
+    width: 100%;
+    height: 4px;
+    background-color: var(--case-border);
+    border-bottom: 1px solid #42483d;
+}
+
+/* ================================================================
+   9. 波段开关（巨型旋钮）
+   ================================================================ */
+.knob-housing {
+    position: relative;
+    width: 150px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.case-scale {
+    position: absolute;
+    font-size: 10px;
+    color: #555c4f;
+    top: 50%;
+    left: 50%;
+    cursor: pointer;
+}
+.c-pos-1 { transform: translate(-40px, -56px); }
+.c-pos-2 { transform: translate(-50%, -64px); }
+.c-pos-3 { transform: translate( 38px, -56px); }
+
+.physical-knob {
+    width: 100px;
+    height: 100px;
+    cursor: pointer;
+    transform: rotate(-45deg);
+    transform-origin: center;
+    transition: transform 0.25s ease;
+}
+
+/* ================================================================
+   10. 双调节旋钮组（音量 + 亮度）
+   ================================================================ */
+.dual-potentiometer-row {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 5px 0;
+}
+.sub-knob-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 45%;
+}
+.sub-knob-dial {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sub-knob-dial::before {
+    content: "";
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border: 1px dashed #42483d;
+    border-radius: 50% !important;
+}
+.potentiometer-axis {
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    transform: rotate(-30deg);
+}
+
+/* ================================================================
+   11. 圆形扬声器网罩
+   ================================================================ */
+.circular-speaker-grille {
+    width: 120px;
+    height: 120px;
+    background-color: var(--case-border);
+    border: 2px solid #3c4238;
+    border-radius: 50% !important;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.6);
+}
+.circular-mesh {
+    width: 100%;
+    height: 100%;
+    border-radius: 50% !important;
+    background-image: radial-gradient(var(--case-bg) 35%, transparent 38%);
+    background-size: 6px 6px;
+    background-repeat: repeat;
+}
+
+/* ================================================================
+   12. 电源模块（闸刀开关 + LED）
+   ================================================================ */
+.power-module {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    width: 100%;
+    padding: 4px 10px;
+    background-color: #1e201c;
+    border: 2px solid var(--case-border);
+}
+.toggle-switch {
+    width: 24px;
+    height: 34px;
+    background-color: #121310;
+    border: 1px solid #3c4238;
+    position: relative;
+    cursor: pointer;
+}
+.toggle-switch::after {
+    content: "";
+    position: absolute;
+    width: 12px;
+    height: 14px;
+    background-color: #838b7d;
+    border: 2px solid #121310;
+    top: 2px;
+    left: 5px;
+    box-shadow: 0 4px 0 #4c5246;
+}
+.hardware-led-lamp {
+    width: 10px;
+    height: 10px;
+    background-color: #9e782f;
+    border: 2px solid #121310;
+    box-shadow: 0 0 4px #9e782f;
+    animation: led-flicker 2s infinite alternate;
+}
+@keyframes led-flicker {
+    0% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* ================================================================
+   13. 万用表接线柱（香蕉插头槽）
+   ================================================================ */
+.banana-terminals-row {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 5px 10px;
+}
+.terminal-post {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 8px;
+    color: #4b5246;
+}
+.jack-hole {
+    width: 22px;
+    height: 22px;
+    border-radius: 50% !important;
+    border: 2px solid var(--case-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: bold;
+    color: #121310;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.8);
+}
+.jack-red  { background-color: #59251d; border-color: #7a3126; color: #8f341d; }
+.jack-black { background-color: #1a1c19; }
+
+/* ================================================================
+   14. Reset 键 + 合格证贴纸
+   ================================================================ */
+.reset-and-info {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+}
+.reset-button-hole {
+    width: 26px;
+    height: 26px;
+    background-color: #121310;
+    border: 2px solid var(--case-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.reset-red-dot {
+    width: 12px;
+    height: 12px;
+    background-color: #6e251a;
+    border: 1px solid #121310;
+}
+.case-sticker {
+    width: 100%;
+    background-color: #9c9475;
+    border: 1px solid #5a5542;
+    color: #2b281e;
+    font-size: 8px;
+    padding: 4px;
+    line-height: 1.2;
+    margin-top: auto;
+    position: relative;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
+}
+.case-sticker::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent var(--case-bg) var(--case-bg) transparent;
+}
+
+/* ================================================================
+
+   24. 纸胶带贴纸（外壳标准版 — absolute 定位）
+   ================================================================ */
+.repair-tape {
+    position: absolute;
+    background-color: var(--tape-bg);
+    border-left: 1px solid rgba(0,0,0,0.1);
+    border-right: 1px solid rgba(0,0,0,0.1);
+    color: #403d30;
+    padding: 8px;
+    font-size: 11px;
+    width: 170px;
+    right: 225px;
+    bottom: 590px;
+    transform: rotate(-2deg);
+    box-shadow: 2px 4px 10px rgba(0,0,0,0.2);
+    z-index: 105;
+    line-height: 1.45;
+}
+
+.repair-tape::before,
+.repair-tape::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-size: 4px 4px;
+}
+
+.repair-tape::before {
+    top: -4px;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--tape-bg) 50%),
+        linear-gradient(-45deg, transparent 50%, var(--tape-bg) 50%);
+}
+
+.repair-tape::after {
+    bottom: -4px;
+    background-image:
+        linear-gradient(135deg, transparent 50%, var(--tape-bg) 50%),
+        linear-gradient(-135deg, transparent 50%, var(--tape-bg) 50%);
+}
+
+/* ================================================================

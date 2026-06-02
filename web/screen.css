@@ -1,0 +1,136 @@
+/* STARDUST LCD屏幕 & 屏内组件 */
+
+   6. LCD 屏幕（左面板）
+   ================================================================ */
+.embedded-lcd {
+    flex: 1.2;
+    background-color: var(--screen-bg);
+    border: 5px solid var(--case-border);
+    padding: 15px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 像素网格纹理 */
+.embedded-lcd::before {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+    background-size: 3px 3px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+/* 电压闪烁 + 边缘老化噪点 */
+.embedded-lcd::after {
+    content: " ";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.12) 100%);
+    z-index: 101;
+    pointer-events: none;
+    animation: micro-flicker 0.4s infinite steps(2);
+}
+
+/* 工业滚动条 */
+.embedded-lcd::-webkit-scrollbar { width: 10px; }
+.embedded-lcd::-webkit-scrollbar-track { background: var(--pixel-dim); }
+.embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dark); border: 2px solid var(--screen-bg); }
+
+.lcd-scrollbar::-webkit-scrollbar { width: var(--scrollbar-width); }
+.lcd-scrollbar::-webkit-scrollbar-track { background: var(--scrollbar-track); border-left: 1px solid var(--pixel-dim); }
+.lcd-scrollbar::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border: 1px solid var(--pixel-dark); }
+.lcd-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
+.lcd-scrollbar { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+
+/* ================================================================
+
+   15. 屏幕内公共组件
+   ================================================================ */
+
+/* 系统状态栏 */
+.screen-header-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    font-size: 11px;
+    border-bottom: 1px solid var(--pixel-dark);
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+/* 硬件警告闪烁文字 */
+.alert-text {
+    background-color: var(--pixel-dark);
+    color: var(--screen-bg);
+    padding: 0 3px;
+    animation: hardware-blink 1s infinite steps(1);
+}
+
+/* 波段指示灯 */
+.band-indicator {
+    border: 2px solid var(--pixel-dark);
+    padding: 6px;
+    margin-bottom: 15px;
+    background-color: rgba(0,0,0,0.02);
+}
+.band-label {
+    font-size: 10px;
+    color: var(--pixel-dim);
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+}
+.band-matrix {
+    display: flex;
+    border: 1px solid var(--pixel-dark);
+    padding: 2px;
+}
+.segment {
+    flex: 1;
+    height: 18px;
+    margin: 0 1px;
+    border: 1px solid var(--pixel-dim);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--pixel-dim);
+}
+.segment.active {
+    background-color: var(--pixel-dark);
+    color: var(--screen-bg);
+    border-color: var(--pixel-dark);
+}
+
+/* 烧屏残影 */
+.burn-in-ghost {
+    position: absolute;
+    color: rgba(0, 0, 0, 0.05);
+    user-select: none;
+    pointer-events: none;
+    font-family: sans-serif;
+}
+
+/* ================================================================
+
+   27. 动画
+   ================================================================ */
+@keyframes micro-flicker {
+    0%   { opacity: 0.96; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.98; }
+}
+
+@keyframes hardware-blink {
+    0%, 49%  { background-color: var(--pixel-dark); color: var(--screen-bg); }
+    50%, 100% { background-color: transparent; color: var(--pixel-alert); }
+}
+
+/* ================================================================
