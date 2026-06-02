@@ -1,18 +1,7 @@
-/* STARDUST LCD屏幕 & 屏内组件 */
-
-   6. LCD 屏幕（左面板）
+/* ================================================================
+   STARDUST LCD屏幕 & 屏内组件 — 6. LCD屏幕内公共样式
+   (注意: .embedded-lcd 主体定义在 case.css 中)
    ================================================================ */
-.embedded-lcd {
-    flex: 1.2;
-    background-color: var(--screen-bg);
-    border: 5px solid var(--case-border);
-    padding: 15px;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
-}
 
 /* 像素网格纹理 */
 .embedded-lcd::before {
