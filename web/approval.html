@@ -446,6 +446,10 @@ document.addEventListener('DOMContentLoaded', async function() {
                 </div>
             </div>
         `;
+    } else {
+        document.getElementById('approveBtn').addEventListener('click', () => updateStatus('approved'));
+        document.getElementById('rejectBtn').addEventListener('click', () => updateStatus('rejected'));
+        document.getElementById('holdBtn').addEventListener('click', () => updateStatus('pending'));
     }
 
     document.getElementById('loading').classList.add('hidden');
@@ -471,10 +475,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         alert('回应已写入愿望单。');
         location.reload();
     }
-
-    document.getElementById('approveBtn').addEventListener('click', () => updateStatus('approved'));
-    document.getElementById('rejectBtn').addEventListener('click', () => updateStatus('rejected'));
-    document.getElementById('holdBtn').addEventListener('click', () => updateStatus('pending'));
 });
 </script>
 <script>
