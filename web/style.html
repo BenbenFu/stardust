@@ -180,6 +180,158 @@
         }
         .mb-4 { margin-bottom: 12px; }
         .mb-6 { margin-bottom: 18px; }
+
+        .gacha-app {
+            display: grid;
+            grid-template-columns: minmax(260px, 0.92fr) minmax(260px, 1.08fr);
+            gap: 14px;
+            align-items: stretch;
+        }
+        .gacha-stage {
+            border: 2px solid var(--pixel-dark);
+            background:
+                linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.032) 1px, transparent 1px),
+                rgba(0,0,0,0.025);
+            background-size: 4px 4px, 4px 4px, auto;
+            padding: 10px;
+            position: relative;
+            min-height: 300px;
+        }
+        .gacha-stage::before {
+            content: "CAPSULE_STYLE_VENDOR / YM2K_LCD_APP";
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            color: rgba(30, 38, 34, 0.35);
+            font-size: 9px;
+            pointer-events: none;
+        }
+        .gacha-svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin-top: 8px;
+        }
+        .gacha-shell,
+        .gacha-line,
+        .gacha-detail {
+            fill: none;
+            stroke: var(--pixel-dark);
+            stroke-width: 3;
+            vector-effect: non-scaling-stroke;
+        }
+        .gacha-fill {
+            fill: rgba(30, 38, 34, 0.08);
+            stroke: var(--pixel-dark);
+            stroke-width: 3;
+            vector-effect: non-scaling-stroke;
+        }
+        .gacha-dark {
+            fill: var(--pixel-dark);
+        }
+        .gacha-dim {
+            fill: var(--pixel-dim);
+        }
+        .gacha-capsule {
+            transform-origin: 210px 210px;
+        }
+        .gacha-capsule.is-selected {
+            filter: drop-shadow(0 0 2px rgba(30, 38, 34, 0.55));
+        }
+        .gacha-knob {
+            transform-origin: 210px 262px;
+        }
+        .gacha-prize {
+            transform-origin: 210px 322px;
+            opacity: 0.22;
+        }
+        .gacha-machine.is-spinning .gacha-knob {
+            animation: gacha-knob-turn 0.58s steps(7) 1;
+        }
+        .gacha-machine.is-spinning .gacha-capsule {
+            animation: gacha-capsule-shuffle 0.58s steps(4) 1;
+        }
+        .gacha-machine.is-dispensing .gacha-prize {
+            animation: gacha-prize-drop 0.72s steps(6) 1 forwards;
+        }
+        .gacha-status-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border: 1px solid var(--pixel-dark);
+            margin-top: 8px;
+            font-size: 10px;
+        }
+        .gacha-status-panel div {
+            border-right: 1px solid var(--pixel-dark);
+            border-bottom: 1px solid var(--pixel-dark);
+            padding: 4px 5px;
+            min-height: 22px;
+        }
+        .gacha-status-panel div:nth-child(2n) { border-right: 0; }
+        .gacha-status-panel div:nth-last-child(-n+2) { border-bottom: 0; }
+        .gacha-copy {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 10px;
+            min-height: 300px;
+        }
+        .gacha-command-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .gacha-command-row .hardware-btn {
+            width: 100%;
+            padding-left: 6px;
+            padding-right: 6px;
+            white-space: nowrap;
+        }
+        .result-container {
+            min-height: 176px;
+        }
+        .result-container.is-awarded {
+            border-style: solid;
+            box-shadow: inset 0 0 0 2px rgba(30, 38, 34, 0.12);
+        }
+        .gacha-ticket {
+            border-top: 1px dashed var(--pixel-dim);
+            padding-top: 8px;
+            font-size: 10px;
+            color: var(--pixel-dim);
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        @keyframes gacha-knob-turn {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(320deg); }
+        }
+        @keyframes gacha-capsule-shuffle {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(5px, -3px) rotate(8deg); }
+            50% { transform: translate(-5px, 2px) rotate(-10deg); }
+            75% { transform: translate(3px, 4px) rotate(6deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        @keyframes gacha-prize-drop {
+            0% { opacity: 0; transform: translateY(-58px) scale(0.72); }
+            45% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @media (max-width: 760px) {
+            .title-card-header,
+            .gacha-app {
+                grid-template-columns: 1fr;
+            }
+            .title-card-header {
+                display: grid;
+            }
+            .gacha-command-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -247,17 +399,56 @@
             <!-- 操作区 -->
             <div class="section-card">
                 <div class="section-card-header">
-                    <h3>[ QUICK_OPERATIONS ]</h3>
-                    <p class="ai-note">&gt;&gt; 随机抽取或手动选择一种写作风格约束。</p>
+                    <h3>[ CAPSULE_STYLE_VENDOR ]</h3>
+                    <p class="ai-note">&gt;&gt; Insert one intention token. Rotate actuator. Receive one writing constraint capsule.</p>
                 </div>
                 <div class="section-card-body">
-                    <div class="diary-controls" style="margin-bottom:15px;">
-                        <button class="hardware-btn btn-primary" id="random-btn">[ RANDOM_PICK ]</button>
-                        <button class="hardware-btn btn-secondary" id="copy-btn" disabled>[ COPY_STYLE ]</button>
-                        <button class="hardware-btn btn-secondary" id="add-style-btn">[ ADD_STYLE ]</button>
-                    </div>
-                    <div class="result-container" id="result-container">
-                        <p class="result-placeholder">点击上方按钮抽取一个风格</p>
+                    <div class="gacha-app">
+                        <div class="gacha-stage">
+                            <svg class="gacha-svg gacha-machine" id="gacha-machine" viewBox="0 0 420 360" role="img" aria-label="Style capsule vending machine">
+                                <rect class="gacha-fill" x="72" y="30" width="256" height="304"/>
+                                <rect class="gacha-shell" x="94" y="52" width="212" height="150"/>
+                                <path class="gacha-line" d="M112 92h268M42 92h54M104 214h212M112 304h196"/>
+                                <circle class="gacha-fill gacha-capsule" cx="146" cy="92" r="20"/>
+                                <circle class="gacha-fill gacha-capsule" cx="205" cy="82" r="18"/>
+                                <circle class="gacha-fill gacha-capsule" cx="252" cy="112" r="22"/>
+                                <circle class="gacha-fill gacha-capsule" cx="174" cy="142" r="19"/>
+                                <circle class="gacha-fill gacha-capsule" cx="230" cy="154" r="17"/>
+                                <path class="gacha-detail" d="M104 52l22 150M306 52l-22 150"/>
+                                <g class="gacha-knob">
+                                    <circle class="gacha-fill" cx="210" cy="262" r="39"/>
+                                    <circle class="gacha-dark" cx="210" cy="262" r="9"/>
+                                    <path class="gacha-line" d="M210 224v26M210 276v26M172 262h26M224 262h26"/>
+                                </g>
+                                <rect class="gacha-fill" x="142" y="310" width="136" height="28"/>
+                                <g class="gacha-prize" id="gacha-prize">
+                                    <path class="gacha-fill" d="M176 294h68l18 15v29h-104v-29z"/>
+                                    <path class="gacha-line" d="M176 309h86M184 324h44"/>
+                                </g>
+                                <text x="114" y="238" class="gacha-dark" style="font-size:13px;">STYLE CAPSULE OUT</text>
+                                <text x="112" y="326" class="gacha-dark" id="gacha-label" style="font-size:11px;">NO CAPSULE</text>
+                            </svg>
+                            <div class="gacha-status-panel">
+                                <div>POOL: <span id="gacha-pool-count">0</span></div>
+                                <div>STATE: <span id="gacha-state">IDLE</span></div>
+                                <div>CAPSULE: <span id="gacha-current">NONE</span></div>
+                                <div>MODE: MANUAL/RNG</div>
+                            </div>
+                        </div>
+                        <div class="gacha-copy">
+                            <div class="gacha-command-row">
+                                <button class="hardware-btn btn-primary" id="random-btn">[ TURN_KNOB ]</button>
+                                <button class="hardware-btn btn-secondary" id="copy-btn" disabled>[ COPY_TICKET ]</button>
+                                <button class="hardware-btn btn-secondary" id="add-style-btn">[ LOAD_CAPSULE ]</button>
+                            </div>
+                            <div class="result-container" id="result-container">
+                                <p class="result-placeholder">WAITING FOR CAPSULE_DISPENSE...</p>
+                            </div>
+                            <div class="gacha-ticket">
+                                <span>PRINT_SLOT: STYLE_CONSTRAINT</span>
+                                <span id="gacha-ticket-id">TICKET: ----</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -440,6 +631,7 @@
     const randomBtn = document.getElementById('random-btn');
     const copyBtn = document.getElementById('copy-btn');
     let resultContainer, addStyleBtn, addModal, closeModalBtn, cancelBtn, addForm, styleNameInput, styleDescInput, styleCategoryInput;
+    let gachaMachine, gachaPoolCount, gachaState, gachaCurrent, gachaLabel, gachaTicketId;
 
     document.addEventListener('DOMContentLoaded', async () => {
         try {
@@ -452,6 +644,12 @@
             styleNameInput = document.getElementById('style-name');
             styleDescInput = document.getElementById('style-desc');
             styleCategoryInput = document.getElementById('style-category');
+            gachaMachine = document.getElementById('gacha-machine');
+            gachaPoolCount = document.getElementById('gacha-pool-count');
+            gachaState = document.getElementById('gacha-state');
+            gachaCurrent = document.getElementById('gacha-current');
+            gachaLabel = document.getElementById('gacha-label');
+            gachaTicketId = document.getElementById('gacha-ticket-id');
             
             addModal.classList.add('hidden');
             const authed = await checkAuth();
@@ -496,6 +694,7 @@
     function renderStyles() {
         const count = styles.length;
         styleCountDisplay.textContent = count;
+        if (gachaPoolCount) gachaPoolCount.textContent = count;
         
         stylesContainer.innerHTML = '';
         
@@ -554,12 +753,18 @@
 
     function selectStyle(style) {
         currentStyle = style;
+        const capsuleName = style.name.length > 18 ? `${style.name.slice(0, 18)}...` : style.name;
         resultContainer.innerHTML = `
             <div>
                 <div class="result-tag">${escapeHtml(style.name)}</div>
                 <p class="result-desc">${escapeHtml(style.desc)}</p>
             </div>
         `;
+        resultContainer.classList.add('is-awarded');
+        if (gachaCurrent) gachaCurrent.textContent = capsuleName;
+        if (gachaLabel) gachaLabel.textContent = capsuleName;
+        if (gachaTicketId) gachaTicketId.textContent = `TICKET: ${String(style.id || 'MANUAL').padStart(4, '0')}`;
+        if (gachaState) gachaState.textContent = 'AWARDED';
         copyBtn.disabled = false;
     }
 
@@ -570,12 +775,24 @@
         }
         
         randomBtn.classList.add('animate-pulse');
+        if (gachaMachine) {
+            gachaMachine.classList.remove('is-spinning', 'is-dispensing');
+            void gachaMachine.offsetWidth;
+            gachaMachine.classList.add('is-spinning');
+        }
+        if (gachaState) gachaState.textContent = 'SPINNING';
         setTimeout(() => {
             randomBtn.classList.remove('animate-pulse');
+            if (gachaMachine) {
+                gachaMachine.classList.remove('is-spinning');
+                gachaMachine.classList.add('is-dispensing');
+            }
         }, 300);
         
         const randomIndex = Math.floor(Math.random() * styles.length);
-        selectStyle(styles[randomIndex]);
+        setTimeout(() => {
+            selectStyle(styles[randomIndex]);
+        }, 520);
     }
 
     function copyStyle() {
