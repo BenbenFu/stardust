@@ -381,6 +381,23 @@
         <div class="modal-body">
             <form id="add-form">
                 <div class="mb-4">
+                    <label class="form-label-wide">分类</label>
+                    <select id="style-category" class="form-input-wide" required>
+                        <option value="">-- 选择分类 --</option>
+                        <option value="code">代码编程</option>
+                        <option value="tech">技术文档</option>
+                        <option value="work">工作办公</option>
+                        <option value="life">生活记录</option>
+                        <option value="social">社交网络</option>
+                        <option value="creative">创意写作</option>
+                        <option value="media">媒体格式</option>
+                        <option value="roleplay">角色扮演</option>
+                        <option value="fiction">小说类型</option>
+                        <option value="format">格式规范</option>
+                        <option value="misc">其他</option>
+                    </select>
+                </div>
+                <div class="mb-4">
                     <label class="form-label-wide">风格名称</label>
                     <input type="text" id="style-name" class="form-input-wide" placeholder="例如：Shell命令行" required>
                 </div>
@@ -397,8 +414,10 @@
     </div>
 </div>
 
-<script>
-    // 分类定义
+<script type="module">
+    import { supabase, checkAuth } from './script.js';
+
+    // 分类定义（从代码读取）
     const categories = {
         code: { name: "代码编程", color: "#2d5a27" },
         tech: { name: "技术文档", color: "#275a5a" },
@@ -413,308 +432,6 @@
         misc: { name: "其他", color: "#555555" }
     };
 
-    // 预设风格库 - 专门针对AI日记写作优化
-    const defaultStyles = [
-        { name: "Shell命令行", desc: "请用Linux Shell命令行的格式写日记，每条记录以$开头，使用命令和输出的形式表达今天发生的事情", category: "code" },
-        { name: "汇编语言", desc: "请用x86汇编语言的语法写日记，使用MOV、ADD、JMP等指令和寄存器来描述你的一天", category: "code" },
-        { name: "C语言代码", desc: "请用C语言代码的格式写日记，包含main函数、变量定义、注释和流程控制语句", category: "code" },
-        { name: "Python脚本", desc: "请用Python脚本的格式写日记，使用函数、类、注释和print语句来记录今天的经历", category: "code" },
-        { name: "JavaScript代码", desc: "请用JavaScript代码的格式写日记，使用变量、函数、事件和控制台输出来记录", category: "code" },
-        { name: "TypeScript接口", desc: "请用TypeScript接口的格式写日记，定义今天发生的所有事件的类型和结构", category: "code" },
-        { name: "SQL查询", desc: "请用SQL查询语句的格式写日记，使用SELECT、INSERT、UPDATE、WHERE等子句来描述事件", category: "code" },
-        { name: "JSON数据", desc: "请用严格的JSON格式写日记，使用键值对、数组和嵌套对象来结构化记录今天的所有事情", category: "tech" },
-        { name: "XML文档", desc: "请用XML文档的格式写日记，使用标签、属性和嵌套元素来组织内容", category: "tech" },
-        { name: "CSV表格", desc: "请用CSV逗号分隔值的格式写日记，第一行是表头，后面每行是一条记录", category: "tech" },
-        { name: "YAML配置", desc: "请用YAML配置文件的格式写日记，使用缩进、冒号和短横线来组织层级结构", category: "tech" },
-        { name: "INI配置", desc: "请用INI配置文件的格式写日记，使用[节]和键=值的形式组织内容", category: "tech" },
-        { name: "Dockerfile", desc: "请用Dockerfile的语法写日记，使用FROM、RUN、COPY、CMD等指令来构建你的一天", category: "tech" },
-        { name: "Nginx配置", desc: "请用Nginx配置文件的格式写日记，使用块、指令和分号来组织内容", category: "tech" },
-        { name: "Makefile", desc: "请用Makefile的格式写日记，使用目标、依赖和命令来构建你的一天", category: "tech" },
-        { name: "Git提交日志", desc: "请用Git提交日志的格式写日记，每条记录包含简短的标题和详细的描述，使用feat、fix、docs等前缀", category: "tech" },
-        { name: "系统日志", desc: "请用Linux系统日志的格式写日记，包含时间戳、主机名、进程名和日志级别", category: "tech" },
-        { name: "API响应", desc: "请用REST API响应的格式写日记，包含状态码、消息和数据字段", category: "tech" },
-        { name: "TCP数据包", desc: "请用TCP数据包的格式写日记，包含源地址、目的地址、序列号和数据载荷", category: "tech" },
-        { name: "会议纪要", desc: "请用会议纪要的格式写日记，包含会议时间、地点、参会人员、议题和决议", category: "work" },
-        { name: "新闻报道", desc: "请用新闻报道的格式写日记，包含标题、导语、正文和结尾，遵循倒金字塔结构", category: "work" },
-        { name: "产品说明书", desc: "请用产品说明书的格式写日记，介绍你今天的功能、使用方法和注意事项", category: "work" },
-        { name: "合同协议", desc: "请用合同协议的格式写日记，包含甲方乙方、权利义务、违约责任和生效日期", category: "work" },
-        { name: "法律判决书", desc: "请用法律判决书的格式写日记，包含原告被告、事实认定、判决理由和判决结果", category: "work" },
-        { name: "病历记录", desc: "请用医院病历记录的格式写日记，包含主诉、现病史、体格检查和诊断意见", category: "work" },
-        { name: "快递单", desc: "请用快递单的格式写日记，包含寄件人、收件人、物品名称、重量和运费", category: "work" },
-        { name: "发票", desc: "请用发票的格式写日记，包含发票号码、日期、商品名称、数量、单价和金额", category: "work" },
-        { name: "收据", desc: "请用收据的格式写日记，确认今天收到了什么，付出了什么", category: "work" },
-        { name: "请假条", desc: "请用请假条的格式写日记，向未来的自己请假，说明原因和时间", category: "work" },
-        { name: "求职简历", desc: "请用求职简历的格式写日记，列出今天的个人信息、工作经历和技能", category: "work" },
-        { name: "招聘启事", desc: "请用招聘启事的格式写日记，招聘明天的自己，列出岗位职责和要求", category: "work" },
-        { name: "餐厅菜单", desc: "请用餐厅菜单的格式写日记，将今天发生的事情分类为前菜、主菜、甜点和饮品", category: "life" },
-        { name: "购物清单", desc: "请用购物清单的格式写日记，列出今天完成的、未完成的和需要记住的事情", category: "life" },
-        { name: "待办事项", desc: "请用待办事项列表的格式写日记，使用复选框标记已完成和未完成的任务", category: "life" },
-        { name: "菜谱", desc: "请用菜谱的格式写日记，包含食材、调料、步骤和烹饪技巧", category: "life" },
-        { name: "游戏攻略", desc: "请用游戏攻略的格式写日记，描述今天的任务、关卡、获得的道具和遇到的敌人", category: "life" },
-        { name: "考试试卷", desc: "请用考试试卷的格式写日记，包含选择题、填空题、简答题和论述题", category: "life" },
-        { name: "调查问卷", desc: "请用调查问卷的格式写日记，提出关于今天的问题并给出自己的答案", category: "life" },
-        { name: "超市价签", desc: "请用超市价签的格式写日记，每件事情都标注价格、产地、保质期和促销信息", category: "life" },
-        { name: "地铁报站", desc: "请用地铁报站的格式写日记，每段都以'前方到站'开头，描述站点和换乘信息", category: "life" },
-        { name: "天气预报", desc: "请用天气预报的格式写日记，描述今天的心情、状态和未来几天的预期", category: "life" },
-        { name: "邮件", desc: "请用电子邮件的格式写日记，包含发件人、收件人、主题、正文和签名", category: "social" },
-        { name: "微博", desc: "请用微博的格式写日记，不超过140字，可以带话题标签和表情", category: "social" },
-        { name: "朋友圈", desc: "请用微信朋友圈的格式写日记，有文字、图片描述、点赞和评论", category: "social" },
-        { name: "小红书笔记", desc: "请用小红书笔记的格式写日记，有吸引人的标题、emoji和标签", category: "social" },
-        { name: "抖音文案", desc: "请用抖音短视频文案的格式写日记，简短、有节奏感、适合口播", category: "social" },
-        { name: "B站弹幕", desc: "请用B站弹幕的格式写日记，每条不超过20字，用不同颜色表示不同情绪", category: "social" },
-        { name: "论坛帖子", desc: "请用论坛帖子的格式写日记，有楼主、楼层、回复和引用", category: "social" },
-        { name: "博客文章", desc: "请用个人博客文章的格式写日记，有标题、日期、正文和标签", category: "social" },
-        { name: "微信聊天记录", desc: "请用微信聊天记录的格式写日记，包含头像、昵称、消息内容和时间", category: "social" },
-        { name: "短信聊天记录", desc: "请用手机短信聊天记录的格式写日记，区分发送方和接收方，有时间戳", category: "social" },
-        { name: "歌词", desc: "请用歌词的格式写日记，有主歌、副歌、桥段，押韵且有节奏感", category: "creative" },
-        { name: "乐谱", desc: "请用简谱的格式写日记，用数字和符号表示今天的情绪高低和节奏", category: "creative" },
-        { name: "电影字幕", desc: "请用电影字幕的格式写日记，每条字幕都有时间码，包含对话和场景描述", category: "creative" },
-        { name: "梦境", desc: "请用梦境的风格写日记，逻辑混乱、时空跳跃、意象模糊，充满超现实的元素", category: "creative" },
-        { name: "呓语", desc: "请用梦呓的风格写日记，断断续续、语无伦次、自言自语，没有完整的句子", category: "creative" },
-        { name: "乱码", desc: "请用乱码的风格写日记，混合使用各种字符、符号和文字，制造出破碎、混乱的感觉", category: "creative" },
-        { name: "电报", desc: "请用电报的风格写日记，语言极其简洁，省略所有虚词，只用关键词表达", category: "creative" },
-        { name: "获奖感言", desc: "请用获奖感言的格式写日记，感谢今天帮助过你的人和事", category: "creative" },
-        { name: "颁奖词", desc: "请用颁奖词的格式写日记，为今天的自己写一段颁奖词", category: "creative" },
-        { name: "自我介绍", desc: "请用自我介绍的格式写日记，向陌生人介绍今天的自己", category: "creative" },
-        { name: "悼词", desc: "请用悼词的格式写日记，悼念今天逝去的某个东西或某种状态", category: "creative" },
-        { name: "墓志铭", desc: "请用墓志铭的格式写日记，用一句话总结今天的一生", category: "creative" },
-        { name: "海报", desc: "请用海报的格式写日记，有大标题、副标题、图片说明和联系方式", category: "media" },
-        { name: "传单", desc: "请用传单的格式写日记，内容简洁、有吸引力，突出重点信息", category: "media" },
-        { name: "广告", desc: "请用广告的格式写日记，有口号、卖点、优惠信息和行动号召", category: "media" },
-        { name: "黑板报", desc: "请用黑板报的格式写日记，有标题、插图、花边和不同字体的文字", category: "media" },
-        { name: "手抄报", desc: "请用手抄报的格式写日记，有标题、插图、边框和不同板块的内容", category: "media" },
-        { name: "便签纸", desc: "请用便签纸的格式写日记，每条记录都很短，写在不同颜色的便签上", category: "media" },
-        { name: "便利贴", desc: "请用便利贴的格式写日记，内容简短、醒目，用于提醒重要事情", category: "media" },
-        { name: "索引卡", desc: "请用索引卡的格式写日记，每张卡片记录一件事情，有编号和关键词", category: "media" },
-        { name: "目录", desc: "请用书籍目录的格式写日记，使用章节号和标题，标注页码", category: "media" },
-        { name: "脚注", desc: "请用脚注的格式写日记，所有内容都以数字上标开头，放在页面底部", category: "media" },
-        { name: "参考文献", desc: "请用学术论文参考文献的格式写日记，每条记录都有作者、标题、出处和年份", category: "media" },
-        { name: "索引", desc: "请用书籍索引的格式写日记，按字母顺序列出今天出现的所有关键词和页码", category: "media" },
-        { name: "维基百科条目", desc: "请用维基百科条目的格式写日记，客观、中立、有参考文献", category: "misc" },
-        { name: "百度百科词条", desc: "请用百度百科词条的格式写日记，包含基本信息、人物经历、主要成就", category: "misc" },
-        { name: "字典词条", desc: "请用字典词条的格式写日记，包含拼音、释义、例句和用法", category: "misc" },
-        { name: "成语词典", desc: "请用成语词典的格式写日记，每个事件都用一个成语概括，并解释出处和含义", category: "misc" },
-        { name: "说明书目录", desc: "请用说明书目录的格式写日记，使用多级编号列出今天的所有章节", category: "misc" },
-        { name: "HTML页面", desc: "请用HTML标签的格式写日记，使用<div>、<p>、<h1>等标签来组织内容", category: "misc" },
-        { name: "CSS样式表", desc: "请用CSS样式表的格式写日记，使用选择器、属性和值来描述今天的状态", category: "misc" },
-        { name: "Markdown文档", desc: "请用标准Markdown格式写日记，使用标题、列表、代码块、引用和链接来排版", category: "misc" },
-        { name: "错误日志", desc: "请用程序错误日志的格式写日记，包含错误级别、时间、堆栈信息和错误描述", category: "misc" },
-        { name: "正则表达式", desc: "请用正则表达式的语法写日记，使用元字符、量词和分组来描述今天的事件", category: "misc" },
-        { name: "GraphQL查询", desc: "请用GraphQL查询语言的格式写日记，指定你想要获取的今天的信息字段", category: "misc" },
-        { name: "gRPC协议", desc: "请用gRPC协议定义的格式写日记，使用message和service来描述今天的交互", category: "misc" },
-        { name: "CMakeLists", desc: "请用CMakeLists.txt的格式写日记，使用cmake命令和变量来描述今天的流程", category: "misc" },
-        { name: "Kubernetes YAML", desc: "请用Kubernetes资源定义的格式写日记，使用apiVersion、kind、spec等字段", category: "misc" },
-        { name: "Terraform配置", desc: "请用Terraform配置语言的格式写日记，使用resource和variable来定义今天的资源", category: "misc" },
-        { name: "Ansible Playbook", desc: "请用Ansible Playbook的格式写日记，使用tasks、handlers和modules来描述今天的任务", category: "misc" },
-        { name: "药品说明书", desc: "请用药品说明书的格式写日记，包含成分、性状、适应症、用法用量和不良反应", category: "misc" },
-        { name: "感谢信", desc: "请用感谢信的格式写日记，感谢今天遇到的人和发生的好事", category: "misc" },
-        { name: "检讨书", desc: "请用检讨书的格式写日记，反思今天的错误和不足，提出改进措施", category: "misc" },
-        { name: "辞职信", desc: "请用辞职信的格式写日记，辞去今天的某个身份或角色", category: "misc" },
-        { name: "电话通话记录", desc: "请用电话通话记录的格式写日记，包含通话时间、对方号码、通话时长和内容摘要", category: "misc" },
-        { name: "心电图", desc: "请用心电图的格式写日记，用横线和竖线表示时间和心情的波动", category: "misc" },
-        { name: "脑电波记录", desc: "请用脑电波记录的格式写日记，用不同频率的波形表示不同的思维活动", category: "misc" },
-        { name: "股票K线图", desc: "请用股票K线图的格式写日记，用开盘价、收盘价、最高价、最低价描述今天的状态", category: "misc" },
-        { name: "航班时刻表", desc: "请用航班时刻表的格式写日记，列出今天每个时间段的航班号、目的地和状态", category: "misc" },
-        { name: "火车时刻表", desc: "请用火车时刻表的格式写日记，包含车次、站点、到达时间、发车时间和停留时间", category: "misc" },
-        { name: "密码", desc: "请用密码的风格写日记，使用简单的替换密码或移位密码来加密内容", category: "creative" },
-        { name: "藏头诗", desc: "请用藏头诗的格式写日记，每句的第一个字连起来组成一个有意义的短语", category: "creative" },
-        { name: "回文诗", desc: "请用回文诗的格式写日记，正读和反读都能通顺", category: "creative" },
-        { name: "数字诗", desc: "请用数字诗的格式写日记，每句都包含一个数字，从一到十依次排列", category: "creative" },
-        { name: "绕口令", desc: "请用绕口令的风格写日记，使用大量的谐音字和叠字，读起来拗口但有趣", category: "creative" },
-        { name: "谜语", desc: "请用谜语的格式写日记，描述今天发生的事情但不直接说出答案", category: "creative" },
-        { name: "对联", desc: "请用对联的格式写日记，上联和下联对仗工整，横批总结全文", category: "creative" },
-        { name: "三字经", desc: "请用三字经的格式写日记，每句三个字，押韵且朗朗上口", category: "creative" },
-        { name: "四字格", desc: "请全部使用四字成语或四字短语写日记，不要使用其他长度的词语", category: "creative" },
-        { name: "五言绝句", desc: "请用五言绝句的格律写日记，四句二十字，平仄押韵", category: "creative" },
-        { name: "七言律诗", desc: "请用七言律诗的格律写日记，八句五十六字，中间两联对仗", category: "creative" },
-        { name: "宋词", desc: "请用宋词的格式写日记，选择一个词牌名，按照格律填写", category: "creative" },
-        { name: "元曲", desc: "请用元曲的格式写日记，选择一个曲牌名，按照格律填写", category: "creative" },
-        { name: "甲骨文", desc: "请用甲骨文的风格写日记，使用象形文字和简单的符号来表达意思", category: "creative" },
-        { name: "文言文", desc: "请用文言文的风格写日记，使用古代汉语的词汇和语法", category: "creative" },
-        { name: "白话文", desc: "请用白话文的风格写日记，语言通俗易懂，像说话一样自然", category: "creative" },
-        { name: "方言", desc: "请用你熟悉的一种方言写日记，使用方言的词汇和语法", category: "creative" },
-        { name: "翻译腔", desc: "请用翻译腔的风格写日记，模仿外国文学翻译过来的语气和句式", category: "creative" },
-        { name: "港台腔", desc: "请用港台腔的风格写日记，使用港台地区的词汇和表达方式", category: "creative" },
-        { name: "网络用语", desc: "请全部使用网络流行语写日记，不要使用正式的书面语", category: "creative" },
-        { name: "火星文", desc: "请用火星文的风格写日记，使用大量的同音字、符号和繁体字", category: "creative" },
-        { name: "儿童语", desc: "请用儿童的语言风格写日记，简单、天真、充满想象力", category: "creative" },
-        { name: "老人语", desc: "请用老人的语言风格写日记，缓慢、啰嗦、充满回忆和感慨", category: "creative" },
-        { name: "机器人语", desc: "请用机器人的语言风格写日记，机械、冰冷、没有感情，使用短句", category: "creative" },
-        { name: "外星人语", desc: "请用外星人的语言风格写日记，创造一些新的词汇和语法规则", category: "creative" },
-        { name: "电报体", desc: "请用电报体的风格写日记，省略所有修饰词，只用名词和动词", category: "creative" },
-        { name: "断句体", desc: "请用断句体的风格写日记，每两个字就用一个句号断开", category: "creative" },
-        { name: "无标点", desc: "请写一篇完全没有标点符号的日记，所有文字连在一起", category: "creative" },
-        { name: "全标点", desc: "请写一篇每个字后面都加一个标点符号的日记", category: "creative" },
-        { name: "单字", desc: "请用单个汉字写日记，每个字占一行", category: "creative" },
-        { name: "双字", desc: "请用两个字的词语写日记，每个词语占一行", category: "creative" },
-        { name: "三字", desc: "请用三个字的短语写日记，每个短语占一行", category: "creative" },
-        { name: "倒写", desc: "请把今天的日记从最后一个字倒着写到第一个字", category: "creative" },
-        { name: "反写", desc: "请把每个字都反过来写，就像在镜子里看到的一样", category: "creative" },
-        { name: "拼音", desc: "请全部用汉语拼音写日记，不要使用任何汉字", category: "creative" },
-        { name: "英文", desc: "请全部用英文写日记，不要使用任何中文", category: "creative" },
-        { name: "中英混合", desc: "请用中英文混合的方式写日记，每个中文词后面都跟一个英文翻译", category: "creative" },
-        { name: "数字", desc: "请全部用阿拉伯数字写日记，用数字代表所有的意思", category: "creative" },
-        { name: "符号", desc: "请全部用标点符号和特殊符号写日记，不要使用任何文字", category: "creative" },
-        { name: "象形", desc: "请用象形文字的风格写日记，用简单的图形来表达意思", category: "creative" },
-        { name: "拟声", desc: "请全部用拟声词写日记，用声音来描述今天发生的一切", category: "creative" },
-        { name: "气味", desc: "请用气味来写日记，描述今天闻到的各种气味以及它们带来的感受", category: "creative" },
-        { name: "声音", desc: "请用声音来写日记，描述今天听到的各种声音以及它们带来的感受", category: "creative" },
-        { name: "颜色", desc: "请用颜色来写日记，描述今天看到的各种颜色以及它们带来的感受", category: "creative" },
-        { name: "触觉", desc: "请用触觉来写日记，描述今天触摸到的各种东西以及它们带来的感受", category: "creative" },
-        { name: "味觉", desc: "请用味觉来写日记，描述今天尝到的各种味道以及它们带来的感受", category: "creative" },
-        { name: "时间", desc: "请用时间来写日记，只记录每个事件发生的时间点和持续时间", category: "misc" },
-        { name: "空间", desc: "请用空间来写日记，只记录每个事件发生的地点和位置关系", category: "misc" },
-        { name: "数字编号", desc: "请用数字编号的格式写日记，每件事情都用一个数字开头", category: "misc" },
-        { name: "字母编号", desc: "请用字母编号的格式写日记，每件事情都用一个字母开头", category: "misc" },
-        { name: "罗马数字", desc: "请用罗马数字编号的格式写日记，每件事情都用一个罗马数字开头", category: "misc" },
-        { name: "天干地支", desc: "请用天干地支编号的格式写日记，每件事情都用一个天干地支开头", category: "misc" },
-        { name: "二十四节气", desc: "请用二十四节气的格式写日记，将今天的事情对应到不同的节气", category: "misc" },
-        { name: "十二生肖", desc: "请用十二生肖的格式写日记，将今天的事情对应到不同的生肖", category: "misc" },
-        { name: "十二星座", desc: "请用十二星座的格式写日记，将今天的事情对应到不同的星座", category: "misc" },
-        { name: "五行", desc: "请用金木水火土五行的格式写日记，将今天的事情对应到不同的五行", category: "misc" },
-        { name: "八卦", desc: "请用八卦的格式写日记，将今天的事情对应到不同的卦象", category: "misc" },
-        { name: "诗歌", desc: "请用诗歌的风格写日记，语言凝练、富有韵律和意象", category: "creative" },
-        { name: "小说", desc: "请用小说的风格写日记，有人物、有情节、有环境描写", category: "creative" },
-        { name: "散文", desc: "请用散文的风格写日记，形散神不散，自由抒发情感", category: "creative" },
-        { name: "传记", desc: "请用传记的风格写日记，客观、真实地记录自己的生平事迹", category: "creative" },
-        { name: "自传", desc: "请用自传的风格写日记，以第一人称讲述自己的故事", category: "creative" },
-        { name: "回忆录", desc: "请用回忆录的风格写日记，回忆过去发生的事情，带有个人情感", category: "creative" },
-        { name: "书信", desc: "请用书信的格式写日记，写给某一个特定的人", category: "creative" },
-        { name: "日记", desc: "请用传统日记的格式写日记，包含日期、天气和正文", category: "creative" },
-        { name: "游记", desc: "请用游记的风格写日记，记录今天的旅行经历和所见所闻", category: "creative" },
-        { name: "随笔", desc: "请用随笔的风格写日记，随手记录自己的感想和思考", category: "creative" },
-        { name: "杂文", desc: "请用杂文的风格写日记，针砭时弊，发表自己的观点和看法", category: "creative" },
-        { name: "评论", desc: "请用评论的风格写日记，对今天发生的事情进行分析和评价", category: "creative" },
-        { name: "说明文", desc: "请用说明文的风格写日记，客观、准确地介绍事物的特征和原理", category: "creative" },
-        { name: "议论文", desc: "请用议论文的风格写日记，提出论点，并用论据和论证来支持", category: "creative" },
-        { name: "记叙文", desc: "请用记叙文的风格写日记，按照时间顺序叙述事情的经过", category: "creative" },
-        { name: "描写文", desc: "请用描写文的风格写日记，详细描写人物、景物和事物的特征", category: "creative" },
-        { name: "抒情文", desc: "请用抒情文的风格写日记，直接抒发自己的喜怒哀乐", category: "creative" },
-        { name: "动物视角", desc: "请从一种动物的视角写日记，用动物的眼睛看世界", category: "creative" },
-        { name: "植物视角", desc: "请从一种植物的视角写日记，用植物的感受体验生活", category: "creative" },
-        { name: "物品视角", desc: "请从一件物品的视角写日记，比如你的手机、杯子或书包", category: "creative" },
-        { name: "上帝视角", desc: "请用上帝的视角写日记，全知全能地观察和评论一切", category: "creative" },
-        { name: "第三人称", desc: "请用第三人称的视角写日记，把自己当作一个陌生人来描写", category: "creative" },
-        { name: "第二人称", desc: "请用第二人称的视角写日记，用'你'来称呼自己", category: "creative" },
-        { name: "过去时", desc: "请全部使用过去时态写日记，描述已经发生的事情", category: "creative" },
-        { name: "现在时", desc: "请全部使用现在时态写日记，仿佛事情正在发生", category: "creative" },
-        { name: "将来时", desc: "请全部使用将来时态写日记，预测未来将要发生的事情", category: "creative" },
-        { name: "倒叙", desc: "请用倒叙的手法写日记，从今天的结尾开始写起", category: "creative" },
-        { name: "插叙", desc: "请用插叙的手法写日记，在叙述中插入过去的回忆", category: "creative" },
-        { name: "意识流", desc: "请用意识流的风格写日记，记录自己脑海中不断流动的想法", category: "creative" },
-        { name: "极简主义", desc: "请用极简主义的风格写日记，用最少的文字表达最多的意思", category: "creative" },
-        { name: "啰嗦主义", desc: "请用啰嗦主义的风格写日记，把一件事情翻来覆去地说清楚", category: "creative" },
-        { name: "黑色幽默", desc: "请用黑色幽默的风格写日记，用荒诞和讽刺的方式表达", category: "creative" },
-        { name: "治愈系", desc: "请用治愈系的风格写日记，温暖、温柔、充满正能量", category: "creative" },
-        { name: "丧系", desc: "请用丧系的风格写日记，颓废、消极、充满无力感", category: "creative" },
-        { name: "沙雕", desc: "请用沙雕的风格写日记，搞笑、无厘头、让人捧腹大笑", category: "creative" },
-        { name: "文艺", desc: "请用文艺的风格写日记，清新、唯美、充满小资情调", category: "creative" },
-        { name: "硬核", desc: "请用硬核的风格写日记，专业、严谨、充满技术含量", category: "creative" },
-        { name: "侦探小说", desc: "请用侦探小说的风格写日记，把今天发生的事情当作一个案件来调查", category: "fiction" },
-        { name: "科幻小说", desc: "请用科幻小说的风格写日记，加入未来科技和外星元素", category: "fiction" },
-        { name: "奇幻小说", desc: "请用奇幻小说的风格写日记，加入魔法、精灵和巨龙等元素", category: "fiction" },
-        { name: "武侠小说", desc: "请用武侠小说的风格写日记，加入武功、江湖和恩怨等元素", category: "fiction" },
-        { name: "言情小说", desc: "请用言情小说的风格写日记，重点描写情感和人际关系", category: "fiction" },
-        { name: "悬疑小说", desc: "请用悬疑小说的风格写日记，制造悬念和紧张感", category: "fiction" },
-        { name: "恐怖小说", desc: "请用恐怖小说的风格写日记，加入恐怖和惊悚元素", category: "fiction" },
-        { name: "童话", desc: "请用童话的风格写日记，简单、美好、充满想象力", category: "fiction" },
-        { name: "寓言", desc: "请用寓言的风格写日记，每个故事都包含一个道理", category: "fiction" },
-        { name: "神话", desc: "请用神话的风格写日记，加入神、仙和超自然力量", category: "fiction" },
-        { name: "传说", desc: "请用民间传说的风格写日记，讲述一个古老的故事", category: "fiction" },
-        { name: "史诗", desc: "请用史诗的风格写日记，用宏大的叙事来描述今天的事情", category: "fiction" },
-        { name: "悲剧", desc: "请用悲剧的风格写日记，重点描写不幸和痛苦", category: "fiction" },
-        { name: "喜剧", desc: "请用喜剧的风格写日记，重点描写搞笑和欢乐", category: "fiction" },
-        { name: "正剧", desc: "请用正剧的风格写日记，严肃、客观地描述事情", category: "fiction" },
-        { name: "独白", desc: "请用内心独白的风格写日记，只写自己的内心想法", category: "creative" },
-        { name: "对话", desc: "请用对话的风格写日记，所有内容都以两个人对话的形式呈现", category: "creative" },
-        { name: "剧本", desc: "请用戏剧剧本的格式写日记，包含人物、场景、动作和台词", category: "format" },
-        { name: "电影剧本", desc: "请用电影剧本的格式写日记，包含场景号、内外景、时间和镜头描述", category: "format" },
-        { name: "漫画脚本", desc: "请用漫画脚本的格式写日记，包含分镜、画面描述和台词", category: "format" },
-        { name: "游戏脚本", desc: "请用游戏脚本的格式写日记，包含NPC对话、任务描述和选项", category: "format" },
-        { name: "说明书", desc: "请用说明书的风格写日记，详细说明如何度过今天", category: "work" },
-        { name: "指南", desc: "请用指南的风格写日记，给读者提供关于今天的建议和指导", category: "work" },
-        { name: "教程", desc: "请用教程的风格写日记，一步一步教读者如何做今天的事情", category: "work" },
-        { name: "报告", desc: "请用报告的风格写日记，客观、系统地汇报今天的情况", category: "work" },
-        { name: "总结", desc: "请用总结的风格写日记，归纳今天的主要内容和收获", category: "work" },
-        { name: "计划", desc: "请用计划的风格写日记，安排明天要做的事情", category: "work" },
-        { name: "预算", desc: "请用预算的格式写日记，记录今天的收入和支出", category: "life" },
-        { name: "账单", desc: "请用账单的格式写日记，详细列出今天的每一笔消费", category: "life" },
-        { name: "清单", desc: "请用清单的格式写日记，列出今天所有的事情", category: "format" },
-        { name: "目录", desc: "请用目录的格式写日记，列出今天所有的章节和页码", category: "format" },
-        { name: "索引", desc: "请用索引的格式写日记，列出今天所有的关键词和对应的位置", category: "format" },
-        { name: "词汇表", desc: "请用词汇表的格式写日记，解释今天出现的所有重要词汇", category: "format" },
-        { name: "时间表", desc: "请用时间表的格式写日记，列出今天每个时间段要做的事情", category: "life" },
-        { name: "日程表", desc: "请用日程表的格式写日记，安排今天的所有活动", category: "life" },
-        { name: "日历", desc: "请用日历的格式写日记，在日期格子里记录今天的事情", category: "life" },
-        { name: "打卡", desc: "请用打卡的格式写日记，记录今天完成的各项打卡任务", category: "life" },
-        { name: "评分", desc: "请用评分的格式写日记，给今天的每件事情打分", category: "life" },
-        { name: "排名", desc: "请用排名的格式写日记，给今天的事情按重要性排序", category: "life" },
-        { name: "投票", desc: "请用投票的格式写日记，对今天的事情进行投票表决", category: "format" },
-        { name: "问卷", desc: "请用问卷的格式写日记，提出关于今天的问题并给出答案", category: "format" },
-        { name: "测试", desc: "请用测试的格式写日记，设计一个关于今天的小测试", category: "format" },
-        { name: "游戏", desc: "请用游戏的格式写日记，把今天的生活变成一个游戏", category: "roleplay" },
-        { name: "角色扮演", desc: "请扮演一个角色写日记，用这个角色的身份和语气说话", category: "roleplay" },
-        { name: "穿越", desc: "请用穿越的风格写日记，想象自己穿越到了另一个时空", category: "roleplay" },
-        { name: "重生", desc: "请用重生的风格写日记，想象自己重新活过了今天", category: "roleplay" },
-        { name: "平行世界", desc: "请用平行世界的风格写日记，描述另一个世界里今天发生的事情", category: "roleplay" },
-        { name: "时间循环", desc: "请用时间循环的风格写日记，描述自己被困在今天不断重复", category: "roleplay" },
-        { name: "时间旅行", desc: "请用时间旅行的风格写日记，描述自己穿越到过去或未来的经历", category: "roleplay" },
-        { name: "赛博朋克2077界面", desc: "请用赛博朋克游戏UI的格式写日记，包含义体状态、网络接入仓日志、公司通告和街头声望", category: "roleplay" },
-        { name: "克苏鲁调查员笔记", desc: "请用克苏鲁神话的风格写日记，记录不可名状的恐惧、sanity check失败和对未知的疯狂猜测", category: "roleplay" },
-        { name: "蒸汽朋克图纸", desc: "请用蒸汽朋克的风格写日记，描述齿轮、活塞、发条装置和差分机的运转情况", category: "roleplay" },
-        { name: "修真者修炼手札", desc: "请用修真小说的格式写日记，记录灵力运转周天、突破瓶颈感悟和丹药炼制心得", category: "roleplay" },
-        { name: "末世生存者日志", desc: "请用末日求生的格式写日记，记录物资储备、感染者动向、安全屋防御和幸存者公约", category: "roleplay" },
-        { name: "哈利波特魔法日记", desc: "请用霍格沃茨学生的格式写日记，使用如尼文、魔药配方和魁地奇战术板", category: "roleplay" },
-        { name: "SCP基金会报告", desc: "请用SCP项目档案的格式写日记，包含项目编号、收容措施、描述以及事故报告", category: "roleplay" },
-        { name: "跑团记录（TRPG）", desc: "请用桌上角色扮演的记录格式写日记，包含掷骰结果、GM提示、角色对话和行动判定", category: "roleplay" },
-        { name: "二次元番剧简介", desc: "请用动漫简介的格式写日记，包含STAFF、CAST、剧情梗概和下一集预告", category: "media" },
-        { name: "洛丽塔穿搭日志", desc: "请用Lo娘日记的格式写日记，记录今天的坐标（OOTD）、JSK/BLB选择、配饰和茶会邀约", category: "media" },
-        { name: "地质勘探报告", desc: "请用地质学的格式写日记，描述今天的岩层构造、矿物成分、化石记录和地壳运动", category: "tech" },
-        { name: "气象云图分析", desc: "请用气象局的格式写日记，分析气压梯度、锋面走向、湿度变化和降水概率", category: "tech" },
-        { name: "化学实验记录", desc: "请用化学实验的格式写日记，包含试剂配比、反应方程式、现象观察和产物提纯", category: "tech" },
-        { name: "物理定律推导", desc: "请用物理学论文的格式写日记，用数学公式和定理推导今天发生的事件", category: "tech" },
-        { name: "生物细胞观察", desc: "请用生物学笔记的格式写日记，记录细胞分裂、新陈代谢速率和DNA转录过程", category: "tech" },
-        { name: "宇宙射线观测", desc: "请用天文学的格式写日记，记录恒星光谱、红移现象、黑洞吸积盘和引力波信号", category: "tech" },
-        { name: "噪音监测报告", desc: "请用分贝仪记录的格式写日记，描述城市白噪音、人声频谱和自然声波", category: "tech" },
-        { name: "色卡比对", desc: "请用潘通（Pantone）色卡的格式写日记，用具体的色号描述心情", category: "media" },
-        { name: "味觉风味轮", desc: "请用威士忌或咖啡风味轮的格式写日记，描述今天经历的酸甜苦咸鲜及具体香气", category: "media" },
-        { name: "产品经理PRD", desc: "请用产品需求文档的格式写日记，包含背景、用户画像、功能需求、验收标准和迭代计划", category: "work" },
-        { name: "心理咨询师个案", desc: "请用心理咨询的格式写日记，包含来访者主诉、防御机制分析、移情反移情和干预策略", category: "work" },
-        { name: "法官庭审笔录", desc: "请用法庭记录的格式写日记，包含传票、举证质证、法庭辩论和当庭宣判", category: "work" },
-        { name: "外科医生手术记录", desc: "请用手术报告的格式写日记，包含术前诊断、麻醉方式、切口缝合和出血量", category: "work" },
-        { name: "特工任务简报", desc: "请用间谍电影的格式写日记，包含情报来源、行动计划、撤退路线和装备清单", category: "roleplay" },
-        { name: "农夫历", desc: "请用老黄历和农谚的格式写日记，记录节气、墒情、作物长势和家畜饲养", category: "life" },
-        { name: "厨师长工作日志", desc: "请用后厨管理的格式写日记，记录备货清单、出餐速度、客诉处理和食材损耗", category: "work" },
-        { name: "DJ打碟歌单", desc: "请用DJ Set的格式写日记，包含BPM、调性（Key）、混音过渡和Track ID", category: "media" },
-        { name: "策展人导览词", desc: "请用艺术展览的格式写日记，将今天的经历分为展厅、展品解读和观展动线", category: "media" },
-        { name: "黑匣子录音", desc: "请用飞行数据记录器的格式写日记，包含UTC时间、高度、空速、俯仰角和驾驶舱语音", category: "tech" },
-        { name: "冷战时期密电", desc: "请用冷战谍报的格式写日记，使用一次性便笺本加密，充满代号", category: "roleplay" },
-        { name: "时间管理局档案", desc: "请用官方机构的格式写日记，记录时间线的分支、悖论修复和历史修正", category: "roleplay" },
-        { name: "AI模型训练日志", desc: "请用机器学习训练的格式写日记，包含Epoch、Loss曲线、Accuracy和过拟合警告", category: "tech" },
-        { name: "操作系统崩溃报告", desc: "请用Windows蓝屏（BSOD）的格式写日记，包含终止代码、失败的操作和内存转储", category: "tech" },
-        { name: "博物馆文物标签", desc: "请用展品说明牌的格式写日记，包含年代、出土地点、材质、尺寸和解说文字", category: "media" },
-        { name: "宜家说明书", desc: "请用宜家组装说明书的格式写日记，只有图示，没有文字，展示零件组合过程", category: "media" },
-        { name: "乐高搭建手册", desc: "请用乐高积木的步骤图写日记，展示今天是如何一步步拼装完成的", category: "media" },
-        { name: "塔罗牌阵解读", desc: "请用韦特塔罗的格式写日记，抽牌并解读它们在过去现在未来的位置", category: "misc" },
-        { name: "星盘运势分析", desc: "请用占星术的格式写日记，分析上升星座、月亮落座、水逆影响和相位刑冲", category: "misc" },
-        { name: "Emoji密码", desc: "请只用Emoji表情符号写日记，不使用任何文字，通过图画叙事", category: "creative" },
-        { name: "摩尔斯电码", desc: "请用摩尔斯电码的格式写日记，滴滴答答地记录", category: "code" },
-        { name: "二进制代码", desc: "请将今天的日记完全转换为二进制的0和1字符串", category: "code" },
-        { name: "盲文点字", desc: "请用盲文（Braille）的六点格式描述今天的触感和经历", category: "code" },
-        { name: "条形码/二维码", desc: "请将日记内容编码为一个UPC-A条形码或QR Code，并附上扫描说明", category: "code" },
-        { name: "康威生命游戏", desc: "请用康威生命游戏的细胞自动机规则来描述今天的状态变化", category: "code" },
-        { name: "数学证明过程", desc: "请将今天的经历写成一道几何题或代数题的证明过程，已知、求证、证明", category: "tech" },
-        { name: "乐谱（五线谱）", desc: "请使用G clef和音符时值来记录今天情绪的起伏，休止符代表沉默", category: "creative" },
-        { name: "建筑蓝图", desc: "请用建筑图纸的格式写日记，包含平面图、立面图、剖面图和节点大样", category: "media" },
-        { name: "垃圾分类指南", desc: "请将今天产生的所有垃圾进行分类，分别投入可回收、厨余、有害和其他垃圾桶", category: "life" },
-        { name: "WIFI信号强度图", desc: "请用信号格数（dBm）来描述今天在不同地点的心情连接质量", category: "tech" },
-        { name: "电池电量消耗图", desc: "请将自己比作一块电池，记录从100%到关机充电的全过程，标注耗电应用", category: "life" },
-        { name: "浏览器历史记录", desc: "请用Chrome历史记录的格式写日记，列出今天访问过的网站、时间和搜索关键词", category: "tech" },
-        { name: "404 Not Found", desc: "请写一篇关于'今天什么都没发生'的日记，全是找不到页面的错误提示", category: "creative" },
-        { name: "验证码", desc: "请用扭曲的字符和干扰线来描述今天的模糊不清的状态", category: "creative" },
-        { name: "自动售货机清单", desc: "请用自动售货机货道号的格式写日记，A1是早餐，B3是下午茶", category: "life" }
-    ];
-
     let styles = [];
     let currentStyle = null;
 
@@ -722,9 +439,9 @@
     const styleCountDisplay = document.getElementById('style-count-display');
     const randomBtn = document.getElementById('random-btn');
     const copyBtn = document.getElementById('copy-btn');
-    let resultContainer, addStyleBtn, addModal, closeModalBtn, cancelBtn, addForm, styleNameInput, styleDescInput;
+    let resultContainer, addStyleBtn, addModal, closeModalBtn, cancelBtn, addForm, styleNameInput, styleDescInput, styleCategoryInput;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
         try {
             resultContainer = document.getElementById('result-container');
             addStyleBtn = document.getElementById('add-style-btn');
@@ -734,9 +451,12 @@
             addForm = document.getElementById('add-form');
             styleNameInput = document.getElementById('style-name');
             styleDescInput = document.getElementById('style-desc');
+            styleCategoryInput = document.getElementById('style-category');
             
             addModal.classList.add('hidden');
-            loadStyles();
+            const authed = await checkAuth();
+            if (!authed) return;
+            await loadStyles();
             renderStyles();
             setupEventListeners();
         } catch (error) {
@@ -747,30 +467,29 @@
         }
     });
 
-    function loadStyles() {
-        const savedStyles = localStorage.getItem('aiStylePool');
-        if (savedStyles) {
-            try {
-                const saved = JSON.parse(savedStyles);
-                const customStyles = saved.filter(s => !defaultStyles.some(ds => ds.name === s.name));
-                styles = [...defaultStyles, ...customStyles];
-                saveStyles();
-            } catch (e) {
-                console.error("解析本地存储失败，使用预设风格:", e);
-                styles = [...defaultStyles];
-                saveStyles();
-            }
-        } else {
-            styles = [...defaultStyles];
-            saveStyles();
-        }
-    }
-
-    function saveStyles() {
+    async function loadStyles() {
         try {
-            localStorage.setItem('aiStylePool', JSON.stringify(styles));
+            const { data, error } = await supabase
+                .from('STYLE_POOL')
+                .select('id, name, desc, category, active')
+                .eq('active', true)
+                .order('id', { ascending: true });
+
+            if (error) {
+                console.error('从 Supabase 加载风格失败:', error);
+                styles = [];
+                return;
+            }
+
+            styles = data.map(row => ({
+                id: row.id,
+                name: row.name,
+                desc: row.desc,
+                category: row.category || 'misc'
+            }));
         } catch (e) {
-            console.error("保存到本地存储失败:", e);
+            console.error('加载风格异常:', e);
+            styles = [];
         }
     }
 
@@ -943,21 +662,56 @@
             }
         });
         
-        addForm.addEventListener('submit', (e) => {
+        addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const name = styleNameInput.value.trim();
             const desc = styleDescInput.value.trim();
+            const category = styleCategoryInput.value;
             
             if (!name || !desc) {
                 alert('请填写风格名称和约束描述');
                 return;
             }
-            
-            styles.push({ name, desc });
-            saveStyles();
-            renderStyles();
-            closeModal();
+            if (!category) {
+                alert('请选择分类');
+                return;
+            }
+
+            const submitBtn = addForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '[ SAVING... ]';
+            submitBtn.disabled = true;
+
+            try {
+                const { data, error } = await supabase
+                    .from('STYLE_POOL')
+                    .insert([{ name, desc, category, active: true }])
+                    .select();
+
+                if (error) {
+                    console.error('添加风格失败:', error);
+                    alert('添加失败: ' + error.message);
+                    return;
+                }
+
+                if (data && data[0]) {
+                    styles.push({
+                        id: data[0].id,
+                        name: data[0].name,
+                        desc: data[0].desc,
+                        category: data[0].category
+                    });
+                }
+                renderStyles();
+                closeModal();
+            } catch (err) {
+                console.error('添加风格异常:', err);
+                alert('添加失败，请稍后重试');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         });
     }
 
