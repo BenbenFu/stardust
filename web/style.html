@@ -319,22 +319,31 @@
         /* 机台 SVG 容器 */
         .gba-machine-svg-container {
             position: relative;
-            width: 200px;
-            height: 280px;
+            width: 160px;
+            height: 230px;
             cursor: pointer;
-            transition: transform 0.15s steps(3), opacity 0.15s steps(3);
-            opacity: 0.35;
-            transform: scale(0.85);
+            transition: transform 0.2s steps(3), opacity 0.2s steps(3);
+            opacity: 0.15;
+            transform: scale(0.78);
+            pointer-events: none;
         }
+        /* 相邻机台 — 淡显可辨识 */
+        .gba-machine-unit.is-adjacent .gba-machine-svg-container {
+            opacity: 0.42;
+            transform: scale(0.85);
+            pointer-events: auto;
+        }
+        .gba-machine-unit.is-adjacent .gba-machine-svg-container:hover {
+            transform: scale(0.88);
+        }
+        /* 当前选中机台 — 全亮 */
         .gba-machine-unit.is-active .gba-machine-svg-container {
             opacity: 1;
             transform: scale(1);
-        }
-        .gba-machine-svg-container:hover {
-            transform: scale(0.95);
+            pointer-events: auto;
         }
         .gba-machine-unit.is-active .gba-machine-svg-container:hover {
-            transform: scale(1.03);
+            transform: scale(1.04);
         }
 
         /* 机台 SVG 本身 */
@@ -660,8 +669,8 @@
                 height: 360px;
             }
             .gba-machine-svg-container {
-                width: 140px;
-                height: 200px;
+                width: 110px;
+                height: 165px;
             }
             .gba-arrow-btn {
                 width: 22px;
@@ -688,8 +697,8 @@
                 height: 420px;
             }
             .gba-machine-svg-container {
-                width: 170px;
-                height: 240px;
+                width: 135px;
+                height: 195px;
             }
         }
     </style>
@@ -1002,30 +1011,103 @@
     };
 
     // ==================== 扭蛋机注册表 ====================
+    // 12台机台: NO.01 普池(全风格) + NO.02-12 各分类限定池
     const GACHA_MACHINES = [
         {
             id: 0,
             name: '8-BIT_NOSTALGIA',
             label: 'NO.01',
-            category: null,
+            category: null,          // 普池 — 囊括所有风格
             silhouette: 'classic',
-            flavor: 'FC红白机风格约束 / 8-bit像素日志'
+            flavor: '全风格混合池 / 8-bit像素日志'
         },
         {
             id: 1,
-            name: 'BRASS_STEAM',
+            name: 'CODE_FORGE',
             label: 'NO.02',
-            category: 'creative',
-            silhouette: 'cylinder',
-            flavor: '蒸汽朋克风格约束 / 铜齿轮纹理日记'
+            category: 'code',
+            silhouette: 'square',
+            flavor: '代码编程风格约束 / 缩进即是诗'
         },
         {
             id: 2,
-            name: 'CYBER_GLITCH',
+            name: 'TECH_ARCHIVE',
             label: 'NO.03',
             category: 'tech',
+            silhouette: 'cylinder',
+            flavor: '技术文档风格约束 / RFC美学'
+        },
+        {
+            id: 3,
+            name: 'WORK_BENCH',
+            label: 'NO.04',
+            category: 'work',
+            silhouette: 'classic',
+            flavor: '工作办公风格约束 / 邮件体与周报'
+        },
+        {
+            id: 4,
+            name: 'LIFE_LOGBOOK',
+            label: 'NO.05',
+            category: 'life',
             silhouette: 'square',
-            flavor: '赛博故障风格约束 / 终端乱码审美日志'
+            flavor: '生活记录风格约束 / 碎碎念与手账'
+        },
+        {
+            id: 5,
+            name: 'SOCIAL_BROADCAST',
+            label: 'NO.06',
+            category: 'social',
+            silhouette: 'cylinder',
+            flavor: '社交网络风格约束 / 推文与帖子体'
+        },
+        {
+            id: 6,
+            name: 'CREATIVE_ENGINE',
+            label: 'NO.07',
+            category: 'creative',
+            silhouette: 'classic',
+            flavor: '创意写作风格约束 / 灵感喷射器'
+        },
+        {
+            id: 7,
+            name: 'MEDIA_STREAM',
+            label: 'NO.08',
+            category: 'media',
+            silhouette: 'square',
+            flavor: '媒体格式风格约束 / 新闻稿与通稿'
+        },
+        {
+            id: 8,
+            name: 'ROLE_ENGINE',
+            label: 'NO.09',
+            category: 'roleplay',
+            silhouette: 'cylinder',
+            flavor: '角色扮演风格约束 / 人格模拟器'
+        },
+        {
+            id: 9,
+            name: 'FICTION_REALM',
+            label: 'NO.10',
+            category: 'fiction',
+            silhouette: 'classic',
+            flavor: '小说类型风格约束 / 叙事引擎'
+        },
+        {
+            id: 10,
+            name: 'FORMAT_DECK',
+            label: 'NO.11',
+            category: 'format',
+            silhouette: 'square',
+            flavor: '格式规范风格约束 / 模板即正义'
+        },
+        {
+            id: 11,
+            name: 'MISC_MYSTERY',
+            label: 'NO.12',
+            category: 'misc',
+            silhouette: 'cylinder',
+            flavor: '其他分类风格约束 / 未知抽屉'
         }
     ];
 
@@ -1316,6 +1398,26 @@
         elements.gbaArrowRight.disabled = (currentMachineIndex >= GACHA_MACHINES.length - 1);
     }
 
+    // ==================== 三机台状态更新 ====================
+    const VISIBLE_COUNT = 3; // 同时显示3台
+
+    function updateActiveStates() {
+        document.querySelectorAll('.gba-machine-unit').forEach((unit, i) => {
+            unit.classList.remove('is-active', 'is-adjacent');
+            if (i === currentMachineIndex) {
+                unit.classList.add('is-active');
+            } else if (i === currentMachineIndex - 1 || i === currentMachineIndex + 1) {
+                unit.classList.add('is-adjacent');
+            }
+        });
+    }
+
+    function getTrackOffset(index) {
+        // 每台占 viewport 的 1/3 宽度，active 居中 → 偏移 (index-1)*slot
+        const slotPct = 100 / VISIBLE_COUNT;
+        return (index - 1) * slotPct;
+    }
+
     // ==================== 轮播导航 ====================
     function navigateCarousel(direction, elements) {
         const { gbaCarouselTrack } = elements;
@@ -1325,20 +1427,15 @@
 
         currentMachineIndex = newIndex;
 
-        const unitWidth = 100 / GACHA_MACHINES.length;
-        gbaCarouselTrack.style.transform = `translateX(-${currentMachineIndex * unitWidth}%)`;
-
-        document.querySelectorAll('.gba-machine-unit').forEach((unit, i) => {
-            unit.classList.toggle('is-active', i === currentMachineIndex);
-        });
-
+        gbaCarouselTrack.style.transform = `translateX(-${getTrackOffset(currentMachineIndex)}%)`;
+        updateActiveStates();
         updateStatusBar(elements);
         updateArrowStates(elements);
 
         const machine = GACHA_MACHINES[currentMachineIndex];
         elements.gbaDialogText.innerHTML =
             `&gt; 已切换到 ${machine.label} [${machine.name}]。<br>` +
-            `[提示] 点击机器上的摇把，投入 1 张票据开始抽取。`;
+            `[提示] 点击中间机台的摇把，投入 1 张票据抽取。`;
     }
 
     // ==================== 抽池计算 ====================
@@ -1444,14 +1541,14 @@
         } = elements;
 
         const machineCount = GACHA_MACHINES.length;
-        gbaCarouselTrack.style.width = `${machineCount * 100}%`;
+        const slotPct = 100 / VISIBLE_COUNT;
+        gbaCarouselTrack.style.width = `${machineCount * slotPct}%`;
 
         GACHA_MACHINES.forEach((machine, index) => {
             const unit = document.createElement('div');
             unit.className = 'gba-machine-unit';
             unit.id = `gba-machine-${index}`;
-            unit.style.width = `${100 / machineCount}%`;
-            if (index === 0) unit.classList.add('is-active');
+            unit.style.width = `${slotPct}%`;
 
             const svgContainer = document.createElement('div');
             svgContainer.className = 'gba-machine-svg-container';
@@ -1466,6 +1563,10 @@
             unit.appendChild(label);
             gbaCarouselTrack.appendChild(unit);
         });
+
+        // 初始偏移：第0台居中 (offset = -33.33%)
+        gbaCarouselTrack.style.transform = `translateX(-${getTrackOffset(0)}%)`;
+        updateActiveStates();
 
         gbaArrowLeft.addEventListener('click', () => navigateCarousel(-1, elements));
         gbaArrowRight.addEventListener('click', () => navigateCarousel(1, elements));
