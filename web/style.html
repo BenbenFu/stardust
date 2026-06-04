@@ -1328,7 +1328,10 @@
 
     // ==================== 动画流水线 ====================
     async function executeGachaPipeline(machineIndex, onComplete) {
-        const unit = document.getElementById(`gba-machine-${machineIndex}`);
+        // 中心机台始终在 slot currentMachineIndex+1
+        const activeSlot = currentMachineIndex + 1;
+        const unit = document.getElementById(`gba-machine-${activeSlot}`);
+        if (!unit) { console.error('找不到活动机台单元'); return; }
         const base = document.getElementById('gba-machine-base');
         const ticketSlot = document.getElementById('gba-ticket-slot');
         const ejectSlot = document.getElementById('gba-ticket-eject-slot');
@@ -1572,7 +1575,21 @@
             const svgContainer = document.createElement('div');
             svgContainer.className = 'gba-machine-svg-container';
             svgContainer.innerHTML = generateMachineSVG(machine.silhouette);
-            svgContainer.addEventListener('click', () => onMachineClick(realIndex, elements));
+            svgContainer.addEventListener('click', () => {
+                // 中间机台 → 触发抽取；相邻机台 → 导航切换
+                if (realIndex === currentMachineIndex) {
+                    onMachineClick(realIndex, elements);
+                } else {
+                    currentMachineIndex = realIndex;
+                    gbaCarouselTrack.style.transform = `translateX(${getTrackOffset(currentMachineIndex)}%)`;
+                    updateActiveStates();
+                    updateStatusBar(elements);
+                    updateArrowStates(elements);
+                    elements.gbaDialogText.innerHTML =
+                        `&gt; ${machine.label} [${machine.name}]<br>` +
+                        `[提示] 点击中间机台的摇把，投入 1 张票据抽取。`;
+                }
+            });
 
             const label = document.createElement('div');
             label.className = 'gba-machine-label';
