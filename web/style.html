@@ -181,359 +181,515 @@
         .mb-4 { margin-bottom: 12px; }
         .mb-6 { margin-bottom: 18px; }
 
-        .gacha-app {
-            display: grid;
-            grid-template-columns: minmax(260px, 0.92fr) minmax(260px, 1.08fr);
-            gap: 14px;
-            align-items: stretch;
-        }
-        .gacha-stage {
-            border: 2px solid var(--pixel-dark);
-            background:
-                linear-gradient(rgba(0,0,0,0.045) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.032) 1px, transparent 1px),
-                rgba(0,0,0,0.025);
-            background-size: 4px 4px, 4px 4px, auto;
-            padding: 10px;
-            position: relative;
-            min-height: 300px;
-        }
-        .gacha-stage::before {
-            content: "CAPSULE_STYLE_VENDOR / YM2K_LCD_APP";
-            position: absolute;
-            top: 6px;
-            left: 8px;
-            color: rgba(30, 38, 34, 0.35);
-            font-size: 9px;
-            pointer-events: none;
-        }
-        .gacha-svg {
-            width: 100%;
-            height: auto;
-            display: block;
-            margin-top: 8px;
-        }
-        .gacha-shell,
-        .gacha-line,
-        .gacha-detail {
-            fill: none;
-            stroke: var(--pixel-dark);
-            stroke-width: 3;
-            vector-effect: non-scaling-stroke;
-        }
-        .gacha-fill {
-            fill: rgba(30, 38, 34, 0.08);
-            stroke: var(--pixel-dark);
-            stroke-width: 3;
-            vector-effect: non-scaling-stroke;
-        }
-        .gacha-dark {
-            fill: var(--pixel-dark);
-        }
-        .gacha-dim {
-            fill: var(--pixel-dim);
-        }
-        .gacha-capsule {
-            transform-origin: 210px 210px;
-        }
-        .gacha-capsule.is-selected {
-            filter: drop-shadow(0 0 2px rgba(30, 38, 34, 0.55));
-        }
-        .gacha-knob {
-            transform-origin: 210px 262px;
-        }
-        .gacha-prize {
-            transform-origin: 210px 322px;
-            opacity: 0.22;
-        }
-        .gacha-machine.is-spinning .gacha-knob {
-            animation: gacha-knob-turn 0.58s steps(7) 1;
-        }
-        .gacha-machine.is-spinning .gacha-capsule {
-            animation: gacha-capsule-shuffle 0.58s steps(4) 1;
-        }
-        .gacha-machine.is-dispensing .gacha-prize {
-            animation: gacha-prize-drop 0.72s steps(6) 1 forwards;
-        }
-        .gacha-status-panel {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            border: 1px solid var(--pixel-dark);
-            margin-top: 8px;
-            font-size: 10px;
-        }
-        .gacha-status-panel div {
-            border-right: 1px solid var(--pixel-dark);
-            border-bottom: 1px solid var(--pixel-dark);
-            padding: 4px 5px;
-            min-height: 22px;
-        }
-        .gacha-status-panel div:nth-child(2n) { border-right: 0; }
-        .gacha-status-panel div:nth-last-child(-n+2) { border-bottom: 0; }
-        .gacha-copy {
+        /* =====================================================================
+           GBA 扭蛋迷你游戏 完整样式系统
+           ===================================================================== */
+
+        /* ---- 4.2.1 GBA 游戏屏幕容器 ---- */
+        .gba-screen {
             display: grid;
             grid-template-rows: auto 1fr auto;
-            gap: 10px;
-            min-height: 300px;
+            height: 480px;
+            border: 3px solid var(--pixel-dark);
+            background: var(--screen-bg);
+            position: relative;
+            overflow: hidden;
         }
-        .gacha-command-row {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 8px;
-        }
-        .gacha-command-row .hardware-btn {
-            width: 100%;
-            padding-left: 6px;
-            padding-right: 6px;
-            white-space: nowrap;
-        }
-        .result-container {
-            min-height: 176px;
-        }
-        .result-container.is-awarded {
-            border-style: solid;
-            box-shadow: inset 0 0 0 2px rgba(30, 38, 34, 0.12);
-        }
-        .gacha-ticket {
-            border-top: 1px dashed var(--pixel-dim);
-            padding-top: 8px;
-            font-size: 10px;
-            color: var(--pixel-dim);
+
+        /* ---- 4.2.2 GBA 状态栏 ---- */
+        .gba-status-bar {
             display: flex;
             justify-content: space-between;
-            gap: 8px;
+            align-items: center;
+            background: var(--pixel-dark);
+            color: var(--screen-bg);
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--pixel-dark);
+            min-height: 24px;
+            flex-shrink: 0;
         }
-        @keyframes gacha-knob-turn {
-            0% { transform: rotate(0deg); }
+        .gba-status-left,
+        .gba-status-right {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .gba-label {
+            color: var(--pixel-dim);
+            font-size: 10px;
+        }
+        .gba-value {
+            color: var(--screen-bg);
+            font-size: 11px;
+        }
+        .gba-ticket-icon,
+        .gba-ticket-icon-limited {
+            font-size: 12px;
+            line-height: 1;
+        }
+        .gba-ticket-icon { color: var(--screen-bg); }
+        .gba-ticket-icon-limited { color: var(--pixel-alert); }
+        .gba-ticket-count {
+            font-size: 10px;
+            letter-spacing: 1px;
+            font-family: var(--font-mono);
+        }
+        .gba-divider {
+            color: var(--pixel-dim);
+            margin: 0 4px;
+        }
+
+        /* ---- 4.2.3 GBA 舞台（机台区域） ---- */
+        .gba-stage {
+            position: relative;
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            overflow: hidden;
+            background:
+                linear-gradient(to top, rgba(30,38,34,0.04) 0, rgba(30,38,34,0.04) 1px, transparent 1px, transparent 40px),
+                var(--screen-bg);
+            padding: 0 40px;
+        }
+
+        /* ---- 4.2.4 箭头按钮 ---- */
+        .gba-arrow-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 44px;
+            background: var(--screen-bg);
+            border: 2px solid var(--pixel-dark);
+            box-shadow: 2px 2px 0 var(--pixel-dark);
+            color: var(--pixel-dark);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            padding: 0;
+            line-height: 1;
+        }
+        .gba-arrow-btn:active {
+            box-shadow: 0 0 0 transparent;
+            transform: translateY(-50%) translate(2px, 2px);
+        }
+        .gba-arrow-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            box-shadow: 1px 1px 0 var(--pixel-dark);
+        }
+        .gba-arrow-left { left: 4px; }
+        .gba-arrow-right { right: 4px; }
+
+        /* ---- 4.2.5 轮播窗口和轨道 ---- */
+        .gba-carousel-window {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            position: relative;
+        }
+        .gba-carousel-track {
+            display: flex;
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            transition: transform 0.25s steps(5);
+        }
+
+        /* ---- 4.2.6 单个机台单元 ---- */
+        .gba-machine-unit {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        /* 机台 SVG 容器 */
+        .gba-machine-svg-container {
+            position: relative;
+            width: 200px;
+            height: 280px;
+            cursor: pointer;
+            transition: transform 0.15s steps(3), opacity 0.15s steps(3);
+            opacity: 0.35;
+            transform: scale(0.85);
+        }
+        .gba-machine-unit.is-active .gba-machine-svg-container {
+            opacity: 1;
+            transform: scale(1);
+        }
+        .gba-machine-svg-container:hover {
+            transform: scale(0.95);
+        }
+        .gba-machine-unit.is-active .gba-machine-svg-container:hover {
+            transform: scale(1.03);
+        }
+
+        /* 机台 SVG 本身 */
+        .gba-machine-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* 机台底部标签牌 */
+        .gba-machine-label {
+            font-size: 10px;
+            border: 1px dashed var(--pixel-dark);
+            padding: 2px 6px;
+            margin-top: 4px;
+            background: rgba(0,0,0,0.03);
+            color: var(--pixel-dark);
+            font-family: var(--font-mono);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.15s steps(2);
+        }
+        .gba-machine-unit.is-active .gba-machine-label {
+            opacity: 1;
+        }
+
+        /* ---- 4.2.7 机器底座（固定在舞台底部） ---- */
+        .gba-machine-base {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 16px;
+            align-items: flex-end;
+            z-index: 5;
+        }
+        .gba-ticket-slot,
+        .gba-ticket-eject-slot {
+            width: 56px;
+            height: 4px;
+            background: var(--pixel-dark);
+            border: 1px solid var(--pixel-dark);
+            position: relative;
+        }
+        .gba-ticket-slot::after {
+            content: "IN";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: var(--pixel-dim);
+            font-family: var(--font-mono);
+        }
+        .gba-ticket-eject-slot::after {
+            content: "OUT";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            color: var(--pixel-dim);
+            font-family: var(--font-mono);
+        }
+
+        /* 票据道具（动画对象） */
+        .gba-ticket-prop {
+            position: absolute;
+            width: 40px;
+            height: 16px;
+            background: var(--paper-worn);
+            border: 1px solid var(--pixel-dark);
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .gba-ticket-prop.is-inserting {
+            animation: gba-ticket-insert 0.4s steps(5) 1 forwards;
+        }
+        .gba-ticket-prop.is-ejecting {
+            animation: gba-ticket-eject 0.6s steps(6) 1 forwards;
+        }
+
+        /* ---- 4.2.8 GBA 对话框 ---- */
+        .gba-dialog-box {
+            border: 3px double var(--pixel-dark);
+            background: rgba(0,0,0,0.03);
+            padding: 8px 12px;
+            min-height: 64px;
+            max-height: 90px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .gba-dialog-text {
+            font-size: 12px;
+            line-height: 1.55;
+            text-align: left;
+            color: var(--pixel-dark);
+            font-family: var(--font-mono);
+            overflow: hidden;
+            min-height: 36px;
+        }
+        .gba-dialog-arrow {
+            align-self: flex-end;
+            font-size: 10px;
+            color: var(--pixel-dark);
+            animation: gba-arrow-bounce 0.6s infinite steps(2);
+            margin-top: 4px;
+        }
+
+        /* ---- 4.2.9 动画精灵通用类 ---- */
+        .gba-svg-knob {
+            transform-origin: var(--knob-cx) var(--knob-cy);
+        }
+        .gba-svg-drum {
+            transform-origin: var(--drum-cx) var(--drum-cy);
+        }
+        .gba-svg-capsule {
+            transform-origin: var(--capsule-cx) var(--capsule-cy);
+        }
+        .gba-svg-prize {
+            opacity: 0;
+            transform-origin: var(--prize-cx) var(--prize-cy);
+        }
+
+        /* 状态类触发动画 */
+        .gba-machine-unit.is-gacha-spinning .gba-svg-knob {
+            animation: gba-anim-knob-turn 0.65s steps(8) 1;
+        }
+        .gba-machine-unit.is-gacha-spinning .gba-svg-drum {
+            animation: gba-anim-drum-rotate 0.65s steps(8) 1;
+        }
+        .gba-machine-unit.is-gacha-shuffling .gba-svg-capsule {
+            animation: gba-anim-capsule-collide 0.9s steps(6) 1;
+        }
+        .gba-machine-unit.is-gacha-dropping .gba-svg-prize {
+            animation: gba-anim-capsule-drop 0.5s steps(5) 1 forwards;
+        }
+
+        /* 机器整体震动 */
+        .gba-machine-unit.is-gacha-jolting .gba-machine-svg-container {
+            animation: gba-anim-machine-jolt 0.15s steps(3) 3;
+        }
+
+        /* ---- 4.2.10 动画关键帧 ---- */
+
+        @keyframes gba-anim-knob-turn {
+            0%   { transform: rotate(0deg); }
+            12%  { transform: rotate(40deg); }
+            25%  { transform: rotate(80deg); }
+            37%  { transform: rotate(120deg); }
+            50%  { transform: rotate(160deg); }
+            62%  { transform: rotate(200deg); }
+            75%  { transform: rotate(240deg); }
+            87%  { transform: rotate(280deg); }
             100% { transform: rotate(320deg); }
         }
-        @keyframes gacha-capsule-shuffle {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(5px, -3px) rotate(8deg); }
-            50% { transform: translate(-5px, 2px) rotate(-10deg); }
-            75% { transform: translate(3px, 4px) rotate(6deg); }
+
+        @keyframes gba-anim-drum-rotate {
+            0%   { transform: rotate(0deg); }
+            25%  { transform: rotate(-15deg); }
+            50%  { transform: rotate(-30deg); }
+            75%  { transform: rotate(-42deg); }
+            100% { transform: rotate(-48deg); }
+        }
+
+        /* 胶囊碰撞混合动画 — 核心 — 多胶囊独立运动 */
+        @keyframes gba-anim-capsule-collide {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            8%   { transform: translate(8px, -6px) rotate(12deg); }
+            16%  { transform: translate(14px, -2px) rotate(25deg); }
+            25%  { transform: translate(6px, 8px) rotate(38deg); }
+            33%  { transform: translate(-4px, 10px) rotate(50deg); }
+            41%  { transform: translate(-12px, 4px) rotate(62deg); }
+            50%  { transform: translate(-10px, -6px) rotate(75deg); }
+            58%  { transform: translate(-2px, -10px) rotate(88deg); }
+            66%  { transform: translate(6px, -6px) rotate(100deg); }
+            75%  { transform: translate(10px, 2px) rotate(112deg); }
+            83%  { transform: translate(4px, 8px) rotate(125deg); }
+            91%  { transform: translate(-4px, 6px) rotate(138deg); }
+            100% { transform: translate(0, 0) rotate(150deg); }
+        }
+
+        .gba-machine-unit.is-gacha-shuffling .gba-svg-capsule:nth-child(2) {
+            animation-name: gba-anim-capsule-collide-2;
+            animation-duration: 0.85s;
+            animation-delay: 0.05s;
+        }
+        @keyframes gba-anim-capsule-collide-2 {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            10%  { transform: translate(-7px, 5px) rotate(-10deg); }
+            20%  { transform: translate(-12px, -2px) rotate(-22deg); }
+            30%  { transform: translate(-4px, -9px) rotate(-35deg); }
+            40%  { transform: translate(6px, -8px) rotate(-47deg); }
+            50%  { transform: translate(12px, -1px) rotate(-60deg); }
+            60%  { transform: translate(8px, 7px) rotate(-72deg); }
+            70%  { transform: translate(0, 10px) rotate(-85deg); }
+            80%  { transform: translate(-8px, 5px) rotate(-98deg); }
+            90%  { transform: translate(-5px, -3px) rotate(-110deg); }
+            100% { transform: translate(0, 0) rotate(-120deg); }
+        }
+
+        .gba-machine-unit.is-gacha-shuffling .gba-svg-capsule:nth-child(3) {
+            animation-name: gba-anim-capsule-collide-3;
+            animation-duration: 0.78s;
+            animation-delay: 0.1s;
+        }
+        @keyframes gba-anim-capsule-collide-3 {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            14%  { transform: translate(5px, 8px) rotate(18deg); }
+            28%  { transform: translate(-8px, 6px) rotate(-18deg); }
+            42%  { transform: translate(-5px, -7px) rotate(36deg); }
+            57%  { transform: translate(8px, -4px) rotate(-36deg); }
+            71%  { transform: translate(3px, 6px) rotate(54deg); }
+            85%  { transform: translate(-6px, 2px) rotate(-54deg); }
             100% { transform: translate(0, 0) rotate(0deg); }
         }
-        @keyframes gacha-prize-drop {
-            0% { opacity: 0; transform: translateY(-58px) scale(0.72); }
-            45% { opacity: 1; transform: translateY(0) scale(1); }
+
+        .gba-machine-unit.is-gacha-shuffling .gba-svg-capsule:nth-child(4) {
+            animation-name: gba-anim-capsule-collide-4;
+            animation-duration: 0.95s;
+            animation-delay: 0.03s;
+        }
+        @keyframes gba-anim-capsule-collide-4 {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            12%  { transform: translate(-6px, -5px) rotate(-14deg); }
+            25%  { transform: translate(-10px, 3px) rotate(-28deg); }
+            37%  { transform: translate(-2px, 9px) rotate(-42deg); }
+            50%  { transform: translate(8px, 6px) rotate(-56deg); }
+            62%  { transform: translate(10px, -3px) rotate(-70deg); }
+            75%  { transform: translate(4px, -8px) rotate(-84deg); }
+            87%  { transform: translate(-4px, -4px) rotate(-98deg); }
+            100% { transform: translate(0, 0) rotate(-110deg); }
+        }
+
+        .gba-machine-unit.is-gacha-shuffling .gba-svg-capsule:nth-child(5) {
+            animation-name: gba-anim-capsule-collide-5;
+            animation-duration: 0.82s;
+            animation-delay: 0.08s;
+        }
+        @keyframes gba-anim-capsule-collide-5 {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            20%  { transform: translate(9px, 4px) rotate(22deg); }
+            40%  { transform: translate(-9px, -6px) rotate(-22deg); }
+            60%  { transform: translate(4px, -9px) rotate(44deg); }
+            80%  { transform: translate(-6px, 5px) rotate(-44deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        .gba-machine-unit.is-gacha-shuffling .gba-svg-capsule:nth-child(6) {
+            animation-name: gba-anim-capsule-collide-6;
+            animation-duration: 0.72s;
+            animation-delay: 0.12s;
+        }
+        @keyframes gba-anim-capsule-collide-6 {
+            0%   { transform: translate(0, 0) rotate(0deg); }
+            16%  { transform: translate(-4px, 3px) rotate(-8deg); }
+            33%  { transform: translate(4px, -2px) rotate(8deg); }
+            50%  { transform: translate(-3px, -4px) rotate(-16deg); }
+            66%  { transform: translate(5px, 2px) rotate(16deg); }
+            83%  { transform: translate(-2px, -2px) rotate(-8deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        @keyframes gba-anim-capsule-drop {
+            0%   { opacity: 0; transform: translateY(-40px) scale(0.6); }
+            20%  { opacity: 1; transform: translateY(-16px) scale(0.8); }
+            40%  { opacity: 1; transform: translateY(0) scale(0.95); }
+            60%  { opacity: 1; transform: translateY(4px) scale(1); }
+            80%  { opacity: 1; transform: translateY(8px) scale(1); }
+            100% { opacity: 1; transform: translateY(12px) scale(1); }
+        }
+
+        @keyframes gba-anim-machine-jolt {
+            0%   { transform: translate(0, 0); }
+            33%  { transform: translate(2px, -1px); }
+            66%  { transform: translate(-2px, 1px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        @keyframes gba-ticket-insert {
+            0%   { opacity: 0; transform: translateY(-24px) scale(0.8); }
+            50%  { opacity: 1; transform: translateY(-8px) scale(0.95); }
             100% { opacity: 1; transform: translateY(0) scale(1); }
         }
+
+        @keyframes gba-ticket-eject {
+            0%   { opacity: 0; transform: translate(-16px, -8px) scale(0.7); }
+            30%  { opacity: 1; transform: translate(0, -2px) scale(0.9); }
+            60%  { opacity: 1; transform: translate(4px, 2px) scale(1); }
+            100% { opacity: 1; transform: translate(8px, 6px) scale(1); }
+        }
+
+        @keyframes gba-arrow-bounce {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(3px); }
+        }
+
+        .gba-dialog-text.is-typing::after {
+            content: "_";
+            animation: gba-cursor-blink 0.5s infinite steps(1);
+            font-weight: bold;
+        }
+        @keyframes gba-cursor-blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        .gba-dialog-box::-webkit-scrollbar { width: 6px; }
+        .gba-dialog-box::-webkit-scrollbar-track { background: var(--screen-bg); }
+        .gba-dialog-box::-webkit-scrollbar-thumb { background: var(--pixel-dim); }
+
+        /* ---- 4.2.11 响应式 ---- */
         @media (max-width: 760px) {
-            .title-card-header,
-            .gacha-app {
-                grid-template-columns: 1fr;
+            .gba-screen {
+                height: 360px;
             }
-            .title-card-header {
-                display: grid;
+            .gba-machine-svg-container {
+                width: 140px;
+                height: 200px;
             }
-            .gacha-command-row {
-                grid-template-columns: 1fr;
+            .gba-arrow-btn {
+                width: 22px;
+                height: 34px;
+                font-size: 10px;
+            }
+            .gba-status-bar {
+                font-size: 9px;
+                padding: 3px 6px;
+            }
+            .gba-dialog-box {
+                min-height: 50px;
+                max-height: 70px;
+                padding: 6px 8px;
+            }
+            .gba-dialog-text {
+                font-size: 11px;
+                min-height: 28px;
             }
         }
 
-        .style-machine-card {
-            border-width: 3px;
-            background:
-                linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px),
-                rgba(0,0,0,0.018);
-            background-size: 6px 6px, 6px 6px, auto;
-        }
-        .style-machine-card .section-card-body {
-            padding: 10px;
-        }
-        .gacha-app {
-            grid-template-columns: minmax(460px, 1.42fr) minmax(260px, 0.58fr);
-            gap: 10px;
-        }
-        .gacha-stage {
-            min-height: 520px;
-            padding: 8px;
-            border-width: 3px;
-            background:
-                radial-gradient(circle at 46% 22%, rgba(255,255,255,0.1), transparent 8rem),
-                linear-gradient(rgba(0,0,0,0.055) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px),
-                rgba(0,0,0,0.018);
-            background-size: auto, 5px 5px, 5px 5px, auto;
-        }
-        .gacha-stage::before {
-            top: auto;
-            bottom: 8px;
-            left: 10px;
-            content: "MAINT_PANEL: CAPSULE_FEEDER_CALIBRATION_REQUIRED";
-        }
-        .gacha-svg {
-            margin-top: 0;
-            min-height: 500px;
-        }
-        .gacha-panel-fill {
-            fill: rgba(30, 38, 34, 0.055);
-            stroke: var(--pixel-dark);
-            stroke-width: 3;
-            vector-effect: non-scaling-stroke;
-        }
-        .gacha-glass {
-            fill: rgba(255,255,255,0.06);
-            stroke: var(--pixel-dark);
-            stroke-width: 4;
-            vector-effect: non-scaling-stroke;
-        }
-        .gacha-hatch {
-            stroke: rgba(30, 38, 34, 0.18);
-            stroke-width: 1;
-        }
-        .gacha-ui-text {
-            fill: var(--pixel-dark);
-            font-family: var(--font-mono);
-            font-size: 12px;
-            font-weight: bold;
-            letter-spacing: 0;
-        }
-        .gacha-ui-text.dim {
-            fill: var(--pixel-dim);
-        }
-        .gacha-line.heavy {
-            stroke-width: 5;
-        }
-        .gacha-drum {
-            transform-origin: 260px 236px;
-        }
-        .gacha-capsule {
-            transform-origin: 260px 236px;
-        }
-        .gacha-knob {
-            transform-origin: 514px 254px;
-        }
-        .gacha-prize {
-            transform-origin: 278px 452px;
-            opacity: 0.18;
-        }
-        .gacha-prize-fill {
-            fill: var(--screen-bg);
-            stroke: var(--pixel-dark);
-            stroke-width: 3;
-            vector-effect: non-scaling-stroke;
-        }
-        .gacha-machine.is-spinning .gacha-drum {
-            animation: gacha-drum-roll 0.82s steps(8) 1;
-        }
-        .gacha-machine.is-spinning .gacha-capsule {
-            animation: gacha-capsule-jolt 0.82s steps(5) 1;
-        }
-        .gacha-machine.is-spinning .gacha-knob {
-            animation: gacha-knob-turn 0.82s steps(9) 1;
-        }
-        .gacha-machine.is-dispensing .gacha-prize {
-            animation: gacha-ticket-eject 0.9s steps(7) 1 forwards;
-        }
-        .gacha-status-panel {
-            margin-top: 6px;
-            font-size: 11px;
-            border-width: 2px;
-        }
-        .gacha-status-panel div {
-            min-height: 28px;
-            padding: 6px 7px;
-            background: rgba(0,0,0,0.025);
-        }
-        .gacha-copy {
-            min-height: 520px;
-            grid-template-rows: auto minmax(0, 1fr) auto;
-            border: 2px solid var(--pixel-dark);
-            padding: 8px;
-            background:
-                linear-gradient(180deg, rgba(30,38,34,0.08), transparent 34px),
-                rgba(0,0,0,0.018);
-        }
-        .gacha-command-row {
-            grid-template-columns: 1fr;
-        }
-        .gacha-command-row .hardware-btn {
-            min-height: 40px;
-            justify-content: space-between;
-            padding: 7px 10px;
-        }
-        .result-container {
-            min-height: 360px;
-            border: 2px solid var(--pixel-dark);
-            border-top: 8px solid var(--pixel-dark);
-            background:
-                linear-gradient(rgba(30,38,34,0.055) 1px, transparent 1px),
-                var(--paper-worn);
-            background-size: 100% 18px;
-            box-shadow:
-                inset 0 0 0 1px rgba(255,255,255,0.18),
-                4px 4px 0 rgba(30,38,34,0.25);
-            position: relative;
-        }
-        .result-container::before {
-            content: "THERMAL_STYLE_TICKET";
-            position: absolute;
-            top: -20px;
-            left: 8px;
-            color: var(--screen-bg);
-            font-size: 10px;
-        }
-        .result-tag {
-            display: block;
-            text-align: center;
-            padding: 5px 8px;
-            margin-bottom: 10px;
-            font-size: 13px;
-        }
-        .result-desc {
-            font-size: 12px;
-            color: var(--pixel-dark);
-            line-height: 1.7;
-        }
-        .result-placeholder {
-            min-height: 310px;
-            display: grid;
-            place-items: center;
-            border: 1px dashed var(--pixel-dim);
-        }
-        .gacha-ticket {
-            border: 2px solid var(--pixel-dark);
-            padding: 7px 8px;
-            background: rgba(0,0,0,0.035);
-            color: var(--pixel-dark);
-        }
-        @keyframes gacha-drum-roll {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(-42deg); }
-        }
-        @keyframes gacha-capsule-jolt {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            20% { transform: translate(7px, -5px) rotate(6deg); }
-            40% { transform: translate(-6px, 4px) rotate(-8deg); }
-            60% { transform: translate(5px, 6px) rotate(5deg); }
-            80% { transform: translate(-4px, -3px) rotate(-4deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-        @keyframes gacha-ticket-eject {
-            0% { opacity: 0; transform: translate(-24px, -80px) scale(0.78); }
-            35% { opacity: 1; transform: translate(0, -22px) scale(0.96); }
-            100% { opacity: 1; transform: translate(0, 0) scale(1); }
-        }
-        @media (max-width: 900px) {
-            .gacha-app {
-                grid-template-columns: 1fr;
+        @media (min-width: 761px) and (max-width: 1024px) {
+            .gba-screen {
+                height: 420px;
             }
-            .gacha-stage,
-            .gacha-copy {
-                min-height: auto;
-            }
-            .gacha-svg {
-                min-height: 0;
-            }
-            .result-container {
-                min-height: 220px;
-            }
-            .result-placeholder {
-                min-height: 170px;
+            .gba-machine-svg-container {
+                width: 170px;
+                height: 240px;
             }
         }
     </style>
@@ -600,86 +756,76 @@
                 </div>
             </div>
 
-            <!-- 操作区 -->
+            <!-- ==================== GBA 扭蛋迷你游戏 ==================== -->
             <div class="section-card style-machine-card">
                 <div class="section-card-header">
-                    <h3>[ CAPSULE_STYLE_VENDOR ]</h3>
-                    <p class="ai-note">&gt;&gt; Insert one intention token. Rotate actuator. Receive one writing constraint capsule.</p>
+                    <h3>[ GACHA_CAPSULE_VENDOR_V2 ]</h3>
+                    <p class="ai-note">&gt;&gt; 选择一台扭蛋机，投入票据，转动摇把，获取写作约束胶囊。</p>
                 </div>
-                <div class="section-card-body">
-                    <div class="gacha-app">
-                        <div class="gacha-stage">
-                            <svg class="gacha-svg gacha-machine" id="gacha-machine" viewBox="0 0 640 560" role="img" aria-label="Style capsule vending machine">
-                                <defs>
-                                    <pattern id="lcd-hatch" width="8" height="8" patternUnits="userSpaceOnUse">
-                                        <path d="M0 8L8 0" class="gacha-hatch"/>
-                                    </pattern>
-                                </defs>
-                                <rect class="gacha-panel-fill" x="36" y="24" width="572" height="506"/>
-                                <path class="gacha-line heavy" d="M36 72h572M36 482h572"/>
-                                <text x="56" y="53" class="gacha-ui-text">STYLE CAPSULE TERMINAL // RANDOM DOCUMENT-FORM DISPENSER</text>
-                                <text x="426" y="53" class="gacha-ui-text dim">LCD_APP 00.1 / TOKEN ACCEPTED</text>
+                <div class="section-card-body" style="padding:0;">
+                    <!-- GBA 游戏屏幕容器 -->
+                    <div class="gba-screen" id="gba-screen">
 
-                                <g class="gacha-dome">
-                                    <path class="gacha-glass" d="M104 118C104 72 148 82 204 82h112c56 0 100-10 100 36v170c0 42-34 76-76 76H180c-42 0-76-34-76-76z"/>
-                                    <path class="gacha-line" d="M120 156h296M104 252h312M150 92l-24 276M390 92l24 276"/>
-                                    <g class="gacha-drum">
-                                        <circle class="gacha-fill gacha-capsule" cx="178" cy="160" r="34"/>
-                                        <circle class="gacha-fill gacha-capsule" cx="260" cy="138" r="30"/>
-                                        <circle class="gacha-fill gacha-capsule" cx="338" cy="172" r="33"/>
-                                        <circle class="gacha-fill gacha-capsule" cx="214" cy="244" r="31"/>
-                                        <circle class="gacha-fill gacha-capsule" cx="316" cy="254" r="36"/>
-                                        <circle class="gacha-fill gacha-capsule" cx="256" cy="320" r="28"/>
-                                        <path class="gacha-line" d="M150 160h56M236 138h48M310 172h56M188 244h52M286 254h64M232 320h48"/>
-                                    </g>
-                                    <path class="gacha-line heavy" d="M190 366h138l-20 40H210z"/>
-                                </g>
-
-                                <g class="gacha-console">
-                                    <rect class="gacha-panel-fill" x="438" y="112" width="152" height="310"/>
-                                    <path class="gacha-line" d="M458 148h112M458 184h112M458 318h112"/>
-                                    <text x="458" y="138" class="gacha-ui-text">ACTUATOR</text>
-                                    <text x="458" y="174" class="gacha-ui-text dim">TURN TO DISPENSE</text>
-                                    <g class="gacha-knob">
-                                        <circle class="gacha-fill" cx="514" cy="254" r="58"/>
-                                        <circle class="gacha-dark" cx="514" cy="254" r="14"/>
-                                        <path class="gacha-line heavy" d="M514 198v38M514 270v38M458 254h38M530 254h38"/>
-                                        <path class="gacha-line" d="M478 218l72 72M550 218l-72 72"/>
-                                    </g>
-                                    <rect class="gacha-fill" x="458" y="340" width="112" height="44"/>
-                                    <text x="475" y="367" class="gacha-ui-text">PUSH / COPY</text>
-                                </g>
-
-                                <g class="gacha-rail">
-                                    <path class="gacha-fill" d="M212 404h114l32 34h142v54H162v-54h178l-26-20H212z"/>
-                                    <path class="gacha-line" d="M178 450h320M318 418l34 36"/>
-                                    <g class="gacha-prize" id="gacha-prize">
-                                        <path class="gacha-prize-fill" d="M218 398h120l32 28v66H186v-66z"/>
-                                        <path class="gacha-line" d="M218 426h152M208 452h132M208 472h84"/>
-                                    </g>
-                                </g>
-                                <text x="184" y="514" class="gacha-ui-text" id="gacha-label">NO CAPSULE / WAITING</text>
-                            </svg>
-                            <div class="gacha-status-panel">
-                                <div>POOL: <span id="gacha-pool-count">0</span></div>
-                                <div>STATE: <span id="gacha-state">IDLE</span></div>
-                                <div>CAPSULE: <span id="gacha-current">NONE</span></div>
-                                <div>MODE: MANUAL/RNG</div>
+                        <!-- 第1层: GBA 状态栏 -->
+                        <div class="gba-status-bar">
+                            <div class="gba-status-left">
+                                <span class="gba-label">MACHINE:</span>
+                                <span class="gba-value" id="gba-machine-name">8-BIT_NOSTALGIA</span>
+                            </div>
+                            <div class="gba-status-right">
+                                <span class="gba-ticket-icon">&#x25A3;</span>
+                                <span class="gba-ticket-count" id="gba-universal-count">&#x25A0;&#x25A0;&#x25A0;&#x25A1;&#x25A1;</span>
+                                <span class="gba-divider">|</span>
+                                <span class="gba-ticket-icon-limited">&#x25C9;</span>
+                                <span class="gba-ticket-count" id="gba-limited-count">&#x25A0;&#x25A0;&#x25A1;&#x25A1;&#x25A1;</span>
                             </div>
                         </div>
-                        <div class="gacha-copy">
-                            <div class="gacha-command-row">
-                                <button class="hardware-btn btn-primary" id="random-btn">[ TURN_KNOB ]</button>
-                                <button class="hardware-btn btn-secondary" id="copy-btn" disabled>[ COPY_TICKET ]</button>
-                                <button class="hardware-btn btn-secondary" id="add-style-btn">[ LOAD_CAPSULE ]</button>
+
+                        <!-- 第2层: 机台轮播舞台 -->
+                        <div class="gba-stage" id="gba-stage">
+                            <!-- 左箭头 -->
+                            <button class="gba-arrow-btn gba-arrow-left" id="gba-arrow-left" aria-label="上一台机器">&#x25C0;</button>
+
+                            <!-- 轮播窗口 -->
+                            <div class="gba-carousel-window" id="gba-carousel-window">
+                                <div class="gba-carousel-track" id="gba-carousel-track">
+                                    <!-- 由 JS 循环 GACHA_MACHINES 生成 .gba-machine-unit -->
+                                </div>
                             </div>
-                            <div class="result-container" id="result-container">
-                                <p class="result-placeholder">WAITING FOR CAPSULE_DISPENSE...</p>
+
+                            <!-- 右箭头 -->
+                            <button class="gba-arrow-btn gba-arrow-right" id="gba-arrow-right" aria-label="下一台机器">&#x25B6;</button>
+
+                            <!-- 机器基础底座（固定在舞台底部，不随轮播移动） -->
+                            <div class="gba-machine-base">
+                                <div class="gba-ticket-slot" id="gba-ticket-slot">
+                                    <!-- 票据插入口 -->
+                                </div>
+                                <div class="gba-ticket-eject-slot" id="gba-ticket-eject-slot">
+                                    <!-- 票据出口 -->
+                                </div>
                             </div>
-                            <div class="gacha-ticket">
-                                <span>PRINT_SLOT: STYLE_CONSTRAINT</span>
-                                <span id="gacha-ticket-id">TICKET: ----</span>
+                        </div>
+
+                        <!-- 第3层: GBA 对话框 -->
+                        <div class="gba-dialog-box" id="gba-dialog-box">
+                            <div class="gba-dialog-text" id="gba-dialog-text">
+                                &gt; 面前是一排旧时代的扭蛋机。
+                                选择一台机器，投入票据，转动摇把。
                             </div>
+                            <div class="gba-dialog-arrow" id="gba-dialog-arrow">&#x25BC;</div>
+                        </div>
+
+                    </div><!-- .gba-screen 结束 -->
+
+                    <!-- 结果栏 + 操作按钮 -->
+                    <div style="display:flex; gap:8px; padding:8px; border-top:2px solid var(--pixel-dark); background:rgba(0,0,0,0.02); align-items:stretch; min-height:52px;">
+                        <div class="result-container" id="result-container" style="flex:1; min-height:36px; padding:6px 8px; font-size:11px; display:flex; align-items:center;">
+                            <p class="result-placeholder" style="margin:0;">WAITING FOR CAPSULE_DISPENSE...</p>
+                        </div>
+                        <div style="display:flex; gap:4px; flex-shrink:0;">
+                            <button class="hardware-btn btn-secondary" id="copy-btn" disabled style="font-size:10px; padding:4px 8px;">[ COPY ]</button>
+                            <button class="hardware-btn btn-secondary" id="add-style-btn" style="font-size:10px; padding:4px 8px;">[ +CAPSULE ]</button>
                         </div>
                     </div>
                 </div>
@@ -840,7 +986,7 @@
 <script type="module">
     import { supabase, checkAuth } from './script.js';
 
-    // 分类定义（从代码读取）
+    // ==================== 分类定义 ====================
     const categories = {
         code: { name: "代码编程", color: "#2d5a27" },
         tech: { name: "技术文档", color: "#275a5a" },
@@ -855,48 +1001,535 @@
         misc: { name: "其他", color: "#555555" }
     };
 
+    // ==================== 扭蛋机注册表 ====================
+    const GACHA_MACHINES = [
+        {
+            id: 0,
+            name: '8-BIT_NOSTALGIA',
+            label: 'NO.01',
+            category: null,
+            silhouette: 'classic',
+            flavor: 'FC红白机风格约束 / 8-bit像素日志'
+        },
+        {
+            id: 1,
+            name: 'BRASS_STEAM',
+            label: 'NO.02',
+            category: 'creative',
+            silhouette: 'cylinder',
+            flavor: '蒸汽朋克风格约束 / 铜齿轮纹理日记'
+        },
+        {
+            id: 2,
+            name: 'CYBER_GLITCH',
+            label: 'NO.03',
+            category: 'tech',
+            silhouette: 'square',
+            flavor: '赛博故障风格约束 / 终端乱码审美日志'
+        }
+    ];
+
+    // ==================== 全局状态 ====================
     let styles = [];
     let currentStyle = null;
+    let currentMachineIndex = 0;
+    let isGachaAnimating = false;
+    let universalTickets = 5;
+    let limitedTickets = 3;
+    const MAX_TICKETS = 5;
 
-    const stylesContainer = document.getElementById('styles-container');
-    const styleCountDisplay = document.getElementById('style-count-display');
-    const randomBtn = document.getElementById('random-btn');
-    const copyBtn = document.getElementById('copy-btn');
-    let resultContainer, addStyleBtn, addModal, closeModalBtn, cancelBtn, addForm, styleNameInput, styleDescInput, styleCategoryInput;
-    let gachaMachine, gachaPoolCount, gachaState, gachaCurrent, gachaLabel, gachaTicketId;
+    // ==================== SVG 机器蓝图生成 ====================
+    function generateMachineSVG_classic() {
+        return `<svg class="gba-machine-svg" viewBox="0 0 200 280" role="img" aria-label="Classic dome gacha machine">
+            <defs>
+                <pattern id="lcd-grid" width="4" height="4" patternUnits="userSpaceOnUse">
+                    <rect width="4" height="4" fill="none"/>
+                    <rect width="1" height="1" fill="rgba(30,38,34,0.06)"/>
+                </pattern>
+            </defs>
+            <ellipse cx="100" cy="90" rx="62" ry="60" fill="url(#lcd-grid)" stroke="#1e2622" stroke-width="3"/>
+            <path d="M 50 60 Q 70 20 100 18" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+            <g class="gba-svg-drum" style="--drum-cx:100px;--drum-cy:145px;">
+                <rect x="48" y="100" width="104" height="80" rx="4" fill="none" stroke="#1e2622" stroke-width="3"/>
+                <line x1="48" y1="118" x2="152" y2="118" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,3"/>
+                <line x1="48" y1="136" x2="152" y2="136" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,3"/>
+                <line x1="48" y1="154" x2="152" y2="154" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,3"/>
+                <g class="gba-svg-capsule" style="--capsule-cx:68px;--capsule-cy:110px;">
+                    <circle cx="68" cy="110" r="9" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="60" y1="110" x2="76" y2="110" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:100px;--capsule-cy:108px;">
+                    <circle cx="100" cy="108" r="10" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="92" y1="108" x2="108" y2="108" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:134px;--capsule-cy:112px;">
+                    <circle cx="134" cy="112" r="9" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="126" y1="112" x2="142" y2="112" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:80px;--capsule-cy:148px;">
+                    <circle cx="80" cy="148" r="11" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="70" y1="148" x2="90" y2="148" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:122px;--capsule-cy:150px;">
+                    <circle cx="122" cy="150" r="10" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="114" y1="150" x2="130" y2="150" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:98px;--capsule-cy:168px;">
+                    <circle cx="98" cy="168" r="8" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="92" y1="168" x2="104" y2="168" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+            </g>
+            <path d="M 90 185 L 90 220 L 100 230 L 110 220 L 110 185" fill="none" stroke="#1e2622" stroke-width="2"/>
+            <line x1="90" y1="220" x2="50" y2="220" stroke="#1e2622" stroke-width="2" stroke-dasharray="4,2"/>
+            <g class="gba-svg-prize" style="--prize-cx:100px;--prize-cy:230px;">
+                <circle cx="100" cy="230" r="8" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                <circle cx="100" cy="230" r="2" fill="#1e2622"/>
+            </g>
+            <rect x="34" y="245" width="132" height="28" rx="2" fill="none" stroke="#1e2622" stroke-width="3"/>
+            <line x1="34" y1="255" x2="166" y2="255" stroke="#1e2622" stroke-width="1"/>
+            <circle cx="46" cy="259" r="2" fill="#1e2622"/>
+            <circle cx="154" cy="259" r="2" fill="#1e2622"/>
+            <g class="gba-svg-knob" style="--knob-cx:155px;--knob-cy:170px;">
+                <line x1="145" y1="170" x2="165" y2="170" stroke="#1e2622" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="175" cy="170" r="12" fill="none" stroke="#1e2622" stroke-width="3"/>
+                <circle cx="175" cy="170" r="3" fill="#1e2622"/>
+                <line x1="175" y1="162" x2="175" y2="178" stroke="#1e2622" stroke-width="1.5"/>
+                <line x1="167" y1="170" x2="183" y2="170" stroke="#1e2622" stroke-width="1.5"/>
+            </g>
+            <rect x="90" y="273" width="20" height="4" fill="#1e2622"/>
+            <rect x="86" y="270" width="28" height="7" fill="none" stroke="#1e2622" stroke-width="1.5"/>
+        </svg>`;
+    }
 
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            resultContainer = document.getElementById('result-container');
-            addStyleBtn = document.getElementById('add-style-btn');
-            addModal = document.getElementById('add-modal');
-            closeModalBtn = document.getElementById('close-modal-btn');
-            cancelBtn = document.getElementById('cancel-btn');
-            addForm = document.getElementById('add-form');
-            styleNameInput = document.getElementById('style-name');
-            styleDescInput = document.getElementById('style-desc');
-            styleCategoryInput = document.getElementById('style-category');
-            gachaMachine = document.getElementById('gacha-machine');
-            gachaPoolCount = document.getElementById('gacha-pool-count');
-            gachaState = document.getElementById('gacha-state');
-            gachaCurrent = document.getElementById('gacha-current');
-            gachaLabel = document.getElementById('gacha-label');
-            gachaTicketId = document.getElementById('gacha-ticket-id');
-            
-            addModal.classList.add('hidden');
-            const authed = await checkAuth();
-            if (!authed) return;
-            await loadStyles();
-            renderStyles();
-            setupEventListeners();
-        } catch (error) {
-            console.error("初始化失败:", error);
-            if (resultContainer) {
-                resultContainer.innerHTML = '<p class="text-red-500 text-center">初始化失败，请刷新页面重试</p>';
-            }
+    function generateMachineSVG_cylinder() {
+        return `<svg class="gba-machine-svg" viewBox="0 0 200 280" role="img" aria-label="Cylinder steam gacha machine">
+            <defs>
+                <pattern id="lcd-grid-c" width="4" height="4" patternUnits="userSpaceOnUse">
+                    <rect width="4" height="4" fill="none"/>
+                    <rect width="1" height="1" fill="rgba(30,38,34,0.06)"/>
+                </pattern>
+            </defs>
+            <ellipse cx="100" cy="50" rx="50" ry="18" fill="url(#lcd-grid-c)" stroke="#1e2622" stroke-width="3"/>
+            <rect x="95" y="30" width="10" height="24" fill="none" stroke="#1e2622" stroke-width="2.5"/>
+            <circle cx="100" cy="28" r="5" fill="none" stroke="#1e2622" stroke-width="2"/>
+            <path d="M 100 28 L 100 15 L 120 15" fill="none" stroke="#1e2622" stroke-width="2" stroke-linecap="round"/>
+            <path d="M 115 8 Q 118 5 120 8 M 118 4 Q 121 1 123 4" fill="none" stroke="#1e2622" stroke-width="1.5"/>
+            <rect x="50" y="68" width="100" height="135" rx="3" fill="none" stroke="#1e2622" stroke-width="3"/>
+            <line x1="50" y1="85" x2="150" y2="85" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="2,6"/>
+            <line x1="50" y1="185" x2="150" y2="185" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="2,6"/>
+            <circle cx="65" cy="82" r="2" fill="#1e2622"/>
+            <circle cx="135" cy="82" r="2" fill="#1e2622"/>
+            <circle cx="65" cy="188" r="2" fill="#1e2622"/>
+            <circle cx="135" cy="188" r="2" fill="#1e2622"/>
+            <g class="gba-svg-drum" style="--drum-cx:100px;--drum-cy:135px;">
+                <rect x="62" y="92" width="76" height="86" rx="2" fill="none" stroke="#1e2622" stroke-width="2"/>
+                <line x1="62" y1="104" x2="138" y2="104" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="62" y1="116" x2="138" y2="116" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="62" y1="128" x2="138" y2="128" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="62" y1="140" x2="138" y2="140" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="62" y1="152" x2="138" y2="152" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="62" y1="164" x2="138" y2="164" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,2"/>
+                <g class="gba-svg-capsule" style="--capsule-cx:80px;--capsule-cy:98px;">
+                    <circle cx="80" cy="98" r="6" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:120px;--capsule-cy:110px;">
+                    <circle cx="120" cy="110" r="7" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:90px;--capsule-cy:122px;">
+                    <circle cx="90" cy="122" r="6" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:110px;--capsule-cy:134px;">
+                    <circle cx="110" cy="134" r="6" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:85px;--capsule-cy:146px;">
+                    <circle cx="85" cy="146" r="7" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:115px;--capsule-cy:158px;">
+                    <circle cx="115" cy="158" r="5" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="1.5"/>
+                </g>
+            </g>
+            <path d="M 100 180 L 100 205 L 100 220" fill="none" stroke="#1e2622" stroke-width="2.5"/>
+            <line x1="88" y1="205" x2="55" y2="205" stroke="#1e2622" stroke-width="2" stroke-dasharray="4,2"/>
+            <g class="gba-svg-prize" style="--prize-cx:100px;--prize-cy:225px;">
+                <circle cx="100" cy="225" r="7" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                <circle cx="100" cy="225" r="2" fill="#1e2622"/>
+            </g>
+            <path d="M 40 240 L 160 240 L 150 268 L 50 268 Z" fill="none" stroke="#1e2622" stroke-width="3"/>
+            <line x1="50" y1="254" x2="150" y2="254" stroke="#1e2622" stroke-width="1"/>
+            <g class="gba-svg-knob" style="--knob-cx:155px;--knob-cy:100px;">
+                <line x1="148" y1="100" x2="162" y2="92" stroke="#1e2622" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="170" cy="88" r="10" fill="none" stroke="#1e2622" stroke-width="2.5"/>
+                <circle cx="170" cy="88" r="3" fill="#1e2622"/>
+                <line x1="162" y1="88" x2="178" y2="88" stroke="#1e2622" stroke-width="1.5"/>
+                <line x1="170" y1="80" x2="170" y2="96" stroke="#1e2622" stroke-width="1.5"/>
+            </g>
+            <rect x="90" y="268" width="20" height="4" fill="#1e2622"/>
+        </svg>`;
+    }
+
+    function generateMachineSVG_square() {
+        return `<svg class="gba-machine-svg" viewBox="0 0 200 280" role="img" aria-label="Square cyber gacha machine">
+            <defs>
+                <pattern id="lcd-grid-s" width="4" height="4" patternUnits="userSpaceOnUse">
+                    <rect width="4" height="4" fill="none"/>
+                    <rect width="1" height="1" fill="rgba(30,38,34,0.06)"/>
+                </pattern>
+            </defs>
+            <path d="M 45 40 L 55 32 L 65 40 L 75 32 L 85 40 L 95 32 L 105 40 L 115 32 L 125 40 L 135 32 L 145 40 L 155 32" fill="none" stroke="#1e2622" stroke-width="2.5"/>
+            <rect x="55" y="44" width="90" height="22" rx="2" fill="url(#lcd-grid-s)" stroke="#1e2622" stroke-width="2.5"/>
+            <rect x="60" y="48" width="12" height="6" fill="#1e2622"/>
+            <rect x="76" y="48" width="12" height="6" fill="#1e2622"/>
+            <rect x="92" y="48" width="12" height="6" fill="none" stroke="#1e2622" stroke-width="1.5"/>
+            <rect x="108" y="48" width="12" height="6" fill="#1e2622"/>
+            <rect x="124" y="48" width="12" height="6" fill="none" stroke="#1e2622" stroke-width="1.5"/>
+            <g class="gba-svg-drum" style="--drum-cx:100px;--drum-cy:145px;">
+                <rect x="40" y="74" width="120" height="110" rx="2" fill="none" stroke="#1e2622" stroke-width="3"/>
+                <line x1="100" y1="74" x2="100" y2="184" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,4"/>
+                <line x1="40" y1="129" x2="160" y2="129" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,4"/>
+                <g class="gba-svg-capsule" style="--capsule-cx:68px;--capsule-cy:98px;">
+                    <circle cx="68" cy="98" r="9" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="60" y1="98" x2="76" y2="98" stroke="#1e2622" stroke-width="1"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:130px;--capsule-cy:100px;">
+                    <circle cx="130" cy="100" r="8" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="124" y1="100" x2="136" y2="100" stroke="#1e2622" stroke-width="1"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:75px;--capsule-cy:150px;">
+                    <circle cx="75" cy="150" r="10" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="68" y1="150" x2="82" y2="150" stroke="#1e2622" stroke-width="1"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:128px;--capsule-cy:148px;">
+                    <circle cx="128" cy="148" r="9" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="120" y1="148" x2="136" y2="148" stroke="#1e2622" stroke-width="1"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:100px;--capsule-cy:120px;">
+                    <circle cx="100" cy="120" r="8" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="94" y1="120" x2="106" y2="120" stroke="#1e2622" stroke-width="1"/>
+                </g>
+                <g class="gba-svg-capsule" style="--capsule-cx:100px;--capsule-cy:168px;">
+                    <circle cx="100" cy="168" r="9" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                    <line x1="92" y1="168" x2="108" y2="168" stroke="#1e2622" stroke-width="1"/>
+                </g>
+            </g>
+            <path d="M 100 186 L 100 200 L 90 210 L 110 220" fill="none" stroke="#1e2622" stroke-width="2.5"/>
+            <g class="gba-svg-prize" style="--prize-cx:110px;--prize-cy:225px;">
+                <rect x="104" y="220" width="14" height="14" rx="2" fill="rgba(30,38,34,0.08)" stroke="#1e2622" stroke-width="2"/>
+                <line x1="108" y1="227" x2="114" y2="227" stroke="#1e2622" stroke-width="1"/>
+            </g>
+            <rect x="38" y="238" width="124" height="34" rx="2" fill="none" stroke="#1e2622" stroke-width="3"/>
+            <rect x="50" y="245" width="100" height="4" fill="#1e2622"/>
+            <rect x="50" y="253" width="100" height="4" fill="#1e2622"/>
+            <rect x="50" y="261" width="100" height="4" fill="#1e2622"/>
+            <g class="gba-svg-knob" style="--knob-cx:48px;--knob-cy:110px;">
+                <line x1="50" y1="110" x2="38" y2="110" stroke="#1e2622" stroke-width="4" stroke-linecap="round"/>
+                <rect x="22" y="100" width="22" height="20" rx="2" fill="none" stroke="#1e2622" stroke-width="2.5"/>
+                <circle cx="33" cy="110" r="3" fill="#1e2622"/>
+            </g>
+            <rect x="88" y="272" width="24" height="4" fill="#1e2622"/>
+            <rect x="84" y="268" width="32" height="8" fill="none" stroke="#1e2622" stroke-width="1.5"/>
+        </svg>`;
+    }
+
+    function generateMachineSVG(silhouette) {
+        switch (silhouette) {
+            case 'cylinder': return generateMachineSVG_cylinder();
+            case 'square':   return generateMachineSVG_square();
+            case 'classic':
+            default:         return generateMachineSVG_classic();
         }
-    });
+    }
 
+    // ==================== 动画工具函数 ====================
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // ==================== 动画流水线 ====================
+    async function executeGachaPipeline(machineIndex, onComplete) {
+        const unit = document.getElementById(`gba-machine-${machineIndex}`);
+        const base = document.getElementById('gba-machine-base');
+        const ticketSlot = document.getElementById('gba-ticket-slot');
+        const ejectSlot = document.getElementById('gba-ticket-eject-slot');
+        const gbaScreen = document.getElementById('gba-screen');
+
+        // 阶段 1: INSERTING
+        const ticketProp = document.createElement('div');
+        ticketProp.className = 'gba-ticket-prop is-inserting';
+        ticketProp.style.left = `${ticketSlot.offsetLeft + 8}px`;
+        ticketProp.style.bottom = `${gbaScreen.offsetHeight - ticketSlot.offsetTop}px`;
+        base.appendChild(ticketProp);
+        await sleep(400);
+        ticketProp.remove();
+
+        // 阶段 2: SPINNING
+        unit.classList.add('is-gacha-spinning');
+        await sleep(700);
+        unit.classList.remove('is-gacha-spinning');
+
+        // 阶段 3: SHUFFLING
+        unit.classList.add('is-gacha-jolting');
+        unit.classList.add('is-gacha-shuffling');
+        await sleep(950);
+        unit.classList.remove('is-gacha-shuffling');
+        unit.classList.remove('is-gacha-jolting');
+
+        // 阶段 4: DROPPING
+        unit.classList.add('is-gacha-dropping');
+        await sleep(550);
+        unit.classList.remove('is-gacha-dropping');
+
+        // 阶段 5: EJECTING
+        const ejectProp = document.createElement('div');
+        ejectProp.className = 'gba-ticket-prop is-ejecting';
+        ejectProp.style.left = `${ejectSlot.offsetLeft + 4}px`;
+        ejectProp.style.bottom = `${gbaScreen.offsetHeight - ejectSlot.offsetTop}px`;
+        base.appendChild(ejectProp);
+        await sleep(700);
+        ejectProp.remove();
+
+        // 阶段 6: TYPING
+        if (onComplete) onComplete();
+
+        const dialogArrow = document.getElementById('gba-dialog-arrow');
+        if (dialogArrow) dialogArrow.style.display = '';
+    }
+
+    // ==================== 票据系统 ====================
+    function renderTicketBlocks(count) {
+        let blocks = '';
+        for (let i = 0; i < MAX_TICKETS; i++) {
+            blocks += i < count ? '\u25A0' : '\u25A1';
+        }
+        blocks += ` [${count}/${MAX_TICKETS}]`;
+        return blocks;
+    }
+
+    function updateStatusBar(elements) {
+        const machine = GACHA_MACHINES[currentMachineIndex];
+        elements.gbaMachineName.textContent = machine.name;
+        elements.gbaUniversalCount.innerHTML = renderTicketBlocks(universalTickets);
+        elements.gbaLimitedCount.innerHTML = renderTicketBlocks(limitedTickets);
+    }
+
+    function updateArrowStates(elements) {
+        elements.gbaArrowLeft.disabled = (currentMachineIndex <= 0);
+        elements.gbaArrowRight.disabled = (currentMachineIndex >= GACHA_MACHINES.length - 1);
+    }
+
+    // ==================== 轮播导航 ====================
+    function navigateCarousel(direction, elements) {
+        const { gbaCarouselTrack } = elements;
+        const newIndex = currentMachineIndex + direction;
+
+        if (newIndex < 0 || newIndex >= GACHA_MACHINES.length || isGachaAnimating) return;
+
+        currentMachineIndex = newIndex;
+
+        const unitWidth = 100 / GACHA_MACHINES.length;
+        gbaCarouselTrack.style.transform = `translateX(-${currentMachineIndex * unitWidth}%)`;
+
+        document.querySelectorAll('.gba-machine-unit').forEach((unit, i) => {
+            unit.classList.toggle('is-active', i === currentMachineIndex);
+        });
+
+        updateStatusBar(elements);
+        updateArrowStates(elements);
+
+        const machine = GACHA_MACHINES[currentMachineIndex];
+        elements.gbaDialogText.innerHTML =
+            `&gt; 已切换到 ${machine.label} [${machine.name}]。<br>` +
+            `[提示] 点击机器上的摇把，投入 1 张票据开始抽取。`;
+    }
+
+    // ==================== 抽池计算 ====================
+    function getGachaPool(machine) {
+        if (machine.category === null) {
+            return [...styles];
+        }
+        return styles.filter(s => s.category === machine.category);
+    }
+
+    // ==================== 机器点击 — 核心抽取逻辑 ====================
+    function onMachineClick(machineIndex, elements) {
+        if (isGachaAnimating) return;
+        if (styles.length === 0) {
+            elements.gbaDialogText.innerHTML = '&gt; 机器内部空空如也。请先添加一些风格到风格库。';
+            return;
+        }
+
+        const machine = GACHA_MACHINES[machineIndex];
+        const pool = getGachaPool(machine);
+
+        const isUniversal = (machine.category === null);
+        const ticketCount = isUniversal ? universalTickets : limitedTickets;
+
+        if (ticketCount <= 0) {
+            const ticketName = isUniversal ? '普池票据' : '限定票据';
+            elements.gbaDialogText.innerHTML =
+                `&gt; 咔哒！摇把卡住了！<br>` +
+                `<span style="color:var(--pixel-alert);">[警告] ${ticketName}已耗尽。请等待重置。</span>`;
+            return;
+        }
+        if (pool.length === 0) {
+            elements.gbaDialogText.innerHTML = '&gt; 当前抽取池为空。请添加对应分类的风格。';
+            return;
+        }
+
+        if (isUniversal) {
+            universalTickets--;
+        } else {
+            limitedTickets--;
+        }
+        updateStatusBar(elements);
+
+        const pickedStyle = pool[Math.floor(Math.random() * pool.length)];
+
+        isGachaAnimating = true;
+        executeGachaPipeline(machineIndex, () => {
+            showGachaResult(pickedStyle, machine, isUniversal, elements);
+            isGachaAnimating = false;
+        });
+    }
+
+    // ==================== 结果显示 ====================
+    function showGachaResult(style, machine, isUniversal, elements) {
+        const { gbaDialogText, gbaDialogArrow } = elements;
+        currentStyle = style;
+
+        const flavorText = machine.flavor || '';
+        const stage1 = `&gt; 咔哒！${flavorText}<br>抽中: [${style.name}]`;
+        const stage2 = `\u300C${style.desc || '(无描述)'}\u300D`;
+
+        gbaDialogArrow.style.display = 'none';
+        gbaDialogText.classList.add('is-typing');
+        gbaDialogText.innerHTML = stage1;
+
+        setTimeout(() => {
+            gbaDialogText.innerHTML += `<br><br>${stage2}`;
+            gbaDialogText.classList.remove('is-typing');
+            gbaDialogArrow.style.display = '';
+
+            updateLegacyResultContainer(style, elements);
+        }, 1200);
+    }
+
+    function updateLegacyResultContainer(style, elements) {
+        const resultContainer = document.getElementById('result-container');
+        if (!resultContainer) return;
+
+        resultContainer.innerHTML = `
+            <div>
+                <div class="result-tag">${escapeHtml(style.name)}</div>
+                <p class="result-desc">${escapeHtml(style.desc || '')}</p>
+            </div>
+        `;
+        resultContainer.classList.add('is-awarded');
+
+        if (elements.copyBtn) {
+            elements.copyBtn.disabled = false;
+        }
+    }
+
+    // ==================== GBA 游戏初始化 ====================
+    function initGBAGame(elements) {
+        const {
+            gbaCarouselTrack, gbaArrowLeft, gbaArrowRight,
+            gbaMachineName, gbaUniversalCount, gbaLimitedCount
+        } = elements;
+
+        const machineCount = GACHA_MACHINES.length;
+        gbaCarouselTrack.style.width = `${machineCount * 100}%`;
+
+        GACHA_MACHINES.forEach((machine, index) => {
+            const unit = document.createElement('div');
+            unit.className = 'gba-machine-unit';
+            unit.id = `gba-machine-${index}`;
+            unit.style.width = `${100 / machineCount}%`;
+            if (index === 0) unit.classList.add('is-active');
+
+            const svgContainer = document.createElement('div');
+            svgContainer.className = 'gba-machine-svg-container';
+            svgContainer.innerHTML = generateMachineSVG(machine.silhouette);
+            svgContainer.addEventListener('click', () => onMachineClick(index, elements));
+
+            const label = document.createElement('div');
+            label.className = 'gba-machine-label';
+            label.textContent = `${machine.label} [${machine.name}]`;
+
+            unit.appendChild(svgContainer);
+            unit.appendChild(label);
+            gbaCarouselTrack.appendChild(unit);
+        });
+
+        gbaArrowLeft.addEventListener('click', () => navigateCarousel(-1, elements));
+        gbaArrowRight.addEventListener('click', () => navigateCarousel(1, elements));
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') { e.preventDefault(); navigateCarousel(-1, elements); }
+            if (e.key === 'ArrowRight') { e.preventDefault(); navigateCarousel(1, elements); }
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                onMachineClick(currentMachineIndex, elements);
+            }
+        });
+
+        updateStatusBar(elements);
+        updateArrowStates(elements);
+    }
+
+    // ==================== 原有功能（保留） ====================
+    function selectStyle(style) {
+        currentStyle = style;
+        const resultContainer = document.getElementById('result-container');
+        if (resultContainer) {
+            resultContainer.innerHTML = `
+                <div>
+                    <div class="result-tag">${escapeHtml(style.name)}</div>
+                    <p class="result-desc">${escapeHtml(style.desc)}</p>
+                </div>
+            `;
+            resultContainer.classList.add('is-awarded');
+        }
+        const copyBtn = document.getElementById('copy-btn');
+        if (copyBtn) copyBtn.disabled = false;
+    }
+
+    function copyStyle() {
+        if (!currentStyle) return;
+        const textToCopy = `请严格按照以下风格要求写今天的日记：\n\n\u3010${currentStyle.name}\u3011\n${currentStyle.desc}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const copyBtn = document.getElementById('copy-btn');
+            if (!copyBtn) return;
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = '[ COPIED! ]';
+            copyBtn.style.background = '#2d5a27';
+            copyBtn.style.color = 'var(--screen-bg)';
+            copyBtn.style.borderColor = '#2d5a27';
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+                copyBtn.style.background = '';
+                copyBtn.style.color = '';
+                copyBtn.style.borderColor = '';
+            }, 1500);
+        }).catch(() => {
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // ==================== 原有数据加载 ====================
     async function loadStyles() {
         try {
             const { data, error } = await supabase
@@ -924,12 +1557,15 @@
     }
 
     function renderStyles() {
+        const stylesContainer = document.getElementById('styles-container');
+        const styleCountDisplay = document.getElementById('style-count-display');
+        if (!stylesContainer || !styleCountDisplay) return;
+
         const count = styles.length;
         styleCountDisplay.textContent = count;
-        if (gachaPoolCount) gachaPoolCount.textContent = count;
-        
+
         stylesContainer.innerHTML = '';
-        
+
         const stylesByCategory = {};
         styles.forEach((style, index) => {
             const category = style.category || 'misc';
@@ -938,238 +1574,193 @@
             }
             stylesByCategory[category].push({ style, index });
         });
-        
+
         Object.keys(stylesByCategory).forEach(categoryKey => {
             const categoryInfo = categories[categoryKey] || { name: '其他', color: '#555' };
             const categoryStyles = stylesByCategory[categoryKey];
-            
+
             const categoryDiv = document.createElement('div');
             categoryDiv.className = 'category-section';
-            
+
             const categoryHeader = document.createElement('div');
             categoryHeader.className = 'category-header';
-            
+
             const categoryDot = document.createElement('span');
             categoryDot.className = 'category-dot';
             categoryDot.style.backgroundColor = categoryInfo.color;
-            
+
             const categoryTitle = document.createElement('span');
             categoryTitle.className = 'category-name';
             categoryTitle.textContent = `${categoryInfo.name} (${categoryStyles.length})`;
-            
+
             categoryHeader.appendChild(categoryDot);
             categoryHeader.appendChild(categoryTitle);
             categoryDiv.appendChild(categoryHeader);
-            
+
             const tagsContainer = document.createElement('div');
             tagsContainer.className = 'diary-tags';
-            
+
             categoryStyles.forEach(({ style, index }) => {
                 const tag = document.createElement('span');
                 tag.className = 'tag-item clickable';
                 tag.title = style.desc;
                 tag.dataset.index = index;
                 tag.textContent = style.name;
-                
-                tag.addEventListener('click', () => {
-                    selectStyle(style);
-                });
-                
+                tag.addEventListener('click', () => selectStyle(style));
                 tagsContainer.appendChild(tag);
             });
-            
+
             categoryDiv.appendChild(tagsContainer);
             stylesContainer.appendChild(categoryDiv);
         });
     }
 
-    function selectStyle(style) {
-        currentStyle = style;
-        const capsuleName = style.name.length > 18 ? `${style.name.slice(0, 18)}...` : style.name;
-        resultContainer.innerHTML = `
-            <div>
-                <div class="result-tag">${escapeHtml(style.name)}</div>
-                <p class="result-desc">${escapeHtml(style.desc)}</p>
-            </div>
-        `;
-        resultContainer.classList.add('is-awarded');
-        if (gachaCurrent) gachaCurrent.textContent = capsuleName;
-        if (gachaLabel) gachaLabel.textContent = capsuleName;
-        if (gachaTicketId) gachaTicketId.textContent = `TICKET: ${String(style.id || 'MANUAL').padStart(4, '0')}`;
-        if (gachaState) gachaState.textContent = 'AWARDED';
-        copyBtn.disabled = false;
-    }
-
-    function randomStyle() {
-        if (styles.length === 0) {
-            resultContainer.innerHTML = '<p class="error-text">风格库为空，请先添加一些风格</p>';
-            return;
-        }
-        
-        randomBtn.classList.add('animate-pulse');
-        if (gachaMachine) {
-            gachaMachine.classList.remove('is-spinning', 'is-dispensing');
-            void gachaMachine.offsetWidth;
-            gachaMachine.classList.add('is-spinning');
-        }
-        if (gachaState) gachaState.textContent = 'SPINNING';
-        setTimeout(() => {
-            randomBtn.classList.remove('animate-pulse');
-            if (gachaMachine) {
-                gachaMachine.classList.remove('is-spinning');
-                gachaMachine.classList.add('is-dispensing');
-            }
-            if (gachaState) gachaState.textContent = 'DISPENSING';
-        }, 760);
-        
-        const randomIndex = Math.floor(Math.random() * styles.length);
-        setTimeout(() => {
-            selectStyle(styles[randomIndex]);
-        }, 1120);
-    }
-
-    function copyStyle() {
-        if (!currentStyle) return;
-        
-        const textToCopy = `请严格按照以下风格要求写今天的日记：\n\n【${currentStyle.name}】\n${currentStyle.desc}`;
-        
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = '[ COPIED! ]';
-            copyBtn.style.background = '#2d5a27';
-            copyBtn.style.color = 'var(--screen-bg)';
-            copyBtn.style.borderColor = '#2d5a27';
-            setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-                copyBtn.style.background = '';
-                copyBtn.style.color = '';
-                copyBtn.style.borderColor = '';
-            }, 1500);
-        }).catch(err => {
-            console.error('复制失败:', err);
-            const textarea = document.createElement('textarea');
-            textarea.value = textToCopy;
-            textarea.style.position = 'fixed';
-            textarea.style.left = '-9999px';
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-            
-            const originalText = copyBtn.innerHTML;
-            copyBtn.innerHTML = '[ COPIED! ]';
-            copyBtn.style.background = '#2d5a27';
-            copyBtn.style.color = 'var(--screen-bg)';
-            copyBtn.style.borderColor = '#2d5a27';
-            setTimeout(() => {
-                copyBtn.innerHTML = originalText;
-                copyBtn.style.background = '';
-                copyBtn.style.color = '';
-                copyBtn.style.borderColor = '';
-            }, 1500);
-        });
-    }
-
-    function openModal() {
-        addModal.classList.remove('hidden');
-        styleNameInput.focus();
-    }
-
+    // ==================== 模态框 ====================
     function closeModal() {
-        if (addModal) {
-            addModal.classList.add('hidden');
-        }
-        if (addForm) {
-            addForm.reset();
-        }
+        const addModal = document.getElementById('add-modal');
+        const addForm = document.getElementById('add-form');
+        if (addModal) addModal.classList.add('hidden');
+        if (addForm) addForm.reset();
     }
-    
+
     window.closeAddModal = closeModal;
 
-    function setupEventListeners() {
-        randomBtn.addEventListener('click', randomStyle);
-        copyBtn.addEventListener('click', copyStyle);
-        addStyleBtn.addEventListener('click', openModal);
-        
-        closeModalBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
+    async function handleAddStyle(e) {
+        e.preventDefault();
+        const styleNameInput = document.getElementById('style-name');
+        const styleDescInput = document.getElementById('style-desc');
+        const styleCategoryInput = document.getElementById('style-category');
+        const addForm = document.getElementById('add-form');
+
+        const name = styleNameInput.value.trim();
+        const desc = styleDescInput.value.trim();
+        const category = styleCategoryInput.value;
+
+        if (!name || !desc) { alert('请填写风格名称和约束描述'); return; }
+        if (!category) { alert('请选择分类'); return; }
+
+        const submitBtn = addForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '[ SAVING... ]';
+        submitBtn.disabled = true;
+
+        try {
+            const { data, error } = await supabase
+                .from('STYLE_POOL')
+                .insert([{ name, desc, category, active: true }])
+                .select();
+
+            if (error) { alert('添加失败: ' + error.message); return; }
+            if (data && data[0]) {
+                styles.push({
+                    id: data[0].id, name: data[0].name,
+                    desc: data[0].desc, category: data[0].category
+                });
+            }
+            renderStyles();
             closeModal();
-        });
-        
-        closeModalBtn.addEventListener('touchstart', function(e) {
-            e.stopPropagation();
-            closeModal();
-        });
-        
-        cancelBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            closeModal();
-        });
-        
-        addModal.addEventListener('click', (e) => {
-            if (e.target === addModal) {
-                closeModal();
-            }
-        });
-        
-        addForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const name = styleNameInput.value.trim();
-            const desc = styleDescInput.value.trim();
-            const category = styleCategoryInput.value;
-            
-            if (!name || !desc) {
-                alert('请填写风格名称和约束描述');
-                return;
-            }
-            if (!category) {
-                alert('请选择分类');
-                return;
-            }
 
-            const submitBtn = addForm.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '[ SAVING... ]';
-            submitBtn.disabled = true;
-
-            try {
-                const { data, error } = await supabase
-                    .from('STYLE_POOL')
-                    .insert([{ name, desc, category, active: true }])
-                    .select();
-
-                if (error) {
-                    console.error('添加风格失败:', error);
-                    alert('添加失败: ' + error.message);
-                    return;
-                }
-
-                if (data && data[0]) {
-                    styles.push({
-                        id: data[0].id,
-                        name: data[0].name,
-                        desc: data[0].desc,
-                        category: data[0].category
-                    });
-                }
-                renderStyles();
-                closeModal();
-            } catch (err) {
-                console.error('添加风格异常:', err);
-                alert('添加失败，请稍后重试');
-            } finally {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+            const dialogText = document.getElementById('gba-dialog-text');
+            if (dialogText) {
+                dialogText.innerHTML = `&gt; 新胶囊已装入: [${name}]<br>现在可以抽取新的风格约束了！`;
             }
-        });
+        } catch (err) {
+            alert('添加失败，请稍后重试');
+        } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
     }
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    // ==================== 事件监听器设置 ====================
+    function setupEventListeners(elements) {
+        const { copyBtn, addStyleBtn, addModal, closeModalBtn, cancelBtn, addForm,
+                styleNameInput, styleDescInput, styleCategoryInput } = elements;
+
+        if (copyBtn) copyBtn.addEventListener('click', copyStyle);
+
+        if (addStyleBtn) addStyleBtn.addEventListener('click', () => {
+            addModal.classList.remove('hidden');
+            styleNameInput.focus();
+        });
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
+            closeModalBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); closeModal(); });
+        }
+        if (cancelBtn) cancelBtn.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
+        if (addModal) addModal.addEventListener('click', (e) => {
+            if (e.target === addModal) closeModal();
+        });
+        if (addForm) addForm.addEventListener('submit', handleAddStyle);
     }
+
+    // ==================== DOM 元素缓存 ====================
+    function cacheDOMElements() {
+        const gbaScreen = document.getElementById('gba-screen');
+        const gbaMachineName = document.getElementById('gba-machine-name');
+        const gbaUniversalCount = document.getElementById('gba-universal-count');
+        const gbaLimitedCount = document.getElementById('gba-limited-count');
+        const gbaStage = document.getElementById('gba-stage');
+        const gbaArrowLeft = document.getElementById('gba-arrow-left');
+        const gbaArrowRight = document.getElementById('gba-arrow-right');
+        const gbaCarouselTrack = document.getElementById('gba-carousel-track');
+        const gbaDialogText = document.getElementById('gba-dialog-text');
+        const gbaDialogArrow = document.getElementById('gba-dialog-arrow');
+
+        if (!gbaScreen || !gbaCarouselTrack || !gbaDialogText) {
+            console.error('关键 GBA DOM 元素缺失');
+            return null;
+        }
+
+        const stylesContainer = document.getElementById('styles-container');
+        const styleCountDisplay = document.getElementById('style-count-display');
+        const copyBtn = document.getElementById('copy-btn');
+        const addStyleBtn = document.getElementById('add-style-btn');
+        const addModal = document.getElementById('add-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const addForm = document.getElementById('add-form');
+        const styleNameInput = document.getElementById('style-name');
+        const styleDescInput = document.getElementById('style-desc');
+        const styleCategoryInput = document.getElementById('style-category');
+
+        addModal.classList.add('hidden');
+
+        return {
+            gbaScreen, gbaMachineName, gbaUniversalCount, gbaLimitedCount,
+            gbaStage, gbaArrowLeft, gbaArrowRight, gbaCarouselTrack,
+            gbaDialogText, gbaDialogArrow,
+            stylesContainer, styleCountDisplay, copyBtn,
+            addStyleBtn, addModal, closeModalBtn, cancelBtn,
+            addForm, styleNameInput, styleDescInput, styleCategoryInput
+        };
+    }
+
+    // ==================== DOMContentLoaded 初始化 ====================
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const elements = cacheDOMElements();
+            if (!elements) {
+                console.error('DOM 元素获取失败');
+                return;
+            }
+
+            const authed = await checkAuth();
+            if (!authed) return;
+
+            await loadStyles();
+            renderStyles();
+
+            initGBAGame(elements);
+            setupEventListeners(elements);
+        } catch (error) {
+            console.error('初始化失败:', error);
+            const dialogText = document.getElementById('gba-dialog-text');
+            if (dialogText) {
+                dialogText.textContent = '> 系统错误: 无法初始化扭蛋终端。请刷新重试。';
+            }
+        }
+    });
 </script>
 </body>
 </html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARDUST_GAMES_CAPSULE_MACHINE</title>
+<style>
+    /* --- 继承老化液晶屏幕的单色体系 --- */
+    :root {
+        --screen-bg: #b0b99a;     /* 变黄老化的液晶屏底色 */
+        --pixel-dark: #1e2622;    /* 墨水深灰蓝（通电像素） */
+        --pixel-dim: #707a65;     /* 弱电液晶底纹 */
+        --font-mono: "MS Gothic", "Courier New", Courier, monospace;
+    }
+
+    * {
+        box-sizing: border-box;
+        border-radius: 0 !important; /* 抹杀一切圆角 */
+        image-rendering: pixelated;   /* 像素硬边渲染 */
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        background-color: var(--screen-bg);
+        color: var(--pixel-dark);
+        font-family: var(--font-mono);
+        font-weight: bold;
+        padding: 15px;
+        margin: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    /* 液晶像素点阵与烧屏滤镜 */
+    body::before {
+        content: " ";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+        background-size: 3px 3px;
+        z-index: 100;
+        pointer-events: none;
+    }
+
+    /* ================= 1. 顶部资源栏 (GBA 状态栏) ================= */
+    .game-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid var(--pixel-dark);
+        padding-bottom: 6px;
+        font-size: 12px;
+    }
+    .ticket-counter {
+        background-color: var(--pixel-dark);
+        color: var(--screen-bg);
+        padding: 2px 6px;
+    }
+
+    /* ================= 2. 中部扭蛋机舞台 (Stage) ================= */
+    .stage-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        padding: 10px 0;
+    }
+
+    /* 经典手柄按键箭头的像素风格 */
+    .arrow-btn {
+        background-color: var(--screen-bg);
+        border: 2px solid var(--pixel-dark);
+        box-shadow: 2px 2px 0 var(--pixel-dark);
+        color: var(--pixel-dark);
+        font-family: var(--font-mono);
+        font-size: 14px;
+        font-weight: bold;
+        width: 32px;
+        height: 40px;
+        cursor: pointer;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        outline: none;
+    }
+    .arrow-btn:active {
+        box-shadow: 0 0 0 transparent;
+        transform: translate(2px, 2px);
+    }
+
+    /* 扭蛋机传送带轨道 */
+    .carousel-window {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+        height: 180px;
+        margin: 0 10px;
+    }
+
+    .carousel-track {
+        display: flex;
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        /* 机械步进移动，无平滑缓动，复古机械卡顿 */
+        transition: left 0.2s steps(4); 
+        width: 300%; /* 三台扭蛋机均分 */
+    }
+
+    /* 每一个扭蛋机独立单元 */
+    .machine-unit {
+        width: 33.333%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* 激活态（正中心位置）的扭蛋机具有强黑色边框线，其余是弱淡墨色 */
+    .machine-unit .machine-svg {
+        width: 90px;
+        height: 130px;
+        cursor: pointer;
+        opacity: 0.4;
+        transform: scale(0.9);
+        transition: all 0.1s steps(2);
+    }
+    .machine-unit.center-active .machine-svg {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    .machine-svg:active{
+        transform: scale(1);
+    }
+    .machine-unit.center-active .machine-svg:active{
+        transform: scale(1);
+    }
+
+    /* 扭蛋机下方的标签牌 */
+    .machine-label {
+        font-size: 11px;
+        border: 1px dashed var(--pixel-dark);
+        padding: 1px 4px;
+        margin-top: 6px;
+        background-color: rgba(0,0,0,0.03);
+        visibility: hidden;
+        white-space: nowrap;
+    }
+    .machine-unit.center-active .machine-label {
+        visibility: visible;
+    }
+
+    /* ================= 3. 底部游戏对话框 (GBA Text Box) ================= */
+    .gba-dialog-box {
+        border: 3px double var(--pixel-dark); /* 双复古粗黑线 */
+        background-color: rgba(0,0,0,0.02);
+        padding: 8px 12px;
+        height: 75px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-bottom: 5px;
+        user-select: none;
+    }
+
+    .dialog-text {
+        font-size: 12px;
+        line-height: 1.5;
+        text-align: justify;
+        overflow: hidden;
+    }
+
+    /* 对话框右下角的闪烁小箭头 [▼] 代表文本可继续 */
+    .dialog-arrow {
+        align-self: flex-end;
+        font-size: 10px;
+        animation: pixel-jump 0.6s infinite steps(2);
+    }
+
+    @keyframes pixel-jump {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(3px); }
+    }
+</style>
+</head>
+<body>
+
+    <header class="game-header">
+        <div>🎰 STARDUST_CAPSULE_OS</div>
+        <div class="ticket-counter">TICKET: <span id="ticket-num">■■■□□ [3/5]</span></div>
+    </header>
+
+    <div class="stage-container">
+        <button class="arrow-btn" id="btn-left">◀</button>
+
+        <div class="carousel-window">
+            <div class="carousel-track" id="machine-track" style="left: 0%;">
+                
+                <div class="machine-unit center-active" id="mach-0">
+                    <svg class="machine-svg" viewBox="0 0 100 140">
+                        <rect x="15" y="10" width="70" height="60" fill="none" stroke="#1e2622" stroke-width="3" />
+                        <circle cx="35" cy="30" r="8" fill="none" stroke="#1e2622" stroke-width="2" />
+                        <circle cx="65" cy="45" r="8" fill="#1e2622" />
+                        <circle cx="50" cy="25" r="8" fill="none" stroke="#1e2622" stroke-width="2" stroke-dasharray="2,2"/>
+                        <circle cx="48" cy="50" r="8" fill="none" stroke="#1e2622" stroke-width="2" />
+                        
+                        <path d="M 10 70 L 90 70 L 85 130 L 15 130 Z" fill="none" stroke="#1e2622" stroke-width="3" />
+                        <line x1="20" y1="80" x2="80" y2="80" stroke="#1e2622" stroke-width="2" />
+                        
+                        <circle cx="50" cy="95" r="14" fill="none" stroke="#1e2622" stroke-width="2" />
+                        <rect x="32" y="91" width="36" height="8" fill="#1e2622" />
+                        
+                        <rect x="40" y="114" width="20" height="16" fill="none" stroke="#1e2622" stroke-width="2" />
+                    </svg>
+                    <div class="machine-label">NO.01 [8-BIT_NOSTALGIA]</div>
+                </div>
+
+                <div class="machine-unit" id="mach-1">
+                    <svg class="machine-svg" viewBox="0 0 100 140">
+                        <rect x="15" y="10" width="70" height="60" fill="none" stroke="#1e2622" stroke-width="3" />
+                        <line x1="38" y1="10" x2="38" y2="70" stroke="#1e2622" stroke-width="2" />
+                        <line x1="62" y1="10" x2="62" y2="70" stroke="#1e2622" stroke-width="2" />
+                        <circle cx="28" cy="40" r="8" fill="#1e2622" />
+                        <circle cx="72" cy="30" r="8" fill="none" stroke="#1e2622" stroke-width="2" />
+
+                        <path d="M 10 70 L 90 70 L 85 130 L 15 130 Z" fill="none" stroke="#1e2622" stroke-width="3" />
+                        <line x1="20" y1="122" x2="35" y2="122" stroke="#1e2622" stroke-width="2"/>
+                        <line x1="20" y1="126" x2="35" y2="126" stroke="#1e2622" stroke-width="2"/>
+
+                        <circle cx="50" cy="95" r="12" fill="none" stroke="#1e2622" stroke-width="2" />
+                        <path d="M 50 95 L 50 78 M 50 95 L 65 104 M 50 95 L 35 104" stroke="#1e2622" stroke-width="4" stroke-linecap="square"/>
+
+                        <rect x="40" y="114" width="20" height="16" fill="none" stroke="#1e2622" stroke-width="2" />
+                    </svg>
+                    <div class="machine-label">NO.02 [BRASS_STEAM]</div>
+                </div>
+
+                <div class="machine-unit" id="mach-2">
+                    <svg class="machine-svg" viewBox="0 0 100 140">
+                        <rect x="15" y="10" width="70" height="60" fill="none" stroke="#1e2622" stroke-width="3" />
+                        <rect x="30" y="25" width="16" height="10" fill="#1e2622" transform="rotate(15 30 25)" />
+                        <rect x="55" y="40" width="16" height="10" fill="none" stroke="#1e2622" stroke-width="2" transform="rotate(-25 55 40)" />
+
+                        <rect x="15" y="70" width="70" height="60" fill="none" stroke="#1e2622" stroke-width="3" />
+                        <line x1="15" y1="80" x2="85" y2="80" stroke="#1e2622" stroke-width="2" stroke-dasharray="4,4" />
+                        
+                        <circle cx="50" cy="100" r="10" fill="none" stroke="#1e2622" stroke-width="2" />
+                        <line x1="44" y1="100" x2="56" y2="100" stroke="#1e2622" stroke-width="3" />
+                        <line x1="50" y1="94" x2="50" y2="106" stroke="#1e2622" stroke-width="3" />
+
+                        <rect x="40" y="116" width="20" height="14" fill="none" stroke="#1e2622" stroke-width="2" />
+                    </svg>
+                    <div class="machine-label">NO.03 [CYBER_GLITCH]</div>
+                </div>
+
+            </div>
+        </div>
+
+        <button class="arrow-btn" id="btn-right">▶</button>
+    </div>
+
+    <div class="gba-dialog-box" id="click-trigger">
+        <div class="dialog-text" id="dialog-content">
+            &gt; 面前是一排锈迹斑斑的旧时代扭蛋机。<br>
+            [提示] 点击正中心的扭蛋机扭柄，投入奖券抽取今日的“日记人格协议”。
+        </div>
+        <div class="dialog-arrow">▼</div>
+    </div>
+
+    <script>
+        const track = document.getElementById('machine-track');
+        const btnLeft = document.getElementById('btn-left');
+        const btnRight = document.getElementById('btn-right');
+        const dialog = document.getElementById('dialog-content');
+        const ticketDisplay = document.getElementById('ticket-num');
+
+        let currentIndex = 0;
+        const totalMachines = 3;
+        
+        // 模拟各台机器人的纸质券数余额
+        const tickets = [3, 1, 0]; 
+
+        // 日记风结果数据库
+        const diaryResults = [
+            [
+                "&gt; 咔哒！伴随粗糙的红白机电音。抽中 [8位卡带人格]！",
+                "「本日记已锁定为FC红白机卡带画风。主人，今天的星屑字模极其简陋，读起来可能会让您的眼睛感到有些酸涩。哔哔——」"
+            ],
+            [
+                "&gt; 嘎吱——铜齿轮咬合。抽中 [铜黄色蒸汽人格]！",
+                "「锅炉压力正常。今天的日记字里行间将被灌满机油与蒸汽的味道。我会用最古板、沉重的齿轮逻辑去记录您的一天，请备好润滑油。」"
+            ],
+            [
+                "&gt; 滋滋...电流过载。抽中 [赛博断开故障人格]！",
+                "「错...错误。今天的心情数据产生大量丢失残影。日记可能会出现莫名的乱码和口吃...但请别删掉我，我正在拼命重启...」"
+            ]
+        ];
+
+        // 生成票券方块UI
+        function renderTicket(num){
+            let blockStr = "";
+            for(let i=0; i<5; i++) blockStr += (i < num) ? "■" : "□";
+            ticketDisplay.innerHTML = `${blockStr} [${num}/5]`;
+        }
+
+        function updateStage() {
+            // 切换传送带左移位置 (每台机器占比 100% / 3)
+            track.style.left = `-${currentIndex * 100}%`;
+            
+            // 更新缩放激活视觉效果
+            for (let i = 0; i < totalMachines; i++) {
+                const mach = document.getElementById(`mach-${i}`);
+                mach.classList.toggle('center-active', i === currentIndex);
+            }
+
+            // 更新顶部剩余券数显示
+            renderTicket(tickets[currentIndex]);
+
+            // 恢复引导文本
+            dialog.innerHTML = `&gt; 已切换到 NO.0${currentIndex+1} 号机台。<br>[提示] 点击上方扭蛋机轴心，消耗 1 张券转动轴心。`;
+        }
+
+        // 左右翻页按钮边界锁死
+        btnLeft.addEventListener('click', () => {
+            if (currentIndex > 0) { 
+                currentIndex--; 
+                updateStage(); 
+            }
+        });
+
+        btnRight.addEventListener('click', () => {
+            if (currentIndex < totalMachines - 1) { 
+                currentIndex++; 
+                updateStage(); 
+            }
+        });
+
+        // 核心：点击当前激活的扭蛋机触发抽取
+        document.querySelectorAll('.machine-svg').forEach((svg, index) => {
+            svg.addEventListener('click', () => {
+                if (index !== currentIndex) return; // 只能点正中心的机器
+                
+                if (tickets[currentIndex] <= 0) {
+                    dialog.innerHTML = `&gt; 咔嚓。转轮卡死了！<br><span style="color:#8f341d;">[警告] 该机台的纸质抽奖券已耗尽。请等待明日重置，或者去清空愿望单换券。</span>`;
+                    return;
+                }
+
+                // 扣券+刷新票券UI
+                tickets[currentIndex]--;
+                renderTicket(tickets[currentIndex]);
+
+                // 播放抽选日记风格结果 (经典GBA两段流小说式阅读)
+                let res = diaryResults[currentIndex];
+                dialog.innerHTML = res[0];
+                
+                // 模拟1.2s后弹出人格台词
+                setTimeout(() => {
+                    dialog.innerHTML = `${res[0]}<br><br>${res[1]}`;
+                }, 1200);
+            });
+        });
+
+        // 初始化页面状态
+        updateStage();
+    </script>
+</body>
+</html>
