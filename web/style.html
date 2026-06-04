@@ -1394,47 +1394,57 @@
     }
 
     function updateArrowStates(elements) {
-        elements.gbaArrowLeft.disabled = (currentMachineIndex <= 0);
-        elements.gbaArrowRight.disabled = (currentMachineIndex >= GACHA_MACHINES.length - 1);
+        // 循环模式：箭头永不 disable
+        elements.gbaArrowLeft.disabled = false;
+        elements.gbaArrowRight.disabled = false;
     }
 
-    // ==================== 三机台状态更新 ====================
-    const VISIBLE_COUNT = 3; // 同时显示3台
+    // ==================== 三机台循环轮播 ====================
+    const VISIBLE_COUNT = 3;                       // 同时显示3台
+    const TOTAL_SLOTS = GACHA_MACHINES.length + 2; // 12真机 + 首尾各1克隆 = 14
+
+    // translateX 百分比相对于 track 自身宽度
+    // track宽 = TOTAL_SLOTS * (100/3)% viewport
+    // 真机 i 位于 track slot i+1 (因为 slot 0 是克隆)
+    // 要让它居中：translateX_pct = -i / TOTAL_SLOTS * 100
+    function getTrackOffset(realIndex) {
+        return -realIndex / TOTAL_SLOTS * 100;
+    }
+
+    // 循环取模
+    function wrapIndex(i) {
+        return ((i % GACHA_MACHINES.length) + GACHA_MACHINES.length) % GACHA_MACHINES.length;
+    }
 
     function updateActiveStates() {
-        document.querySelectorAll('.gba-machine-unit').forEach((unit, i) => {
+        const units = document.querySelectorAll('.gba-machine-unit');
+        units.forEach((unit, slot) => {
             unit.classList.remove('is-active', 'is-adjacent');
-            if (i === currentMachineIndex) {
+            // slot 0=clone-11, slot 1..12=real 0..11, slot 13=clone-0
+            // 激活范围: [current, current+1, current+2] (3个相邻 slot)
+            if (slot === currentMachineIndex + 1) {
                 unit.classList.add('is-active');
-            } else if (i === currentMachineIndex - 1 || i === currentMachineIndex + 1) {
+            } else if (slot === currentMachineIndex || slot === currentMachineIndex + 2) {
                 unit.classList.add('is-adjacent');
             }
         });
     }
 
-    function getTrackOffset(index) {
-        // 每台占 viewport 的 1/3 宽度，active 居中 → 偏移 (index-1)*slot
-        const slotPct = 100 / VISIBLE_COUNT;
-        return (index - 1) * slotPct;
-    }
-
-    // ==================== 轮播导航 ====================
+    // ==================== 轮播导航（循环） ====================
     function navigateCarousel(direction, elements) {
         const { gbaCarouselTrack } = elements;
-        const newIndex = currentMachineIndex + direction;
+        if (isGachaAnimating) return;
 
-        if (newIndex < 0 || newIndex >= GACHA_MACHINES.length || isGachaAnimating) return;
+        currentMachineIndex = wrapIndex(currentMachineIndex + direction);
 
-        currentMachineIndex = newIndex;
-
-        gbaCarouselTrack.style.transform = `translateX(-${getTrackOffset(currentMachineIndex)}%)`;
+        gbaCarouselTrack.style.transform = `translateX(${getTrackOffset(currentMachineIndex)}%)`;
         updateActiveStates();
         updateStatusBar(elements);
         updateArrowStates(elements);
 
         const machine = GACHA_MACHINES[currentMachineIndex];
         elements.gbaDialogText.innerHTML =
-            `&gt; 已切换到 ${machine.label} [${machine.name}]。<br>` +
+            `&gt; ${machine.label} [${machine.name}]<br>` +
             `[提示] 点击中间机台的摇把，投入 1 张票据抽取。`;
     }
 
@@ -1533,27 +1543,35 @@
         }
     }
 
-    // ==================== GBA 游戏初始化 ====================
+    // ==================== GBA 游戏初始化（循环克隆轮播） ====================
     function initGBAGame(elements) {
         const {
             gbaCarouselTrack, gbaArrowLeft, gbaArrowRight,
             gbaMachineName, gbaUniversalCount, gbaLimitedCount
         } = elements;
 
-        const machineCount = GACHA_MACHINES.length;
         const slotPct = 100 / VISIBLE_COUNT;
-        gbaCarouselTrack.style.width = `${machineCount * slotPct}%`;
+        gbaCarouselTrack.style.width = `${TOTAL_SLOTS * slotPct}%`;
 
-        GACHA_MACHINES.forEach((machine, index) => {
+        // 构建 14 个 track 单元：clone-11, real-0..11, clone-0
+        const buildOrder = [
+            { realIndex: GACHA_MACHINES.length - 1, isClone: true },  // clone-11
+            ...GACHA_MACHINES.map((_, i) => ({ realIndex: i, isClone: false })),
+            { realIndex: 0, isClone: true }                             // clone-0
+        ];
+
+        buildOrder.forEach(({ realIndex, isClone }, slot) => {
+            const machine = GACHA_MACHINES[realIndex];
             const unit = document.createElement('div');
             unit.className = 'gba-machine-unit';
-            unit.id = `gba-machine-${index}`;
+            unit.id = `gba-machine-${slot}`;
             unit.style.width = `${slotPct}%`;
+            if (isClone) unit.dataset.cloneOf = realIndex;
 
             const svgContainer = document.createElement('div');
             svgContainer.className = 'gba-machine-svg-container';
             svgContainer.innerHTML = generateMachineSVG(machine.silhouette);
-            svgContainer.addEventListener('click', () => onMachineClick(index, elements));
+            svgContainer.addEventListener('click', () => onMachineClick(realIndex, elements));
 
             const label = document.createElement('div');
             label.className = 'gba-machine-label';
@@ -1564,8 +1582,8 @@
             gbaCarouselTrack.appendChild(unit);
         });
 
-        // 初始偏移：第0台居中 (offset = -33.33%)
-        gbaCarouselTrack.style.transform = `translateX(-${getTrackOffset(0)}%)`;
+        // 初始状态：第0台居中，translateX = 0 (无需偏移)
+        gbaCarouselTrack.style.transform = `translateX(${getTrackOffset(0)}%)`;
         updateActiveStates();
 
         gbaArrowLeft.addEventListener('click', () => navigateCarousel(-1, elements));
