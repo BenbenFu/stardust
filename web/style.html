@@ -301,7 +301,7 @@
             left: 0;
             top: 0;
             height: 100%;
-            transition: transform 0.25s steps(5);
+            transition: transform 0.2s steps(3);
         }
 
         /* ---- 4.2.6 单个机台单元 ---- */
@@ -1551,6 +1551,7 @@
         } = elements;
 
         const slotPct = 100 / VISIBLE_COUNT;
+        const unitPct = 100 / TOTAL_SLOTS;  // 子元素 % 相对轨道，7.14%轨道 = 33.33%视口
         gbaCarouselTrack.style.width = `${TOTAL_SLOTS * slotPct}%`;
 
         // 构建 14 个 track 单元：clone-11, real-0..11, clone-0
@@ -1565,7 +1566,7 @@
             const unit = document.createElement('div');
             unit.className = 'gba-machine-unit';
             unit.id = `gba-machine-${slot}`;
-            unit.style.width = `${slotPct}%`;
+            unit.style.width = `${unitPct}%`;
             if (isClone) unit.dataset.cloneOf = realIndex;
 
             const svgContainer = document.createElement('div');
