@@ -436,7 +436,7 @@
             background: rgba(0,0,0,0.03);
             padding: 8px 12px;
             min-height: 64px;
-            max-height: 90px;
+            max-height: 110px;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -452,6 +452,7 @@
             font-family: var(--font-mono);
             overflow: hidden;
             min-height: 36px;
+            flex: 1;
         }
         .gba-dialog-arrow {
             align-self: flex-end;
@@ -822,33 +823,28 @@
                                 &gt; 面前是一排旧时代的扭蛋机。
                                 选择一台机器，投入票据，转动摇把。
                             </div>
-                            <div class="gba-dialog-arrow" id="gba-dialog-arrow">&#x25BC;</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                                <div class="gba-dialog-arrow" id="gba-dialog-arrow">&#x25BC;</div>
+                                <div style="display:flex; gap:4px;">
+                                    <button class="hardware-btn btn-secondary btn-small" id="copy-btn" disabled style="font-size:9px; padding:2px 6px;">[ COPY_TICKET ]</button>
+                                    <button class="hardware-btn btn-secondary btn-small" id="add-style-btn" style="font-size:9px; padding:2px 6px;">[ +CAPSULE ]</button>
+                                </div>
+                            </div>
                         </div>
 
                     </div><!-- .gba-screen 结束 -->
-
-                    <!-- 结果栏 + 操作按钮 -->
-                    <div style="display:flex; gap:8px; padding:8px; border-top:2px solid var(--pixel-dark); background:rgba(0,0,0,0.02); align-items:stretch; min-height:52px;">
-                        <div class="result-container" id="result-container" style="flex:1; min-height:36px; padding:6px 8px; font-size:11px; display:flex; align-items:center;">
-                            <p class="result-placeholder" style="margin:0;">WAITING FOR CAPSULE_DISPENSE...</p>
-                        </div>
-                        <div style="display:flex; gap:4px; flex-shrink:0;">
-                            <button class="hardware-btn btn-secondary" id="copy-btn" disabled style="font-size:10px; padding:4px 8px;">[ COPY ]</button>
-                            <button class="hardware-btn btn-secondary" id="add-style-btn" style="font-size:10px; padding:4px 8px;">[ +CAPSULE ]</button>
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            <!-- 风格列表 -->
-            <div class="section-card">
+            <!-- 扭蛋机抽奖概率公示 -->
+            <div class="section-card" id="prob-section">
                 <div class="section-card-header">
-                    <h3>[ STYLE_LIBRARY ]</h3>
-                    <p class="ai-note">&gt;&gt; 点击风格标签查看详细约束描述。</p>
+                    <h3>[ GACHA_PROBABILITY_BOARD ]</h3>
+                    <p class="ai-note">&gt;&gt; 每台扭蛋机的可抽取内容与单次概率公示。<span style="color:var(--pixel-dim);">当前选中: <strong id="prob-active-machine">NO.01</strong></span></p>
                 </div>
-                <div class="section-card-body">
-                    <div id="styles-container" class="styles-scroll">
-                        <!-- 风格标签将在这里动态生成 -->
+                <div class="section-card-body" style="padding:8px;">
+                    <div id="prob-container" class="styles-scroll" style="max-height:320px;">
+                        <!-- JS 动态生成概率表格 -->
                     </div>
                 </div>
             </div>
@@ -1444,6 +1440,7 @@
         updateActiveStates();
         updateStatusBar(elements);
         updateArrowStates(elements);
+        updateProbActiveLabel();
 
         const machine = GACHA_MACHINES[currentMachineIndex];
         elements.gbaDialogText.innerHTML =
@@ -1525,25 +1522,10 @@
             gbaDialogText.classList.remove('is-typing');
             gbaDialogArrow.style.display = '';
 
-            updateLegacyResultContainer(style, elements);
+            // 启用对话框内的 COPY 按钮
+            const copyBtn = document.getElementById('copy-btn');
+            if (copyBtn) copyBtn.disabled = false;
         }, 1200);
-    }
-
-    function updateLegacyResultContainer(style, elements) {
-        const resultContainer = document.getElementById('result-container');
-        if (!resultContainer) return;
-
-        resultContainer.innerHTML = `
-            <div>
-                <div class="result-tag">${escapeHtml(style.name)}</div>
-                <p class="result-desc">${escapeHtml(style.desc || '')}</p>
-            </div>
-        `;
-        resultContainer.classList.add('is-awarded');
-
-        if (elements.copyBtn) {
-            elements.copyBtn.disabled = false;
-        }
     }
 
     // ==================== GBA 游戏初始化（循环克隆轮播） ====================
@@ -1585,6 +1567,7 @@
                     updateActiveStates();
                     updateStatusBar(elements);
                     updateArrowStates(elements);
+                    updateProbActiveLabel();
                     elements.gbaDialogText.innerHTML =
                         `&gt; ${machine.label} [${machine.name}]<br>` +
                         `[提示] 点击中间机台的摇把，投入 1 张票据抽取。`;
@@ -1623,18 +1606,13 @@
     // ==================== 原有功能（保留） ====================
     function selectStyle(style) {
         currentStyle = style;
-        const resultContainer = document.getElementById('result-container');
-        if (resultContainer) {
-            resultContainer.innerHTML = `
-                <div>
-                    <div class="result-tag">${escapeHtml(style.name)}</div>
-                    <p class="result-desc">${escapeHtml(style.desc)}</p>
-                </div>
-            `;
-            resultContainer.classList.add('is-awarded');
-        }
         const copyBtn = document.getElementById('copy-btn');
         if (copyBtn) copyBtn.disabled = false;
+
+        const gbaDialogText = document.getElementById('gba-dialog-text');
+        if (gbaDialogText) {
+            gbaDialogText.innerHTML = `&gt; 已选中风格:<br>\u300C${escapeHtml(style.name)}\u300D ${escapeHtml(style.desc || '')}`;
+        }
     }
 
     function copyStyle() {
@@ -1699,63 +1677,62 @@
         }
     }
 
-    function renderStyles() {
-        const stylesContainer = document.getElementById('styles-container');
+    function renderProbBoard() {
+        const probContainer = document.getElementById('prob-container');
+        if (!probContainer) return;
+
+        // 更新顶部风格总数
         const styleCountDisplay = document.getElementById('style-count-display');
-        if (!stylesContainer || !styleCountDisplay) return;
+        if (styleCountDisplay) styleCountDisplay.textContent = styles.length;
 
-        const count = styles.length;
-        styleCountDisplay.textContent = count;
+        probContainer.innerHTML = '';
 
-        stylesContainer.innerHTML = '';
+        // 为每台机台构建概率卡片
+        GACHA_MACHINES.forEach(machine => {
+            const pool = getGachaPool(machine);
+            const poolSize = pool.length;
+            const probability = poolSize > 0 ? (100 / poolSize).toFixed(1) : '0.0';
+            const isUniversal = machine.category === null;
+            const catName = isUniversal ? '全风格普池' : (categories[machine.category]?.name || machine.category);
 
-        const stylesByCategory = {};
-        styles.forEach((style, index) => {
-            const category = style.category || 'misc';
-            if (!stylesByCategory[category]) {
-                stylesByCategory[category] = [];
-            }
-            stylesByCategory[category].push({ style, index });
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px dashed var(--pixel-dim); font-size:11px;';
+
+            // 左侧：机台标识
+            const left = document.createElement('div');
+            left.style.cssText = 'min-width:72px; flex-shrink:0;';
+            left.innerHTML = `<strong style="font-size:12px;">${machine.label}</strong><br>
+                <span style="color:var(--pixel-dim);font-size:9px;">${isUniversal ? '&#x25A3; 普池' : '&#x25C9; 限定'}</span>`;
+
+            // 中间：池信息
+            const mid = document.createElement('div');
+            mid.style.cssText = 'flex:1; min-width:0;';
+            const sampleNames = pool.slice(0, 6).map(s => escapeHtml(s.name)).join(', ');
+            mid.innerHTML = `<span style="color:var(--pixel-dim);">${catName}</span><br>
+                <span>池容量: <strong>${poolSize}</strong> 个风格</span>
+                ${poolSize > 0 ? `<br><span style="color:var(--pixel-dim);font-size:10px;">${sampleNames}${poolSize > 6 ? '...' : ''}</span>` : '<br><span style="color:var(--pixel-alert);">(空池)</span>'}`;
+
+            // 右侧：概率
+            const right = document.createElement('div');
+            right.style.cssText = 'text-align:right; flex-shrink:0; min-width:56px;';
+            right.innerHTML = `<span style="font-size:9px;color:var(--pixel-dim);">单次概率</span><br>
+                <strong style="font-size:14px;${poolSize === 0 ? 'color:var(--pixel-alert);' : ''}">${probability}%</strong>`;
+
+            row.appendChild(left);
+            row.appendChild(mid);
+            row.appendChild(right);
+            probContainer.appendChild(row);
         });
 
-        Object.keys(stylesByCategory).forEach(categoryKey => {
-            const categoryInfo = categories[categoryKey] || { name: '其他', color: '#555' };
-            const categoryStyles = stylesByCategory[categoryKey];
+        // 更新统计
+        updateProbActiveLabel();
+    }
 
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'category-section';
-
-            const categoryHeader = document.createElement('div');
-            categoryHeader.className = 'category-header';
-
-            const categoryDot = document.createElement('span');
-            categoryDot.className = 'category-dot';
-            categoryDot.style.backgroundColor = categoryInfo.color;
-
-            const categoryTitle = document.createElement('span');
-            categoryTitle.className = 'category-name';
-            categoryTitle.textContent = `${categoryInfo.name} (${categoryStyles.length})`;
-
-            categoryHeader.appendChild(categoryDot);
-            categoryHeader.appendChild(categoryTitle);
-            categoryDiv.appendChild(categoryHeader);
-
-            const tagsContainer = document.createElement('div');
-            tagsContainer.className = 'diary-tags';
-
-            categoryStyles.forEach(({ style, index }) => {
-                const tag = document.createElement('span');
-                tag.className = 'tag-item clickable';
-                tag.title = style.desc;
-                tag.dataset.index = index;
-                tag.textContent = style.name;
-                tag.addEventListener('click', () => selectStyle(style));
-                tagsContainer.appendChild(tag);
-            });
-
-            categoryDiv.appendChild(tagsContainer);
-            stylesContainer.appendChild(categoryDiv);
-        });
+    function updateProbActiveLabel() {
+        const label = document.getElementById('prob-active-machine');
+        if (label && GACHA_MACHINES[currentMachineIndex]) {
+            label.textContent = GACHA_MACHINES[currentMachineIndex].label;
+        }
     }
 
     // ==================== 模态框 ====================
@@ -1800,7 +1777,7 @@
                     desc: data[0].desc, category: data[0].category
                 });
             }
-            renderStyles();
+            renderProbBoard();
             closeModal();
 
             const dialogText = document.getElementById('gba-dialog-text');
@@ -1855,7 +1832,7 @@
             return null;
         }
 
-        const stylesContainer = document.getElementById('styles-container');
+        const probContainer = document.getElementById('prob-container');
         const styleCountDisplay = document.getElementById('style-count-display');
         const copyBtn = document.getElementById('copy-btn');
         const addStyleBtn = document.getElementById('add-style-btn');
@@ -1873,7 +1850,7 @@
             gbaScreen, gbaMachineName, gbaUniversalCount, gbaLimitedCount,
             gbaStage, gbaArrowLeft, gbaArrowRight, gbaCarouselTrack,
             gbaDialogText, gbaDialogArrow,
-            stylesContainer, styleCountDisplay, copyBtn,
+            probContainer, styleCountDisplay, copyBtn,
             addStyleBtn, addModal, closeModalBtn, cancelBtn,
             addForm, styleNameInput, styleDescInput, styleCategoryInput
         };
@@ -1892,7 +1869,7 @@
             if (!authed) return;
 
             await loadStyles();
-            renderStyles();
+            renderProbBoard();
 
             initGBAGame(elements);
             setupEventListeners(elements);
