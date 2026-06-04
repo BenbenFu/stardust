@@ -1440,7 +1440,7 @@
         updateActiveStates();
         updateStatusBar(elements);
         updateArrowStates(elements);
-        updateProbActiveLabel();
+        renderProbBoard();
 
         const machine = GACHA_MACHINES[currentMachineIndex];
         elements.gbaDialogText.innerHTML =
@@ -1567,7 +1567,7 @@
                     updateActiveStates();
                     updateStatusBar(elements);
                     updateArrowStates(elements);
-                    updateProbActiveLabel();
+                    renderProbBoard();
                     elements.gbaDialogText.innerHTML =
                         `&gt; ${machine.label} [${machine.name}]<br>` +
                         `[提示] 点击中间机台的摇把，投入 1 张票据抽取。`;
@@ -1681,50 +1681,53 @@
         const probContainer = document.getElementById('prob-container');
         if (!probContainer) return;
 
-        // 更新顶部风格总数
         const styleCountDisplay = document.getElementById('style-count-display');
         if (styleCountDisplay) styleCountDisplay.textContent = styles.length;
 
         probContainer.innerHTML = '';
 
-        // 为每台机台构建概率卡片
-        GACHA_MACHINES.forEach(machine => {
-            const pool = getGachaPool(machine);
-            const poolSize = pool.length;
-            const probability = poolSize > 0 ? (100 / poolSize).toFixed(1) : '0.0';
-            const isUniversal = machine.category === null;
-            const catName = isUniversal ? '全风格普池' : (categories[machine.category]?.name || machine.category);
+        // 仅显示当前选中的机台
+        const machine = GACHA_MACHINES[currentMachineIndex];
+        if (!machine) return;
 
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex; align-items:flex-start; gap:8px; padding:6px 0; border-bottom:1px dashed var(--pixel-dim); font-size:11px;';
+        const pool = getGachaPool(machine);
+        const poolSize = pool.length;
+        const probability = poolSize > 0 ? (100 / poolSize).toFixed(1) : '0.0';
+        const isUniversal = machine.category === null;
+        const catName = isUniversal ? '全风格普池' : (categories[machine.category]?.name || machine.category);
 
-            // 左侧：机台标识
-            const left = document.createElement('div');
-            left.style.cssText = 'min-width:72px; flex-shrink:0;';
-            left.innerHTML = `<strong style="font-size:12px;">${machine.label}</strong><br>
-                <span style="color:var(--pixel-dim);font-size:9px;">${isUniversal ? '&#x25A3; 普池' : '&#x25C9; 限定'}</span>`;
+        const row = document.createElement('div');
+        row.style.cssText = 'padding:8px; font-size:11px;';
 
-            // 中间：池信息
-            const mid = document.createElement('div');
-            mid.style.cssText = 'flex:1; min-width:0;';
-            const sampleNames = pool.slice(0, 6).map(s => escapeHtml(s.name)).join(', ');
-            mid.innerHTML = `<span style="color:var(--pixel-dim);">${catName}</span><br>
-                <span>池容量: <strong>${poolSize}</strong> 个风格</span>
-                ${poolSize > 0 ? `<br><span style="color:var(--pixel-dim);font-size:10px;">${sampleNames}${poolSize > 6 ? '...' : ''}</span>` : '<br><span style="color:var(--pixel-alert);">(空池)</span>'}`;
+        // 标题行
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;';
+        header.innerHTML = `
+            <div>
+                <strong style="font-size:13px;">${machine.label} ${machine.name}</strong>
+                <span style="color:var(--pixel-dim);margin-left:6px;font-size:10px;">${isUniversal ? '\u25A3 普池' : '\u25C9 限定池'}</span>
+            </div>
+            <div style="text-align:right;">
+                <span style="font-size:9px;color:var(--pixel-dim);">单次概率</span><br>
+                <strong style="font-size:15px;${poolSize === 0 ? 'color:var(--pixel-alert);' : ''}">${probability}%</strong>
+            </div>`;
 
-            // 右侧：概率
-            const right = document.createElement('div');
-            right.style.cssText = 'text-align:right; flex-shrink:0; min-width:56px;';
-            right.innerHTML = `<span style="font-size:9px;color:var(--pixel-dim);">单次概率</span><br>
-                <strong style="font-size:14px;${poolSize === 0 ? 'color:var(--pixel-alert);' : ''}">${probability}%</strong>`;
+        // 池详情
+        const body = document.createElement('div');
+        body.style.cssText = `border:1px solid var(--pixel-dim); padding:8px; background:rgba(0,0,0,0.015);`;
+        body.innerHTML = `
+            <div style="margin-bottom:4px;"><span style="color:var(--pixel-dim);">分类: ${catName} &nbsp;|&nbsp; 池容量: <strong>${poolSize}</strong> 个风格</span></div>
+            <div style="font-size:10px; color:var(--pixel-dark); line-height:1.6;">
+                ${poolSize > 0
+                    ? pool.map(s => `<span style="display:inline-block; background:var(--pixel-dim); color:var(--screen-bg); padding:1px 5px; margin:1px 2px;">${escapeHtml(s.name)}</span>`).join('')
+                    : '<span style="color:var(--pixel-alert);">(空池 — 请先添加对应分类的风格)</span>'}
+            </div>`;
 
-            row.appendChild(left);
-            row.appendChild(mid);
-            row.appendChild(right);
-            probContainer.appendChild(row);
-        });
+        row.appendChild(header);
+        row.appendChild(body);
+        probContainer.appendChild(row);
 
-        // 更新统计
+        // 同步更新标题栏标签
         updateProbActiveLabel();
     }
 
