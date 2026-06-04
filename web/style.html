@@ -332,6 +332,210 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .style-machine-card {
+            border-width: 3px;
+            background:
+                linear-gradient(rgba(0,0,0,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px),
+                rgba(0,0,0,0.018);
+            background-size: 6px 6px, 6px 6px, auto;
+        }
+        .style-machine-card .section-card-body {
+            padding: 10px;
+        }
+        .gacha-app {
+            grid-template-columns: minmax(460px, 1.42fr) minmax(260px, 0.58fr);
+            gap: 10px;
+        }
+        .gacha-stage {
+            min-height: 520px;
+            padding: 8px;
+            border-width: 3px;
+            background:
+                radial-gradient(circle at 46% 22%, rgba(255,255,255,0.1), transparent 8rem),
+                linear-gradient(rgba(0,0,0,0.055) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.035) 1px, transparent 1px),
+                rgba(0,0,0,0.018);
+            background-size: auto, 5px 5px, 5px 5px, auto;
+        }
+        .gacha-stage::before {
+            top: auto;
+            bottom: 8px;
+            left: 10px;
+            content: "MAINT_PANEL: CAPSULE_FEEDER_CALIBRATION_REQUIRED";
+        }
+        .gacha-svg {
+            margin-top: 0;
+            min-height: 500px;
+        }
+        .gacha-panel-fill {
+            fill: rgba(30, 38, 34, 0.055);
+            stroke: var(--pixel-dark);
+            stroke-width: 3;
+            vector-effect: non-scaling-stroke;
+        }
+        .gacha-glass {
+            fill: rgba(255,255,255,0.06);
+            stroke: var(--pixel-dark);
+            stroke-width: 4;
+            vector-effect: non-scaling-stroke;
+        }
+        .gacha-hatch {
+            stroke: rgba(30, 38, 34, 0.18);
+            stroke-width: 1;
+        }
+        .gacha-ui-text {
+            fill: var(--pixel-dark);
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 0;
+        }
+        .gacha-ui-text.dim {
+            fill: var(--pixel-dim);
+        }
+        .gacha-line.heavy {
+            stroke-width: 5;
+        }
+        .gacha-drum {
+            transform-origin: 260px 236px;
+        }
+        .gacha-capsule {
+            transform-origin: 260px 236px;
+        }
+        .gacha-knob {
+            transform-origin: 514px 254px;
+        }
+        .gacha-prize {
+            transform-origin: 278px 452px;
+            opacity: 0.18;
+        }
+        .gacha-prize-fill {
+            fill: var(--screen-bg);
+            stroke: var(--pixel-dark);
+            stroke-width: 3;
+            vector-effect: non-scaling-stroke;
+        }
+        .gacha-machine.is-spinning .gacha-drum {
+            animation: gacha-drum-roll 0.82s steps(8) 1;
+        }
+        .gacha-machine.is-spinning .gacha-capsule {
+            animation: gacha-capsule-jolt 0.82s steps(5) 1;
+        }
+        .gacha-machine.is-spinning .gacha-knob {
+            animation: gacha-knob-turn 0.82s steps(9) 1;
+        }
+        .gacha-machine.is-dispensing .gacha-prize {
+            animation: gacha-ticket-eject 0.9s steps(7) 1 forwards;
+        }
+        .gacha-status-panel {
+            margin-top: 6px;
+            font-size: 11px;
+            border-width: 2px;
+        }
+        .gacha-status-panel div {
+            min-height: 28px;
+            padding: 6px 7px;
+            background: rgba(0,0,0,0.025);
+        }
+        .gacha-copy {
+            min-height: 520px;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            border: 2px solid var(--pixel-dark);
+            padding: 8px;
+            background:
+                linear-gradient(180deg, rgba(30,38,34,0.08), transparent 34px),
+                rgba(0,0,0,0.018);
+        }
+        .gacha-command-row {
+            grid-template-columns: 1fr;
+        }
+        .gacha-command-row .hardware-btn {
+            min-height: 40px;
+            justify-content: space-between;
+            padding: 7px 10px;
+        }
+        .result-container {
+            min-height: 360px;
+            border: 2px solid var(--pixel-dark);
+            border-top: 8px solid var(--pixel-dark);
+            background:
+                linear-gradient(rgba(30,38,34,0.055) 1px, transparent 1px),
+                var(--paper-worn);
+            background-size: 100% 18px;
+            box-shadow:
+                inset 0 0 0 1px rgba(255,255,255,0.18),
+                4px 4px 0 rgba(30,38,34,0.25);
+            position: relative;
+        }
+        .result-container::before {
+            content: "THERMAL_STYLE_TICKET";
+            position: absolute;
+            top: -20px;
+            left: 8px;
+            color: var(--screen-bg);
+            font-size: 10px;
+        }
+        .result-tag {
+            display: block;
+            text-align: center;
+            padding: 5px 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        .result-desc {
+            font-size: 12px;
+            color: var(--pixel-dark);
+            line-height: 1.7;
+        }
+        .result-placeholder {
+            min-height: 310px;
+            display: grid;
+            place-items: center;
+            border: 1px dashed var(--pixel-dim);
+        }
+        .gacha-ticket {
+            border: 2px solid var(--pixel-dark);
+            padding: 7px 8px;
+            background: rgba(0,0,0,0.035);
+            color: var(--pixel-dark);
+        }
+        @keyframes gacha-drum-roll {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-42deg); }
+        }
+        @keyframes gacha-capsule-jolt {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(7px, -5px) rotate(6deg); }
+            40% { transform: translate(-6px, 4px) rotate(-8deg); }
+            60% { transform: translate(5px, 6px) rotate(5deg); }
+            80% { transform: translate(-4px, -3px) rotate(-4deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        @keyframes gacha-ticket-eject {
+            0% { opacity: 0; transform: translate(-24px, -80px) scale(0.78); }
+            35% { opacity: 1; transform: translate(0, -22px) scale(0.96); }
+            100% { opacity: 1; transform: translate(0, 0) scale(1); }
+        }
+        @media (max-width: 900px) {
+            .gacha-app {
+                grid-template-columns: 1fr;
+            }
+            .gacha-stage,
+            .gacha-copy {
+                min-height: auto;
+            }
+            .gacha-svg {
+                min-height: 0;
+            }
+            .result-container {
+                min-height: 220px;
+            }
+            .result-placeholder {
+                min-height: 170px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -397,7 +601,7 @@
             </div>
 
             <!-- 操作区 -->
-            <div class="section-card">
+            <div class="section-card style-machine-card">
                 <div class="section-card-header">
                     <h3>[ CAPSULE_STYLE_VENDOR ]</h3>
                     <p class="ai-note">&gt;&gt; Insert one intention token. Rotate actuator. Receive one writing constraint capsule.</p>
@@ -405,28 +609,56 @@
                 <div class="section-card-body">
                     <div class="gacha-app">
                         <div class="gacha-stage">
-                            <svg class="gacha-svg gacha-machine" id="gacha-machine" viewBox="0 0 420 360" role="img" aria-label="Style capsule vending machine">
-                                <rect class="gacha-fill" x="72" y="30" width="256" height="304"/>
-                                <rect class="gacha-shell" x="94" y="52" width="212" height="150"/>
-                                <path class="gacha-line" d="M112 92h268M42 92h54M104 214h212M112 304h196"/>
-                                <circle class="gacha-fill gacha-capsule" cx="146" cy="92" r="20"/>
-                                <circle class="gacha-fill gacha-capsule" cx="205" cy="82" r="18"/>
-                                <circle class="gacha-fill gacha-capsule" cx="252" cy="112" r="22"/>
-                                <circle class="gacha-fill gacha-capsule" cx="174" cy="142" r="19"/>
-                                <circle class="gacha-fill gacha-capsule" cx="230" cy="154" r="17"/>
-                                <path class="gacha-detail" d="M104 52l22 150M306 52l-22 150"/>
-                                <g class="gacha-knob">
-                                    <circle class="gacha-fill" cx="210" cy="262" r="39"/>
-                                    <circle class="gacha-dark" cx="210" cy="262" r="9"/>
-                                    <path class="gacha-line" d="M210 224v26M210 276v26M172 262h26M224 262h26"/>
+                            <svg class="gacha-svg gacha-machine" id="gacha-machine" viewBox="0 0 640 560" role="img" aria-label="Style capsule vending machine">
+                                <defs>
+                                    <pattern id="lcd-hatch" width="8" height="8" patternUnits="userSpaceOnUse">
+                                        <path d="M0 8L8 0" class="gacha-hatch"/>
+                                    </pattern>
+                                </defs>
+                                <rect class="gacha-panel-fill" x="36" y="24" width="572" height="506"/>
+                                <path class="gacha-line heavy" d="M36 72h572M36 482h572"/>
+                                <text x="56" y="53" class="gacha-ui-text">STYLE CAPSULE TERMINAL // RANDOM DOCUMENT-FORM DISPENSER</text>
+                                <text x="426" y="53" class="gacha-ui-text dim">LCD_APP 00.1 / TOKEN ACCEPTED</text>
+
+                                <g class="gacha-dome">
+                                    <path class="gacha-glass" d="M104 118C104 72 148 82 204 82h112c56 0 100-10 100 36v170c0 42-34 76-76 76H180c-42 0-76-34-76-76z"/>
+                                    <path class="gacha-line" d="M120 156h296M104 252h312M150 92l-24 276M390 92l24 276"/>
+                                    <g class="gacha-drum">
+                                        <circle class="gacha-fill gacha-capsule" cx="178" cy="160" r="34"/>
+                                        <circle class="gacha-fill gacha-capsule" cx="260" cy="138" r="30"/>
+                                        <circle class="gacha-fill gacha-capsule" cx="338" cy="172" r="33"/>
+                                        <circle class="gacha-fill gacha-capsule" cx="214" cy="244" r="31"/>
+                                        <circle class="gacha-fill gacha-capsule" cx="316" cy="254" r="36"/>
+                                        <circle class="gacha-fill gacha-capsule" cx="256" cy="320" r="28"/>
+                                        <path class="gacha-line" d="M150 160h56M236 138h48M310 172h56M188 244h52M286 254h64M232 320h48"/>
+                                    </g>
+                                    <path class="gacha-line heavy" d="M190 366h138l-20 40H210z"/>
                                 </g>
-                                <rect class="gacha-fill" x="142" y="310" width="136" height="28"/>
-                                <g class="gacha-prize" id="gacha-prize">
-                                    <path class="gacha-fill" d="M176 294h68l18 15v29h-104v-29z"/>
-                                    <path class="gacha-line" d="M176 309h86M184 324h44"/>
+
+                                <g class="gacha-console">
+                                    <rect class="gacha-panel-fill" x="438" y="112" width="152" height="310"/>
+                                    <path class="gacha-line" d="M458 148h112M458 184h112M458 318h112"/>
+                                    <text x="458" y="138" class="gacha-ui-text">ACTUATOR</text>
+                                    <text x="458" y="174" class="gacha-ui-text dim">TURN TO DISPENSE</text>
+                                    <g class="gacha-knob">
+                                        <circle class="gacha-fill" cx="514" cy="254" r="58"/>
+                                        <circle class="gacha-dark" cx="514" cy="254" r="14"/>
+                                        <path class="gacha-line heavy" d="M514 198v38M514 270v38M458 254h38M530 254h38"/>
+                                        <path class="gacha-line" d="M478 218l72 72M550 218l-72 72"/>
+                                    </g>
+                                    <rect class="gacha-fill" x="458" y="340" width="112" height="44"/>
+                                    <text x="475" y="367" class="gacha-ui-text">PUSH / COPY</text>
                                 </g>
-                                <text x="114" y="238" class="gacha-dark" style="font-size:13px;">STYLE CAPSULE OUT</text>
-                                <text x="112" y="326" class="gacha-dark" id="gacha-label" style="font-size:11px;">NO CAPSULE</text>
+
+                                <g class="gacha-rail">
+                                    <path class="gacha-fill" d="M212 404h114l32 34h142v54H162v-54h178l-26-20H212z"/>
+                                    <path class="gacha-line" d="M178 450h320M318 418l34 36"/>
+                                    <g class="gacha-prize" id="gacha-prize">
+                                        <path class="gacha-prize-fill" d="M218 398h120l32 28v66H186v-66z"/>
+                                        <path class="gacha-line" d="M218 426h152M208 452h132M208 472h84"/>
+                                    </g>
+                                </g>
+                                <text x="184" y="514" class="gacha-ui-text" id="gacha-label">NO CAPSULE / WAITING</text>
                             </svg>
                             <div class="gacha-status-panel">
                                 <div>POOL: <span id="gacha-pool-count">0</span></div>
@@ -787,12 +1019,13 @@
                 gachaMachine.classList.remove('is-spinning');
                 gachaMachine.classList.add('is-dispensing');
             }
-        }, 300);
+            if (gachaState) gachaState.textContent = 'DISPENSING';
+        }, 760);
         
         const randomIndex = Math.floor(Math.random() * styles.length);
         setTimeout(() => {
             selectStyle(styles[randomIndex]);
-        }, 520);
+        }, 1120);
     }
 
     function copyStyle() {
