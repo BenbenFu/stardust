@@ -797,7 +797,7 @@
                             <button class="gba-arrow-btn gba-arrow-right" id="gba-arrow-right" aria-label="下一台机器">&#x25B6;</button>
 
                             <!-- 机器基础底座（固定在舞台底部，不随轮播移动） -->
-                            <div class="gba-machine-base">
+                            <div class="gba-machine-base" id="gba-machine-base">
                                 <div class="gba-ticket-slot" id="gba-ticket-slot">
                                     <!-- 票据插入口 -->
                                 </div>
@@ -1350,7 +1350,7 @@
     }
 
     // ==================== 机器点击 — 核心抽取逻辑 ====================
-    function onMachineClick(machineIndex, elements) {
+    async function onMachineClick(machineIndex, elements) {
         if (isGachaAnimating) return;
         if (styles.length === 0) {
             elements.gbaDialogText.innerHTML = '&gt; 机器内部空空如也。请先添加一些风格到风格库。';
@@ -1385,10 +1385,16 @@
         const pickedStyle = pool[Math.floor(Math.random() * pool.length)];
 
         isGachaAnimating = true;
-        executeGachaPipeline(machineIndex, () => {
-            showGachaResult(pickedStyle, machine, isUniversal, elements);
+        try {
+            await executeGachaPipeline(machineIndex, () => {
+                showGachaResult(pickedStyle, machine, isUniversal, elements);
+            });
+        } catch (e) {
+            console.error('动画流水线错误:', e);
+            elements.gbaDialogText.innerHTML = '&gt; 机器卡住了...请刷新重试。';
+        } finally {
             isGachaAnimating = false;
-        });
+        }
     }
 
     // ==================== 结果显示 ====================
