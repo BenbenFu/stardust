@@ -806,7 +806,7 @@
                             <div class="gba-status-right">
                                 <span class="gba-ticket-count" id="gba-universal-count">&#x25A3; &#x25A0;&#x25A0;&#x25A0;&#x25A0;&#x25A0;</span>
                                 <span class="gba-divider">|</span>
-                                <span class="gba-ticket-count" id="gba-limited-count">&#x25C9; &#x25A0;&#x25A0;&#x25A0;&#x25A1;&#x25A1;</span>
+                                <span class="gba-ticket-count" id="gba-limited-count">&#x25C9; &#x25CF;&#x25CF;&#x25CF;&#x25CB;&#x25CB;</span>
                             </div>
                         </div>
 
@@ -1222,7 +1222,11 @@
 
         let blocks = '';
         for (let i = 0; i < MAX_TICKETS; i++) {
-            blocks += i < count ? '\u25A0' : '\u25A1';
+            if (isLimited) {
+                blocks += i < count ? '\u25CF' : '\u25CB';  // ● 实心圆 / ○ 空心圆
+            } else {
+                blocks += i < count ? '\u25A0' : '\u25A1';  // ■ 实心方块 / □ 空心方块
+            }
         }
 
         return `<span class="gba-ticket-label">${label}</span><span class="${iconClass}">${icon}</span> ${blocks} \u00D7${count}`;
