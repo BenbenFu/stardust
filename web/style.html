@@ -316,7 +316,7 @@
             flex-shrink: 0;
         }
 
-        /* 机台 SVG 容器 */
+        /* 机台视频容器 */
         .gba-machine-svg-container {
             position: relative;
             width: 160px;
@@ -326,6 +326,7 @@
             opacity: 0.15;
             transform: scale(0.78);
             pointer-events: none;
+            overflow: hidden;
         }
         /* 相邻机台 — 淡显可辨识 */
         .gba-machine-unit.is-adjacent .gba-machine-svg-container {
@@ -346,7 +347,20 @@
             transform: scale(1.04);
         }
 
-        /* 机台 SVG 本身 */
+        /* 机台视频本身 */
+        .gba-machine-video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+            pointer-events: none;
+            /* mix-blend-mode:multiply 将白色背景透明化：
+               白(255,255,255) * 屏幕底色 = 屏幕底色，
+               深色内容正常保留 */
+            mix-blend-mode: multiply;
+        }
+
+        /* 旧 SVG 类保留（兼容性），若将来部分机台仍用 SVG */
         .gba-machine-svg {
             width: 100%;
             height: 100%;
@@ -1116,167 +1130,34 @@
     let limitedTickets = 3;
     const MAX_TICKETS = 5;
 
-    // ==================== SVG 机器蓝图生成 ====================
-    function generateMachineSVG_classic() {
-        return `<svg class="gba-machine-svg" viewBox="0 0 200 280">
-    <defs>
-        <pattern id="lcd-grid" width="4" height="4" patternUnits="userSpaceOnUse">
-            <rect width="4" height="4" fill="none"/>
-            <rect width="1" height="1" fill="rgba(30,38,34,0.06)"/>
-        </pattern>
-    </defs>
-    <ellipse cx="100" cy="90" rx="62" ry="60" fill="rgba(30,38,34,0.03)" stroke="none"/>
-    <ellipse cx="100" cy="90" rx="62" ry="60" fill="url(#lcd-grid)" stroke="#1e2622" stroke-width="3"/>
-    <path d="M 50 60 Q 70 18 100 16" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2.5"/>
-    <path d="M 55 72 Q 72 34 100 32" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1.5"/>
-    <rect x="44" y="90" width="112" height="14" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="2"/>
-    <line x1="44" y1="90" x2="156" y2="90" stroke="#1e2622" stroke-width="2.5"/>
-    <line x1="44" y1="104" x2="156" y2="104" stroke="#1e2622" stroke-width="2"/>
-    <g class="gba-svg-drum" style="--drum-cx:100px;--drum-cy:145px;">
-        <rect x="48" y="104" width="104" height="74" rx="3" fill="rgba(30,38,34,0.03)"/>
-        <rect x="48" y="104" width="104" height="74" rx="3" fill="none" stroke="#1e2622" stroke-width="2.5"/>
-        <line x1="48" y1="122" x2="152" y2="122" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,4"/>
-        <line x1="48" y1="140" x2="152" y2="140" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,4"/>
-        <line x1="48" y1="158" x2="152" y2="158" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,4"/>
-        <g class="gba-svg-capsule" style="--capsule-cx:68px;--capsule-cy:112px;"><circle cx="68" cy="112" r="9" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="60" y1="112" x2="76" y2="112" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:98px;--capsule-cy:110px;"><circle cx="98" cy="110" r="10" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="90" y1="110" x2="106" y2="110" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:132px;--capsule-cy:114px;"><circle cx="132" cy="114" r="9" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="124" y1="114" x2="140" y2="114" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:80px;--capsule-cy:150px;"><circle cx="80" cy="150" r="11" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="70" y1="150" x2="90" y2="150" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:118px;--capsule-cy:152px;"><circle cx="118" cy="152" r="10" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="110" y1="152" x2="126" y2="152" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:96px;--capsule-cy:168px;"><circle cx="96" cy="168" r="8" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="90" y1="168" x2="102" y2="168" stroke="#1e2622" stroke-width="1.5"/></g>
-    </g>
-    <rect x="40" y="182" width="120" height="52" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="2.5"/>
-    <line x1="40" y1="196" x2="160" y2="196" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="74" y="200" width="52" height="5" rx="1" fill="rgba(30,38,34,0.03)" stroke="#1e2622" stroke-width="1.5"/>
-    <line x1="56" y1="210" x2="144" y2="210" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,4"/>
-    <g class="gba-svg-prize" style="--prize-cx:100px;--prize-cy:205px;"><circle cx="100" cy="205" r="6" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/></g>
-    <rect x="36" y="236" width="128" height="26" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="3"/>
-    <line x1="36" y1="248" x2="164" y2="248" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="44" y="262" width="24" height="6" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="132" y="262" width="24" height="6" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="1.5"/>
-    <circle cx="56" cy="265" r="2" fill="#1e2622"/><circle cx="144" cy="265" r="2" fill="#1e2622"/>
-    <g class="gba-svg-knob" style="--knob-cx:175px;--knob-cy:148px;">
-        <line x1="158" y1="148" x2="168" y2="148" stroke="#1e2622" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="175" cy="148" r="11" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2.5"/>
-        <circle cx="175" cy="148" r="3" fill="#1e2622"/>
-        <line x1="175" y1="140" x2="175" y2="156" stroke="#1e2622" stroke-width="1.5"/>
-        <line x1="167" y1="148" x2="183" y2="148" stroke="#1e2622" stroke-width="1.5"/>
-    </g>
-</svg>`;
-    }
+    // ==================== 视频机器注册表 ====================
+    // 当前只有1个视频，所有机台共用。后续可扩展为每台一个视频。
+    // 格式：key=silhouette（或 machine.id），value=视频文件路径
+    const MACHINE_VIDEOS = {
+        'default':  'gashapon1.mp4',
+        'classic':  'gashapon1.mp4',
+        'cylinder': 'gashapon1.mp4',
+        'square':   'gashapon1.mp4'
+    };
 
-    function generateMachineSVG_cylinder() {
-        return `<svg class="gba-machine-svg" viewBox="0 0 200 280">
-    <defs>
-        <pattern id="lcd-grid-c" width="4" height="4" patternUnits="userSpaceOnUse">
-            <rect width="4" height="4" fill="none"/>
-            <rect width="1" height="1" fill="rgba(30,38,34,0.06)"/>
-        </pattern>
-    </defs>
-    <ellipse cx="100" cy="48" rx="44" ry="16" fill="rgba(30,38,34,0.03)" stroke="#1e2622" stroke-width="2.5"/>
-    <rect x="94" y="28" width="12" height="24" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/>
-    <circle cx="100" cy="26" r="7" fill="rgba(30,38,34,0.03)" stroke="#1e2622" stroke-width="2"/>
-    <line x1="100" y1="20" x2="100" y2="32" stroke="#1e2622" stroke-width="1"/>
-    <line x1="94" y1="26" x2="106" y2="26" stroke="#1e2622" stroke-width="1"/>
-    <path d="M 100 28 L 100 16 L 118 16" fill="none" stroke="#1e2622" stroke-width="2" stroke-linecap="round"/>
-    <path d="M 115 9 Q 118 6 120 9 M 117 5 Q 120 2 122 5" fill="none" stroke="#1e2622" stroke-width="1.5"/>
-    <circle cx="65" cy="48" r="2" fill="#1e2622"/><circle cx="135" cy="48" r="2" fill="#1e2622"/>
-    <rect x="48" y="62" width="104" height="118" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="3"/>
-    <line x1="48" y1="78" x2="152" y2="78" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="3,5"/>
-    <circle cx="58" cy="74" r="2" fill="#1e2622"/><circle cx="142" cy="74" r="2" fill="#1e2622"/>
-    <g class="gba-svg-drum" style="--drum-cx:100px;--drum-cy:130px;">
-        <rect x="60" y="82" width="80" height="82" rx="2" fill="rgba(30,38,34,0.03)"/>
-        <rect x="60" y="82" width="80" height="82" rx="2" fill="none" stroke="#1e2622" stroke-width="2"/>
-        <line x1="60" y1="96" x2="140" y2="96" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,3"/>
-        <line x1="60" y1="110" x2="140" y2="110" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,3"/>
-        <line x1="60" y1="124" x2="140" y2="124" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,3"/>
-        <line x1="60" y1="138" x2="140" y2="138" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,3"/>
-        <line x1="60" y1="152" x2="140" y2="152" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,3"/>
-        <g class="gba-svg-capsule" style="--capsule-cx:76px;--capsule-cy:90px;"><circle cx="76" cy="90" r="6" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:120px;--capsule-cy:92px;"><circle cx="120" cy="92" r="7" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:88px;--capsule-cy:118px;"><circle cx="88" cy="118" r="6" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:110px;--capsule-cy:130px;"><circle cx="110" cy="130" r="7" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:84px;--capsule-cy:144px;"><circle cx="84" cy="144" r="7" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="1.5"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:116px;--capsule-cy:154px;"><circle cx="116" cy="154" r="5" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="1.5"/></g>
-    </g>
-    <rect x="44" y="180" width="112" height="44" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="2.5"/>
-    <line x1="44" y1="194" x2="156" y2="194" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="70" y="198" width="60" height="5" rx="1" fill="rgba(30,38,34,0.03)" stroke="#1e2622" stroke-width="1.5"/>
-    <line x1="58" y1="208" x2="142" y2="208" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,4"/>
-    <g class="gba-svg-prize" style="--prize-cx:100px;--prize-cy:203px;"><circle cx="100" cy="203" r="5" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/></g>
-    <path d="M 38 226 L 162 226 L 150 258 L 50 258 Z" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="3"/>
-    <line x1="48" y1="242" x2="152" y2="242" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="58" y="258" width="20" height="5" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="122" y="258" width="20" height="5" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="1.5"/>
-    <g class="gba-svg-knob" style="--knob-cx:170px;--knob-cy:100px;">
-        <line x1="152" y1="100" x2="162" y2="100" stroke="#1e2622" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="170" cy="100" r="10" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2.5"/>
-        <circle cx="170" cy="100" r="3" fill="#1e2622"/>
-        <line x1="162" y1="100" x2="178" y2="100" stroke="#1e2622" stroke-width="1.5"/>
-        <line x1="170" y1="92" x2="170" y2="108" stroke="#1e2622" stroke-width="1.5"/>
-    </g>
-</svg>`;
-    }
+    // 创建机台视频元素
+    // 返回 HTMLVideoElement，未播放时停在第一帧 (通过 preload+load 实现 poster)
+    function createMachineVideoElement(silhouette) {
+        const video = document.createElement('video');
+        video.className = 'gba-machine-video';
+        video.src = MACHINE_VIDEOS[silhouette] || MACHINE_VIDEOS['default'];
+        video.preload = 'auto';
+        video.muted = true;           // 静音以允许自动预加载
+        video.playsInline = true;     // iOS 内联播放
+        video.loop = false;
+        video.currentTime = 0;        // 停在第一帧
 
-    function generateMachineSVG_square() {
-        return `<svg class="gba-machine-svg" viewBox="0 0 200 280">
-    <defs>
-        <pattern id="lcd-grid-s" width="4" height="4" patternUnits="userSpaceOnUse">
-            <rect width="4" height="4" fill="none"/>
-            <rect width="1" height="1" fill="rgba(30,38,34,0.06)"/>
-        </pattern>
-    </defs>
-    <path d="M 46 42 L 54 34 L 62 42 L 70 34 L 78 42 L 86 34 L 94 42 L 102 34 L 110 42 L 118 34 L 126 42 L 134 34 L 142 42 L 150 34 L 158 42" fill="none" stroke="#1e2622" stroke-width="2"/>
-    <rect x="56" y="46" width="88" height="20" rx="2" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/>
-    <rect x="60" y="50" width="10" height="6" fill="rgba(30,38,34,0.12)"/>
-    <rect x="74" y="50" width="10" height="6" fill="rgba(30,38,34,0.12)"/>
-    <rect x="88" y="50" width="10" height="6" fill="none" stroke="#1e2622" stroke-width="1"/>
-    <rect x="102" y="50" width="10" height="6" fill="rgba(30,38,34,0.12)"/>
-    <rect x="116" y="50" width="10" height="6" fill="none" stroke="#1e2622" stroke-width="1"/>
-    <line x1="56" y1="48" x2="144" y2="48" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-    <rect x="40" y="70" width="120" height="110" fill="rgba(30,38,34,0.03)" stroke="#1e2622" stroke-width="3"/>
-    <line x1="40" y1="85" x2="160" y2="85" stroke="#1e2622" stroke-width="1" stroke-dasharray="3,5"/>
-    <g class="gba-svg-drum" style="--drum-cx:100px;--drum-cy:135px;">
-        <rect x="46" y="90" width="108" height="80" rx="2" fill="rgba(30,38,34,0.03)"/>
-        <rect x="46" y="90" width="108" height="80" rx="2" fill="none" stroke="#1e2622" stroke-width="2"/>
-        <line x1="100" y1="90" x2="100" y2="170" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="2,4"/>
-        <line x1="46" y1="130" x2="154" y2="130" stroke="#1e2622" stroke-width="1.5" stroke-dasharray="2,4"/>
-        <g class="gba-svg-capsule" style="--capsule-cx:70px;--capsule-cy:105px;"><circle cx="70" cy="105" r="9" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="62" y1="105" x2="78" y2="105" stroke="#1e2622" stroke-width="1"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:130px;--capsule-cy:106px;"><circle cx="130" cy="106" r="8" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="124" y1="106" x2="136" y2="106" stroke="#1e2622" stroke-width="1"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:100px;--capsule-cy:115px;"><circle cx="100" cy="115" r="8" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="94" y1="115" x2="106" y2="115" stroke="#1e2622" stroke-width="1"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:75px;--capsule-cy:148px;"><circle cx="75" cy="148" r="10" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="67" y1="148" x2="83" y2="148" stroke="#1e2622" stroke-width="1"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:128px;--capsule-cy:147px;"><circle cx="128" cy="147" r="9" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="120" y1="147" x2="136" y2="147" stroke="#1e2622" stroke-width="1"/></g>
-        <g class="gba-svg-capsule" style="--capsule-cx:102px;--capsule-cy:160px;"><circle cx="102" cy="160" r="7" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2"/><line x1="96" y1="160" x2="108" y2="160" stroke="#1e2622" stroke-width="1"/></g>
-    </g>
-    <rect x="38" y="182" width="124" height="42" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="2.5"/>
-    <line x1="38" y1="196" x2="162" y2="196" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="72" y="200" width="56" height="5" rx="1" fill="rgba(30,38,34,0.03)" stroke="#1e2622" stroke-width="1.5"/>
-    <line x1="50" y1="210" x2="150" y2="210" stroke="#1e2622" stroke-width="1" stroke-dasharray="2,4"/>
-    <g class="gba-svg-prize" style="--prize-cx:100px;--prize-cy:205px;"><rect x="97" y="202" width="6" height="6" rx="1" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="1.5"/></g>
-    <rect x="36" y="226" width="128" height="28" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="3"/>
-    <rect x="46" y="232" width="108" height="4" fill="rgba(30,38,34,0.07)"/>
-    <rect x="46" y="240" width="108" height="4" fill="rgba(30,38,34,0.07)"/>
-    <rect x="46" y="248" width="108" height="4" fill="rgba(30,38,34,0.07)"/>
-    <rect x="42" y="256" width="26" height="5" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="1.5"/>
-    <rect x="132" y="256" width="26" height="5" fill="rgba(30,38,34,0.12)" stroke="#1e2622" stroke-width="1.5"/>
-    <circle cx="55" cy="258" r="2" fill="#1e2622"/><circle cx="145" cy="258" r="2" fill="#1e2622"/>
-    <g class="gba-svg-knob" style="--knob-cx:32px;--knob-cy:110px;">
-        <line x1="44" y1="110" x2="34" y2="110" stroke="#1e2622" stroke-width="4" stroke-linecap="round"/>
-        <rect x="20" y="100" width="22" height="20" rx="2" fill="rgba(30,38,34,0.07)" stroke="#1e2622" stroke-width="2.5"/>
-        <circle cx="31" cy="110" r="3" fill="#1e2622"/>
-        <line x1="23" y1="110" x2="39" y2="110" stroke="#1e2622" stroke-width="1.5"/>
-        <line x1="31" y1="102" x2="31" y2="118" stroke="#1e2622" stroke-width="1.5"/>
-    </g>
-</svg>`;
-    }
+        // 加载元数据后定位到第一帧以显示 poster 效果
+        video.addEventListener('loadedmetadata', () => {
+            video.currentTime = 0.01; // 触发首帧渲染
+        });
 
-    function generateMachineSVG(silhouette) {
-        switch (silhouette) {
-            case 'cylinder': return generateMachineSVG_cylinder();
-            case 'square':   return generateMachineSVG_square();
-            case 'classic':
-            default:         return generateMachineSVG_classic();
-        }
+        return video;
     }
 
     // ==================== 动画工具函数 ====================
@@ -1284,57 +1165,53 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // ==================== 动画流水线 ====================
+    // ==================== 动画流水线（视频版） ====================
     async function executeGachaPipeline(machineIndex, onComplete) {
-        // 中心机台始终在 slot currentMachineIndex+1
+        // 找到中心机台的视频元素
         const activeSlot = currentMachineIndex + 1;
         const unit = document.getElementById(`gba-machine-${activeSlot}`);
         if (!unit) { console.error('找不到活动机台单元'); return; }
-        const base = document.getElementById('gba-machine-base');
-        const ticketSlot = document.getElementById('gba-ticket-slot');
-        const ejectSlot = document.getElementById('gba-ticket-eject-slot');
-        const gbaScreen = document.getElementById('gba-screen');
 
-        // 阶段 1: INSERTING
-        const ticketProp = document.createElement('div');
-        ticketProp.className = 'gba-ticket-prop is-inserting';
-        ticketProp.style.left = `${ticketSlot.offsetLeft + 8}px`;
-        ticketProp.style.bottom = `${gbaScreen.offsetHeight - ticketSlot.offsetTop}px`;
-        base.appendChild(ticketProp);
-        await sleep(400);
-        ticketProp.remove();
+        const video = unit.querySelector('.gba-machine-video');
+        if (!video) { console.error('找不到视频元素'); return; }
 
-        // 阶段 2: SPINNING
-        unit.classList.add('is-gacha-spinning');
-        await sleep(700);
-        unit.classList.remove('is-gacha-spinning');
+        // 重置到起始并播放
+        video.currentTime = 0;
 
-        // 阶段 3: SHUFFLING
-        unit.classList.add('is-gacha-jolting');
-        unit.classList.add('is-gacha-shuffling');
-        await sleep(950);
-        unit.classList.remove('is-gacha-shuffling');
-        unit.classList.remove('is-gacha-jolting');
+        // 等待视频播放完毕（返回 Promise）
+        await new Promise((resolve, reject) => {
+            const onEnded = () => {
+                video.removeEventListener('ended', onEnded);
+                video.removeEventListener('error', onError);
+                resolve();
+            };
+            const onError = (e) => {
+                video.removeEventListener('ended', onEnded);
+                video.removeEventListener('error', onError);
+                // 视频加载失败时降级：等待固定时长
+                console.warn('视频播放失败，降级等待3s:', e);
+                setTimeout(resolve, 3000);
+            };
+            video.addEventListener('ended', onEnded);
+            video.addEventListener('error', onError);
 
-        // 阶段 4: DROPPING
-        unit.classList.add('is-gacha-dropping');
-        await sleep(550);
-        unit.classList.remove('is-gacha-dropping');
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(onError);
+            }
+        });
 
-        // 阶段 5: EJECTING
-        const ejectProp = document.createElement('div');
-        ejectProp.className = 'gba-ticket-prop is-ejecting';
-        ejectProp.style.left = `${ejectSlot.offsetLeft + 4}px`;
-        ejectProp.style.bottom = `${gbaScreen.offsetHeight - ejectSlot.offsetTop}px`;
-        base.appendChild(ejectProp);
-        await sleep(700);
-        ejectProp.remove();
-
-        // 阶段 6: TYPING
+        // 视频播放完毕后触发结果回调
         if (onComplete) onComplete();
 
+        // 恢复对话框箭头
         const dialogArrow = document.getElementById('gba-dialog-arrow');
         if (dialogArrow) dialogArrow.style.display = '';
+
+        // 视频停在最后一帧，延迟500ms后重置到首帧（等对话框文字出现后）
+        setTimeout(() => {
+            video.currentTime = 0.01;
+        }, 1500);
     }
 
     // ==================== 票据系统 ====================
@@ -1518,7 +1395,9 @@
 
             const svgContainer = document.createElement('div');
             svgContainer.className = 'gba-machine-svg-container';
-            svgContainer.innerHTML = generateMachineSVG(machine.silhouette);
+            // 创建视频元素替代原 SVG
+            const videoEl = createMachineVideoElement(machine.silhouette);
+            svgContainer.appendChild(videoEl);
             svgContainer.addEventListener('click', () => {
                 // 中间机台 → 触发抽取；相邻机台 → 导航切换
                 if (realIndex === currentMachineIndex) {
