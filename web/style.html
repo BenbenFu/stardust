@@ -354,10 +354,7 @@
             display: block;
             object-fit: contain;
             pointer-events: none;
-            /* mix-blend-mode:multiply 将白色背景透明化：
-               白(255,255,255) * 屏幕底色 = 屏幕底色，
-               深色内容正常保留 */
-            mix-blend-mode: multiply;
+            /* WebM 已含 alpha 透明通道，无需 mix-blend-mode */
         }
 
         /* 旧 SVG 类保留（兼容性），若将来部分机台仍用 SVG */
@@ -1134,10 +1131,10 @@
     // 当前只有1个视频，所有机台共用。后续可扩展为每台一个视频。
     // 格式：key=silhouette（或 machine.id），value=视频文件路径
     const MACHINE_VIDEOS = {
-        'default':  'gashapon1.mp4',
-        'classic':  'gashapon1.mp4',
-        'cylinder': 'gashapon1.mp4',
-        'square':   'gashapon1.mp4'
+        'default':  'gashapon1.webm',
+        'classic':  'gashapon1.webm',
+        'cylinder': 'gashapon1.webm',
+        'square':   'gashapon1.webm'
     };
 
     // 创建机台视频元素
