@@ -446,14 +446,21 @@
             border: 3px double var(--pixel-dark);
             background: rgba(0,0,0,0.03);
             padding: 8px 12px;
-            min-height: 64px;
-            max-height: 110px;
+            height: 87px;             /* 固定: 2行文字 + 按钮行 */
             position: relative;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            overflow-y: auto;
+            overflow: hidden;
             flex-shrink: 0;
+            cursor: pointer;
+            transition: height 0.15s steps(2);
+        }
+        .gba-dialog-box.is-detail {
+            height: auto;
+            min-height: 87px;
+            max-height: 180px;
+            overflow-y: auto;
         }
         .gba-dialog-text {
             font-size: 12px;
@@ -461,15 +468,20 @@
             text-align: left;
             color: var(--pixel-dark);
             font-family: var(--font-mono);
+            max-height: 3.1em;       /* 2行 = 2*1.55 */
             overflow: hidden;
-            min-height: 36px;
+        }
+        .gba-dialog-box.is-detail .gba-dialog-text {
+            max-height: none;
             flex: 1;
+            overflow-y: auto;
         }
         .gba-dialog-arrow {
             align-self: flex-end;
             font-size: 10px;
             color: var(--pixel-dark);
-            animation: gba-arrow-bounce 0.6s infinite steps(2);
+            cursor: pointer;
+            transition: transform 0.15s;
             margin-top: 4px;
         }
 
@@ -694,13 +706,15 @@
                 padding: 3px 6px;
             }
             .gba-dialog-box {
-                min-height: 50px;
-                max-height: 70px;
+                height: 72px;
                 padding: 6px 8px;
+            }
+            .gba-dialog-box.is-detail {
+                min-height: 72px;
+                max-height: 140px;
             }
             .gba-dialog-text {
                 font-size: 11px;
-                min-height: 28px;
             }
         }
 
@@ -1282,6 +1296,15 @@
         elements.gbaDialogText.innerHTML =
             `&gt; ${machine.label} [${machine.name}]<br>` +
             `[提示] 点击中间机台的摇把，投入 1 张票据抽取。`;
+
+        // 切换机台时清除旧抽取结果的详情状态
+        const gbaDialogBox = document.getElementById('gba-dialog-box');
+        if (gbaDialogBox) {
+            gbaDialogBox.dataset.fullHtml = '';
+            gbaDialogBox.classList.remove('is-detail');
+            const gbaDialogArrow = document.getElementById('gba-dialog-arrow');
+            if (gbaDialogArrow) gbaDialogArrow.textContent = '';
+        }
     }
 
     // ==================== 抽池计算 ====================
@@ -1342,21 +1365,24 @@
 
     // ==================== 结果显示 ====================
     function showGachaResult(style, machine, isUniversal, elements) {
-        const { gbaDialogText, gbaDialogArrow } = elements;
+        const { gbaDialogText, gbaDialogArrow, gbaDialogBox } = elements;
         currentStyle = style;
 
         const flavorText = machine.flavor || '';
         const stage1 = `&gt; 咔哒！${flavorText}<br>抽中: [${style.name}]`;
         const stage2 = `\u300C${style.desc || '(无描述)'}\u300D`;
 
-        gbaDialogArrow.style.display = 'none';
+        // 折叠到紧凑视图
+        gbaDialogBox.classList.remove('is-detail');
+        gbaDialogBox.dataset.fullHtml = stage1 + '<br><br>' + stage2;
+        gbaDialogArrow.style.display = '';
+        gbaDialogArrow.textContent = '\u25B6';  // ▶ 可点击展开详情
+
         gbaDialogText.classList.add('is-typing');
         gbaDialogText.innerHTML = stage1;
 
         setTimeout(() => {
-            gbaDialogText.innerHTML += `<br><br>${stage2}`;
             gbaDialogText.classList.remove('is-typing');
-            gbaDialogArrow.style.display = '';
 
             // 启用对话框内的 COPY 按钮
             const copyBtn = document.getElementById('copy-btn');
@@ -1653,6 +1679,29 @@
             if (e.target === addModal) closeModal();
         });
         if (addForm) addForm.addEventListener('submit', handleAddStyle);
+
+        // 对话框点击：切换展开/折叠详情
+        const gbaDialogBox = document.getElementById('gba-dialog-box');
+        const gbaDialogText = document.getElementById('gba-dialog-text');
+        const gbaDialogArrow = document.getElementById('gba-dialog-arrow');
+        if (gbaDialogBox && gbaDialogText && gbaDialogArrow) {
+            gbaDialogBox.addEventListener('click', (e) => {
+                if (e.target.tagName === 'BUTTON') return;           // 不拦截按钮
+                if (!gbaDialogBox.dataset.fullHtml) return;          // 无详情可展开
+
+                const isDetail = gbaDialogBox.classList.contains('is-detail');
+                if (isDetail) {
+                    // 折叠回紧凑视图
+                    gbaDialogBox.classList.remove('is-detail');
+                    gbaDialogArrow.textContent = '\u25B6';
+                } else {
+                    // 展开详情
+                    gbaDialogBox.classList.add('is-detail');
+                    gbaDialogText.innerHTML = gbaDialogBox.dataset.fullHtml;
+                    gbaDialogArrow.textContent = '\u25C0';
+                }
+            });
+        }
     }
 
     // ==================== DOM 元素缓存 ====================
@@ -1667,6 +1716,7 @@
         const gbaCarouselTrack = document.getElementById('gba-carousel-track');
         const gbaDialogText = document.getElementById('gba-dialog-text');
         const gbaDialogArrow = document.getElementById('gba-dialog-arrow');
+        const gbaDialogBox = document.getElementById('gba-dialog-box');
 
         if (!gbaScreen || !gbaCarouselTrack || !gbaDialogText) {
             console.error('关键 GBA DOM 元素缺失');
@@ -1690,7 +1740,7 @@
         return {
             gbaScreen, gbaMachineName, gbaUniversalCount, gbaLimitedCount,
             gbaStage, gbaArrowLeft, gbaArrowRight, gbaCarouselTrack,
-            gbaDialogText, gbaDialogArrow,
+            gbaDialogText, gbaDialogArrow, gbaDialogBox,
             probContainer, styleCountDisplay, copyBtn,
             addStyleBtn, addModal, closeModalBtn, cancelBtn,
             addForm, styleNameInput, styleDescInput, styleCategoryInput
