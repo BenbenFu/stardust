@@ -1301,6 +1301,7 @@
         const gbaDialogBox = document.getElementById('gba-dialog-box');
         if (gbaDialogBox) {
             gbaDialogBox.dataset.fullHtml = '';
+            gbaDialogBox.dataset.shortHtml = '';
             gbaDialogBox.classList.remove('is-detail');
             const gbaDialogArrow = document.getElementById('gba-dialog-arrow');
             if (gbaDialogArrow) gbaDialogArrow.textContent = '';
@@ -1370,11 +1371,11 @@
 
         const flavorText = machine.flavor || '';
         const stage1 = `&gt; 咔哒！${flavorText}<br>抽中: [${style.name}]`;
-        const stage2 = `\u300C${style.desc || '(无描述)'}\u300D`;
 
         // 折叠到紧凑视图
         gbaDialogBox.classList.remove('is-detail');
-        gbaDialogBox.dataset.fullHtml = stage1 + '<br><br>' + stage2;
+        gbaDialogBox.dataset.shortHtml = stage1;
+        gbaDialogBox.dataset.fullHtml  = `\u300C${style.desc || '(无描述)'}\u300D`;
         gbaDialogArrow.style.display = '';
         gbaDialogArrow.textContent = '\u25B6';  // ▶ 可点击展开详情
 
@@ -1691,11 +1692,12 @@
 
                 const isDetail = gbaDialogBox.classList.contains('is-detail');
                 if (isDetail) {
-                    // 折叠回紧凑视图
+                    // 折叠：回到机器名 + 抽中结果
                     gbaDialogBox.classList.remove('is-detail');
+                    gbaDialogText.innerHTML = gbaDialogBox.dataset.shortHtml || '';
                     gbaDialogArrow.textContent = '\u25B6';
                 } else {
-                    // 展开详情
+                    // 展开：只显示 desc 描述内容
                     gbaDialogBox.classList.add('is-detail');
                     gbaDialogText.innerHTML = gbaDialogBox.dataset.fullHtml;
                     gbaDialogArrow.textContent = '\u25C0';
