@@ -861,16 +861,10 @@
                 </div>
             </div>
 
-            <!-- 扭蛋机抽奖概率公示 -->
-            <div class="section-card" id="prob-section">
-                <div class="section-card-header">
-                    <h3>[ GACHA_PROBABILITY_BOARD ]</h3>
-                    <p class="ai-note">&gt;&gt; 每台扭蛋机的可抽取内容与单次概率公示。<span style="color:var(--pixel-dim);">当前选中: <strong id="prob-active-machine">NO.01</strong></span></p>
-                </div>
-                <div class="section-card-body" style="padding:8px;">
-                    <div id="prob-container" class="styles-scroll" style="max-height:320px;">
-                        <!-- JS 动态生成概率表格 -->
-                    </div>
+            <!-- 扭蛋机抽奖概率公示（扁平紧凑） -->
+            <div id="prob-section" class="section-card" style="padding:6px 10px; font-size:10px; font-family:var(--font-mono);">
+                <div id="prob-container">
+                    <!-- JS 动态生成: 机台名 + 概率 + 风格标签，全部内联 -->
                 </div>
             </div>
 
@@ -1549,58 +1543,38 @@
         const styleCountDisplay = document.getElementById('style-count-display');
         if (styleCountDisplay) styleCountDisplay.textContent = styles.length;
 
-        probContainer.innerHTML = '';
-
-        // 仅显示当前选中的机台
         const machine = GACHA_MACHINES[currentMachineIndex];
-        if (!machine) return;
+        if (!machine) { probContainer.innerHTML = ''; return; }
 
         const pool = getGachaPool(machine);
         const poolSize = pool.length;
         const probability = poolSize > 0 ? (100 / poolSize).toFixed(1) : '0.0';
         const isUniversal = machine.category === null;
-        const catName = isUniversal ? '全风格普池' : (categories[machine.category]?.name || machine.category);
+        const poolIcon = isUniversal ? '\u25A3' : '\u25C9';
+        const poolLabel = isUniversal ? '普池' : '限定';
 
-        const row = document.createElement('div');
-        row.style.cssText = 'padding:8px; font-size:11px;';
+        // 标题行: 板名 + 机台名 + 池类型 + 容量 + 概率
+        const titleLine = `<div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span><span style="color:var(--pixel-dim);">[GACHA_PROBABILITY]</span> <strong>${machine.label} ${machine.name}</strong></span>
+            <span style="text-align:right;">
+                <span style="color:var(--pixel-dim);">${poolIcon} ${poolLabel}</span>
+                &nbsp;|&nbsp; <strong>${poolSize}</strong>个
+                &nbsp;|&nbsp; 中奖率 <strong style="font-size:12px;${poolSize===0?'color:var(--pixel-alert);':''}">${probability}%</strong>/次
+            </span>
+        </div>`;
 
-        // 标题行
-        const header = document.createElement('div');
-        header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;';
-        header.innerHTML = `
-            <div>
-                <strong style="font-size:13px;">${machine.label} ${machine.name}</strong>
-                <span style="color:var(--pixel-dim);margin-left:6px;font-size:10px;">${isUniversal ? '\u25A3 普池' : '\u25C9 限定池'}</span>
-            </div>
-            <div style="text-align:right;">
-                <span style="font-size:9px;color:var(--pixel-dim);">单次概率</span><br>
-                <strong style="font-size:15px;${poolSize === 0 ? 'color:var(--pixel-alert);' : ''}">${probability}%</strong>
-            </div>`;
-
-        // 池详情
-        const body = document.createElement('div');
-        body.style.cssText = `border:1px solid var(--pixel-dim); padding:8px; background:rgba(0,0,0,0.015);`;
-        body.innerHTML = `
-            <div style="margin-bottom:4px;"><span style="color:var(--pixel-dim);">分类: ${catName} &nbsp;|&nbsp; 池容量: <strong>${poolSize}</strong> 个风格</span></div>
-            <div style="font-size:10px; color:var(--pixel-dark); line-height:1.6;">
-                ${poolSize > 0
-                    ? pool.map(s => `<span style="display:inline-block; background:var(--pixel-dim); color:var(--screen-bg); padding:1px 5px; margin:1px 2px;">${escapeHtml(s.name)}</span>`).join('')
-                    : '<span style="color:var(--pixel-alert);">(空池 — 请先添加对应分类的风格)</span>'}
-            </div>`;
-
-        row.appendChild(header);
-        row.appendChild(body);
-        probContainer.appendChild(row);
-
-        // 同步更新标题栏标签
-        updateProbActiveLabel();
-    }
-
-    function updateProbActiveLabel() {
-        const label = document.getElementById('prob-active-machine');
-        if (label && GACHA_MACHINES[currentMachineIndex]) {
-            label.textContent = GACHA_MACHINES[currentMachineIndex].label;
+        // 标签行: 风格名称小方块
+        let tagLine = '';
+        if (poolSize > 0) {
+            const tags = pool.map(s =>
+                `<span style="display:inline-block; background:var(--pixel-dark); color:var(--screen-bg); padding:0 5px; margin:1px; font-size:9px; line-height:1.6;">${escapeHtml(s.name)}</span>`
+            ).join('');
+            tagLine = `<div style="line-height:1.8; padding-top:2px; border-top:1px dashed var(--pixel-dim);">${tags}</div>`;
+        } else {
+            tagLine = `<div style="padding-top:2px; border-top:1px dashed var(--pixel-dim); color:var(--pixel-alert);">(空池 — 请先添加对应分类的风格)</div>`;
         }
+
+        probContainer.innerHTML = titleLine + tagLine;
     }
 
     // ==================== 模态框 ====================
