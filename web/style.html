@@ -1211,13 +1211,18 @@
     }
 
     // ==================== 票据系统 ====================
-    const TICKET_SVG_UNIVERSAL = `<svg width="14" height="9" viewBox="0 0 14 9" style="vertical-align:middle; margin-right:1px;"><rect x="0.5" y="0.5" width="13" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1"/><line x1="3.5" y1="0.5" x2="3.5" y2="8.5" stroke="currentColor" stroke-width="0.5"/><line x1="10.5" y1="0.5" x2="10.5" y2="8.5" stroke="currentColor" stroke-width="0.5"/></svg>`;
-    const TICKET_SVG_LIMITED  = `<svg width="14" height="9" viewBox="0 0 14 9" style="vertical-align:middle; margin-right:1px;"><rect x="0.5" y="0.5" width="13" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="7" cy="4.5" r="2" fill="none" stroke="currentColor" stroke-width="1"/></svg>`;
-
     function renderTicketIcon(count, type) {
-        const svg = type === 'limited' ? TICKET_SVG_LIMITED : TICKET_SVG_UNIVERSAL;
-        const color = type === 'limited' ? 'var(--pixel-alert)' : 'var(--screen-bg)';
-        return `<span style="color:${color}; display:inline-flex; align-items:center; gap:2px;">${svg}\u00D7${count}</span>`;
+        const isLimited = type === 'limited';
+        const fillColor   = isLimited ? 'var(--pixel-alert)' : 'var(--screen-bg)';
+        const borderColor = isLimited ? 'var(--pixel-alert)' : 'var(--screen-bg)';
+
+        let segments = '';
+        for (let i = 0; i < MAX_TICKETS; i++) {
+            const bg = i < count ? fillColor : 'transparent';
+            segments += `<span style="width:7px;height:14px;background:${bg};"></span>`;
+        }
+
+        return `<span style="display:inline-flex; gap:0; border:1.5px solid ${borderColor}; margin-right:3px; vertical-align:middle;">${segments}</span><span style="font-family:var(--font-mono); font-weight:500;">\u00D7${count}</span>`;
     }
 
     function updateStatusBar(elements) {
