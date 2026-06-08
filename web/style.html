@@ -350,7 +350,9 @@
             display: block;
             object-fit: contain;
             pointer-events: none;
-            /* WebM 已含 alpha 透明通道，无需 mix-blend-mode */
+            /* WebM 已含 alpha 透明通道 */
+            /* LCD 单色终端调色：去色 → 暖黄底 → 偏绿 → 降饱和度 */
+            filter: grayscale(0.6) sepia(0.3) hue-rotate(50deg) saturate(0.5) contrast(1.05) brightness(0.92);
         }
 
         /* 旧 SVG 类保留（兼容性），若将来部分机台仍用 SVG */
