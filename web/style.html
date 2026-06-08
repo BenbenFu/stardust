@@ -1132,13 +1132,12 @@
     const MAX_TICKETS = 5;
 
     // ==================== 视频机器注册表 ====================
-    // 当前只有1个视频，所有机台共用。后续可扩展为每台一个视频。
-    // 格式：key=silhouette（或 machine.id），value=视频文件路径
+    // 按 silhouette 分配: classic=1号, cylinder=2号, square=3号
     const MACHINE_VIDEOS = {
         'default':  'gashapon1.webm',
         'classic':  'gashapon1.webm',
-        'cylinder': 'gashapon1.webm',
-        'square':   'gashapon1.webm'
+        'cylinder': 'gashapon2.webm',
+        'square':   'gashapon3.webm'
     };
 
     // 创建机台视频元素
