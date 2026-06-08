@@ -46,7 +46,11 @@
    ================================================================ */
 .embedded-lcd {
     flex: 1.2;
-    background-color: var(--screen-bg);
+    background:
+        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px),
+        var(--screen-bg);
+    background-size: 3px 3px, 3px 3px, auto;
     border: 5px solid var(--case-border);
     padding: 15px;
     position: relative;
@@ -56,18 +60,7 @@
     overflow-x: hidden;
 }
 
-/* 像素网格纹理 */
-.embedded-lcd::before {
-    content: " ";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background:
-        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
-    background-size: 3px 3px;
-    z-index: 100;
-    pointer-events: none;
-}
+/* 像素网格纹理（已移至 .embedded-lcd 的 background 中以随内容滚动） */
 
 /* 电压闪烁 + 边缘老化噪点 */
 .embedded-lcd::after {

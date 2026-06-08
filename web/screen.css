@@ -1,20 +1,9 @@
 /* ================================================================
    STARDUST LCD屏幕 & 屏内组件 — 6. LCD屏幕内公共样式
-   (注意: .embedded-lcd 主体定义在 case.css 中)
+   (注意: .embedded-lcd 主体定义与像素网格背景在 case.css 中)
    ================================================================ */
 
-/* 像素网格纹理 */
-.embedded-lcd::before {
-    content: " ";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background:
-        linear-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
-    background-size: 3px 3px;
-    z-index: 100;
-    pointer-events: none;
-}
+/* 像素网格纹理已移至 case.css 的 .embedded-lcd 背景层中以随内容滚动 */
 
 /* 电压闪烁 + 边缘老化噪点 */
 .embedded-lcd::after {
