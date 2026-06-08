@@ -62,17 +62,6 @@
 
 /* 像素网格纹理（已移至 .embedded-lcd 的 background 中以随内容滚动） */
 
-/* 电压闪烁 + 边缘老化噪点 */
-.embedded-lcd::after {
-    content: " ";
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.12) 100%);
-    z-index: 101;
-    pointer-events: none;
-    animation: micro-flicker 0.4s infinite steps(2);
-}
-
 /* 工业滚动条 */
 .embedded-lcd::-webkit-scrollbar { width: 10px; }
 .embedded-lcd::-webkit-scrollbar-track { background: var(--pixel-dim); }
