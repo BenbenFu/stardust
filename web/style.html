@@ -754,11 +754,11 @@
         <div class="band-indicator">
             <div class="band-label">
                 <span>LCD_TUNING_DISPLAY</span>
-                <span>BAND_02 [RUN_DIARY]</span>
+                <span>BAND_02 [STYLE_PICKER]</span>
             </div>
             <div class="band-matrix">
                 <div class="segment">[01] WISH_LIST</div>
-                <div class="segment active">[02] RUN_DIARY</div>
+                <div class="segment active">[02] STYLE_PICKER</div>
                 <div class="segment">[03] FINANCE</div>
             </div>
         </div>
@@ -1757,6 +1757,21 @@
             }
         }
     });
+</script>
+
+<script>
+(function(){
+    var p=location.pathname,k=document.getElementById('mainKnob'),d='list',r=-45;
+    if(/style/.test(p)){d='style';r=0;}else if(/ledger/.test(p)){d='ledger';r=45;}
+    k.style.transform='rotate('+r+'deg)';
+    var pages=['list.html','style.html','ledger.html'];
+    document.querySelectorAll('.case-scale').forEach(function(e,i){
+        e.title=pages[i];
+        e.onclick=function(){location.href=pages[i];};
+    });
+    k.title='点击切换页面';
+    k.onclick=function(){var idx=d==='style'?1:d==='ledger'?2:0;location.href=pages[(idx+1)%3];};
+})();
 </script>
 </body>
 </html>
