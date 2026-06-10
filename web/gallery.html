@@ -80,6 +80,46 @@
 
     .gallery-card .card-highlight-item:last-child { margin-bottom: 0; }
 
+    /* === 精华句分隔符 === */
+    .hl-sep {
+        display: block;
+        text-align: center;
+        margin: 6px 0;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        user-select: none;
+        pointer-events: none;
+        opacity: 0.35;
+    }
+
+    /* dotmatrix: 暗绿色 LED 指示灯行 */
+    .card-dotmatrix .hl-sep { color: #2a3a2a; letter-spacing: 4px; }
+
+    /* oscilloscope: 细横线（信号基线） */
+    .card-oscilloscope .hl-sep {
+        height: 0;
+        border-top: 1px solid rgba(42, 90, 42, 0.3);
+        margin: 8px 0;
+        opacity: 1;
+    }
+
+    /* segment: 段码风破折号 */
+    .card-segment .hl-sep { color: #2a2f2c; letter-spacing: 2px; }
+
+    /* thermal: 收据齿孔虚线 */
+    .card-thermal .hl-sep {
+        height: 0;
+        border-top: 1px dashed rgba(0, 0, 0, 0.15);
+        margin: 8px 0;
+        opacity: 1;
+    }
+
+    /* terminal: shell 注释符 */
+    .card-terminal .hl-sep { color: #1a3a1a; text-align: left; letter-spacing: 0; }
+
+    /* flipclock: 机械面板圆点 */
+    .card-flipclock .hl-sep { color: #2a2e2b; letter-spacing: 6px; }
+
     .gallery-card .card-no-highlight {
         font-family: var(--font-mono);
         font-size: 10px;
@@ -621,6 +661,17 @@
         };
     }
 
+    // 渲染精华句列表（含句间分隔符）
+    function renderHighlights(highlights, sepChar) {
+        if (!highlights || highlights.length === 0) return '';
+        let html = '';
+        highlights.forEach((h, i) => {
+            if (i > 0) html += `<div class="hl-sep">${sepChar}</div>`;
+            html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`;
+        });
+        return html;
+    }
+
     // 渲染单张卡片
     function renderCard(diary) {
         const cardType = cardTypes[diary.id % cardTypes.length];
@@ -635,7 +686,7 @@
                 html += `<span class="card-date">${diary.date}</span>`;
                 html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
                 if (highlights.length > 0) {
-                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                    html += renderHighlights(highlights, '· · · · ·');
                 } else {
                     html += '<p class="card-no-highlight">[ 未标注精华 ]</p>';
                 }
@@ -649,7 +700,7 @@
                 html += `<span class="card-date">${diary.date}</span>`;
                 html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
                 if (highlights.length > 0) {
-                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                    html += renderHighlights(highlights, '');
                 } else {
                     html += '<p class="card-no-highlight">[ NO_SIGNAL ]</p>';
                 }
@@ -661,7 +712,7 @@
                 html += '<span class="seg-separator"></span>';
                 html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
                 if (highlights.length > 0) {
-                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                    html += renderHighlights(highlights, '-- -- -- --');
                 } else {
                     html += '<p class="card-no-highlight">[ -- ]</p>';
                 }
@@ -673,7 +724,7 @@
                 html += `<span class="card-date">${diary.date}</span>`;
                 html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
                 if (highlights.length > 0) {
-                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                    html += renderHighlights(highlights, '');
                 } else {
                     html += '<p class="card-no-highlight">[ * 未标注精华 * ]</p>';
                 }
@@ -687,7 +738,7 @@
                 html += `<span class="term-prefix" style="color:#3a6a3a;">[${diary.date}]</span>`;
                 html += `<span class="term-prefix prompt" style="color:#4a7a4a;">$ cat /diary/${diary.dateRaw}/highlights</span>`;
                 if (highlights.length > 0) {
-                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                    html += renderHighlights(highlights, '# ------');
                 } else {
                     html += '<p class="card-no-highlight"># no highlights found</p>';
                 }
@@ -707,7 +758,7 @@
                 html += '<span class="rivet rivet-tl"></span><span class="rivet rivet-tr"></span><span class="rivet rivet-bl"></span><span class="rivet rivet-br"></span>';
                 html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
                 if (highlights.length > 0) {
-                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                    html += renderHighlights(highlights, '·  ·  ·');
                 } else {
                     html += '<p class="card-no-highlight">[ NO_HIGHLIGHTS ]</p>';
                 }
