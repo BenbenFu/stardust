@@ -150,7 +150,8 @@ function getStatusInfo(status) {
         'pending': { text: '等待回应', class: 'status-pending' },
         'approved': { text: '愿望批准', class: 'status-approved' },
         'rejected': { text: '暂不实现', class: 'status-rejected' },
-        'completed': { text: '进化完成', class: 'status-completed' }
+        'completed': { text: '进化完成', class: 'status-completed' },
+        'failed': { text: '实现失败', class: 'status-failed' }
     };
     return statusMap[status] || statusMap['pending'];
 }

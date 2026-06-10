@@ -432,7 +432,37 @@ document.addEventListener('DOMContentLoaded', async function() {
     const statusInfo = getStatusInfo(data.status);
     document.getElementById('statusBadge').innerHTML = `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
 
-    if (data.status !== 'pending') {
+    if (data.status === 'approved') {
+        // 批准后：展示决策信息 + 实现成功/失败按钮
+        document.getElementById('approvalSection').innerHTML = `
+            <div class="bg-gradient-to-r from-neonblue/20 to-neonpurple/20 px-6 py-4 border-b border-neonblue/30">
+                <h3 class="text-xl font-bold font-cyber neon-text">
+                    <i class="fa fa-gavel mr-2"></i>[MANUAL_INPUT] 愿望实现结果
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">决策时间</div>
+                    <div class="cyber-display">${data.approved_at || '无'}</div>
+                </div>
+                <div class="mb-6">
+                    <div class="block text-sm font-medium text-neonpurple mb-2 font-cyber">你的回应</div>
+                    <div class="cyber-display">${data.approval_comment || '无'}</div>
+                </div>
+                <div class="flex flex-wrap gap-4">
+                    <button id="fulfillBtn" class="cyber-btn cyber-btn-success">
+                        <i class="fa fa-check mr-2"></i>[ FULFILLED_实现成功 ]
+                    </button>
+                    <button id="failBtn" class="cyber-btn cyber-btn-danger">
+                        <i class="fa fa-times mr-2"></i>[ FAILED_实现失败 ]
+                    </button>
+                </div>
+            </div>
+        `;
+        document.getElementById('fulfillBtn').addEventListener('click', () => updateStatus('completed'));
+        document.getElementById('failBtn').addEventListener('click', () => updateStatus('failed'));
+    } else if (data.status !== 'pending') {
+        // rejected / completed / failed: 纯静态展示
         document.getElementById('approvalSection').innerHTML = `
             <div class="p-6">
                 <div class="mb-4">

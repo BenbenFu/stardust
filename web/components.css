@@ -253,8 +253,15 @@
     box-shadow: 0 0 3px var(--pixel-blue);
 }
 
+/* 失败 — 暗灰常亮 */
+.status-failed::before {
+    background: var(--pixel-dim);
+    box-shadow: 0 0 3px var(--pixel-dim);
+}
+
 .status-approved,
-.status-completed {
+.status-completed,
+.status-failed {
     background: var(--pixel-dark);
     color: var(--screen-bg);
 }
