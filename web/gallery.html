@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARDUST_v0.1_DIARY_GALLERY</title>
+<link rel="stylesheet" href="style.css?v=20260610">
+<script type="module" src="script.js?v=20260602"></script>
+<style>
+    /* === gallery 页面布局 === */
+    .gallery-grid {
+        column-count: 4;
+        column-gap: 16px;
+        padding: 12px 8px;
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
+
+    @media (max-width: 1280px) { .gallery-grid { column-count: 3; } }
+    @media (max-width: 960px)  { .gallery-grid { column-count: 2; } }
+    @media (max-width: 640px)  { .gallery-grid { column-count: 1; } }
+
+    /* === 基础卡片 === */
+    .gallery-card {
+        display: block;
+        break-inside: avoid;
+        margin-bottom: 16px;
+        padding: 16px 14px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: transform 0.12s, box-shadow 0.12s;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gallery-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 3px 4px 0 var(--pixel-dark);
+    }
+
+    .gallery-card .card-date {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    .gallery-card .card-title {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        font-weight: bold;
+        margin: 0 0 10px 0;
+        line-height: 1.3;
+        word-break: break-all;
+        overflow-wrap: break-word;
+    }
+
+    .gallery-card .card-highlight-item {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        line-height: 1.5;
+        margin: 0 0 6px 0;
+        word-break: break-all;
+        overflow-wrap: break-word;
+    }
+
+    .gallery-card .card-highlight-item:last-child { margin-bottom: 0; }
+
+    .gallery-card .card-no-highlight {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        font-style: italic;
+        margin: 0;
+    }
+
+    .gallery-card .card-footer {
+        margin-top: 12px;
+        padding-top: 8px;
+        border-top: 1px solid;
+    }
+
+    .gallery-card .card-id {
+        font-family: var(--font-mono);
+        font-size: 9px;
+    }
+
+    /* ================================================================
+       类型1: LED 点阵屏卡
+       ================================================================ */
+    .card-dotmatrix {
+        background:
+            linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px),
+            #111a14;
+        background-size: 3px 3px;
+        border: 2px solid #3a4438;
+    }
+
+    .card-dotmatrix::before,
+    .card-dotmatrix::after {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border: 1px solid #3a4438;
+        background: transparent;
+    }
+
+    .card-dotmatrix::before { top: 6px; left: 6px; }
+    .card-dotmatrix::after  { top: 6px; right: 6px; }
+
+    .card-dotmatrix .card-screw-bl,
+    .card-dotmatrix .card-screw-br {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border: 1px solid #3a4438;
+        background: transparent;
+        bottom: 6px;
+    }
+
+    .card-dotmatrix .card-screw-bl { left: 6px; }
+    .card-dotmatrix .card-screw-br { right: 6px; }
+
+    .card-dotmatrix .card-date { color: #4a6a3a; }
+    .card-dotmatrix .card-title { color: #6b8c42; }
+    .card-dotmatrix .card-highlight-item { color: #5a8a4a; padding-left: 8px; border-left: 2px solid #3a583a; }
+    .card-dotmatrix .card-no-highlight { color: #3a4a2a; }
+    .card-dotmatrix .card-footer { border-color: #2a3828; color: #3a583a; }
+    .card-dotmatrix .card-id { color: #3a583a; }
+
+    .card-dotmatrix .led-strip {
+        display: flex;
+        gap: 3px;
+        margin-top: 8px;
+    }
+
+    .card-dotmatrix .led-dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #3a583a;
+    }
+
+    .card-dotmatrix .led-dot.on { background: #6b8c42; }
+
+    /* ================================================================
+       类型2: CRT 示波器卡
+       ================================================================ */
+    .card-oscilloscope {
+        background: #0a1a0a;
+        border: 2px solid #2a4a2a;
+        border-radius: 8px;
+        box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
+    }
+
+    .card-oscilloscope .osc-grid {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.12;
+        background:
+            repeating-linear-gradient(0deg, transparent, transparent 19px, #3a6a3a 19px, #3a6a3a 20px);
+    }
+
+    .card-oscilloscope .osc-wave {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        pointer-events: none;
+        opacity: 0.15;
+    }
+
+    .card-oscilloscope .card-date { color: #2a5a2a; }
+    .card-oscilloscope .card-title { color: #4a8a4a; text-shadow: 0 0 4px #2a6a2a; }
+    .card-oscilloscope .card-highlight-item { color: #5a9a5a; text-shadow: 0 0 2px #3a7a3a; }
+    .card-oscilloscope .card-no-highlight { color: #2a4a2a; }
+    .card-oscilloscope .card-footer { border-color: #1a3a1a; color: #2a5a2a; }
+    .card-oscilloscope .card-id { color: #2a5a2a; }
+
+    /* ================================================================
+       类型3: 段码液晶卡
+       ================================================================ */
+    .card-segment {
+        background: #1a1f1c;
+        border: 2px solid #3a3f3c;
+    }
+
+    .card-segment .seg-date {
+        font-family: var(--font-mono);
+        font-size: 16px;
+        font-weight: bold;
+        display: block;
+        letter-spacing: 4px;
+        margin-bottom: 8px;
+    }
+
+    .card-segment .seg-separator {
+        display: block;
+        border-top: 1px solid #2a2f2c;
+        margin: 6px 0 10px 0;
+    }
+
+    .card-segment .card-date { display: none; }
+    .card-segment .card-title { color: #7d8577; font-size: 11px; }
+    .card-segment .card-highlight-item { color: #5c6654; padding-left: 10px; position: relative; }
+    .card-segment .card-highlight-item::before { content: ">"; position: absolute; left: 0; color: #3a3f3c; }
+    .card-segment .card-no-highlight { color: #3a3f3c; }
+    .card-segment .card-footer { border-color: #2a2f2c; color: #3a3f3c; }
+    .card-segment .card-id { color: #3a3f3c; }
+
+    .card-segment .seg-indicators {
+        display: flex;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .card-segment .seg-ind {
+        width: 16px;
+        height: 8px;
+        border: 1px solid #3a3f3c;
+        background: transparent;
+    }
+
+    .card-segment .seg-ind.active { background: #3a3f3c; }
+
+    /* ================================================================
+       类型4: 热敏纸收据卡
+       ================================================================ */
+    .card-thermal {
+        background:
+            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px),
+            var(--paper-worn);
+        border: 1px solid #b8b088;
+    }
+
+    .card-thermal::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 8px;
+        right: 8px;
+        height: 1px;
+        border-top: 1px dashed rgba(0,0,0,0.15);
+    }
+
+    .card-thermal::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 8px;
+        right: 8px;
+        height: 1px;
+        border-bottom: 1px dashed rgba(0,0,0,0.15);
+    }
+
+    .card-thermal .card-date { color: #5a5a3a; }
+    .card-thermal .card-title { color: #2a2a1a; }
+    .card-thermal .card-highlight-item { color: #3a3a1a; border-left: 2px solid rgba(0,0,0,0.1); padding-left: 8px; }
+    .card-thermal .card-no-highlight { color: #7a7a5a; }
+    .card-thermal .card-footer { border-color: rgba(0,0,0,0.08); color: #6a6a4a; }
+    .card-thermal .card-id { color: #6a6a4a; }
+
+    .card-thermal .receipt-footer {
+        font-family: var(--font-mono);
+        font-size: 8px;
+        text-align: center;
+        margin-top: 6px;
+    }
+
+    /* ================================================================
+       类型5: 终端命令行卡
+       ================================================================ */
+    .card-terminal {
+        background: #0d1110;
+        border: 2px solid #2a302a;
+    }
+
+    .card-terminal .term-prefix {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    .card-terminal .term-prefix.prompt { margin-top: 8px; }
+
+    .card-terminal .card-date { display: none; }
+    .card-terminal .card-title { color: #5a8a5a; font-family: var(--font-mono); }
+    .card-terminal .card-highlight-item { color: #4a7a4a; font-family: var(--font-mono); padding-left: 12px; }
+    .card-terminal .card-highlight-item::before { content: ">"; margin-left: -12px; margin-right: 6px; color: #3a6a3a; }
+    .card-terminal .card-no-highlight { color: #2a4a2a; font-family: var(--font-mono); }
+    .card-terminal .card-footer { border-color: #1a2a1a; color: #2a4a2a; }
+    .card-terminal .card-id { color: #2a4a2a; font-family: var(--font-mono); }
+
+    .card-terminal .cursor-blink {
+        display: inline-block;
+        width: 7px;
+        height: 13px;
+        background: #5a8a5a;
+        vertical-align: middle;
+        margin-left: 2px;
+        animation: terminal-blink 1s steps(1) infinite;
+    }
+
+    @keyframes terminal-blink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+    }
+
+    /* ================================================================
+       类型6: 翻页钟面板卡
+       ================================================================ */
+    .card-flipclock {
+        background: #1e221f;
+        border: 2px solid #3a3e3b;
+    }
+
+    .card-flipclock .rivet {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: 1px solid #5c6654;
+        background: #2a2e2b;
+    }
+
+    .card-flipclock .rivet-tl { top: 6px; left: 6px; }
+    .card-flipclock .rivet-tr { top: 6px; right: 6px; }
+    .card-flipclock .rivet-bl { bottom: 6px; left: 6px; }
+    .card-flipclock .rivet-br { bottom: 6px; right: 6px; }
+
+    .card-flipclock .flip-date {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .card-flipclock .flip-digit {
+        font-family: var(--font-mono);
+        font-size: 20px;
+        font-weight: bold;
+        background: #111311;
+        color: #7d8577;
+        padding: 4px 6px;
+        border: 1px solid #3a3e3b;
+        position: relative;
+        min-width: 22px;
+        text-align: center;
+        line-height: 1;
+    }
+
+    .card-flipclock .flip-digit::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        right: 0;
+        height: 1px;
+        background: #1e221f;
+        box-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    }
+
+    .card-flipclock .flip-sep {
+        font-family: var(--font-mono);
+        font-size: 18px;
+        color: #3a3e3b;
+        align-self: center;
+    }
+
+    .card-flipclock .card-date { display: none; }
+    .card-flipclock .card-title { color: #b0b99a; text-align: center; }
+    .card-flipclock .card-highlight-item { color: #7d8577; font-size: 10px; text-align: center; letter-spacing: 1px; }
+    .card-flipclock .card-no-highlight { color: #3a3e3b; text-align: center; }
+    .card-flipclock .card-footer { border-color: #2a2e2b; color: #3a3e3b; }
+    .card-flipclock .card-id { color: #3a3e3b; }
+
+    /* === gallery 页面特有 === */
+    .gallery-footer {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .gallery-count {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--pixel-dim);
+    }
+
+    /* 滚动条 */
+    .gallery-grid::-webkit-scrollbar { width: 8px; }
+    .gallery-grid::-webkit-scrollbar-track { background: var(--screen-bg); border-left: 1px solid var(--pixel-dim); }
+    .gallery-grid::-webkit-scrollbar-thumb { background: var(--pixel-dim); border: 1px solid var(--pixel-dark); }
+    .gallery-grid::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
+    .gallery-grid { scrollbar-width: thin; scrollbar-color: var(--pixel-dim) var(--screen-bg); }
+
+    /* 加载/空状态 */
+    .gallery-status {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--pixel-dim);
+        text-align: center;
+        padding: 40px 20px;
+    }
+</style>
+</head>
+<body>
+
+<div class="hardware-device">
+    <div class="case-screw screw-tl"></div>
+    <div class="case-screw screw-tr"></div>
+    <div class="case-screw screw-bl"></div>
+    <div class="case-screw screw-br"></div>
+
+    <div class="embedded-lcd">
+        <!-- 系统状态栏 -->
+        <header class="screen-header-stats">
+            <div>SYS: STARDUST_CORE_v0.10</div>
+            <div style="text-align: right;">ROM: ST-2.04_A</div>
+            <div>CPU: 68MHz / <span class="alert-text">78C_WARN</span></div>
+            <div style="text-align: right;">STORAGE: 128KB / 256KB</div>
+            <div>DIARY_DB: 0x2F8A | SYNC: 202X/10/19</div>
+            <div style="text-align: right;">SECTOR_LIFE: 10.87%</div>
+        </header>
+
+        <!-- 波段指示灯 -->
+        <div class="band-indicator">
+            <div class="band-label">
+                <span>LCD_TUNING_DISPLAY</span>
+                <span>BAND_02 [DIARY_GALLERY]</span>
+            </div>
+            <div class="band-matrix">
+                <div class="segment">[01] WISH_LIST</div>
+                <div class="segment active">[02] GALLERY</div>
+                <div class="segment">[03] FINANCE</div>
+            </div>
+        </div>
+
+        <div class="burn-in-ghost" style="top:140px;left:40%;">GALLERY_SECTOR_0x0A</div>
+
+        <!-- 瀑布流卡片网格 -->
+        <div class="gallery-grid" id="galleryGrid">
+            <div class="gallery-status">>>> LOADING_CARDS... 正在从云端加载日记卡片... <<<</div>
+        </div>
+
+        <!-- 底部操作栏 -->
+        <footer>
+            <div class="gallery-footer">
+                <a href="diary.html" class="hardware-btn btn-secondary">[ DIARY_日记浏览 ]</a>
+                <a href="style.html" class="hardware-btn btn-secondary">[ STYLE_PICKER ]</a>
+                <span class="gallery-count" id="galleryCount" style="margin-left:auto;"></span>
+            </div>
+            <div class="disclaimer">
+                所有数据存储于本地内存，断电未导出将丢失<br>
+                建议每周执行一次完整备份
+            </div>
+        </footer>
+    </div>
+
+    <!-- 右侧物理控制面板 -->
+    <div class="physical-control-panel">
+        <div class="ventilation-slits">
+            <div class="slit"></div>
+            <div class="slit"></div>
+        </div>
+
+        <div class="case-print-text">▲ WAVEBAND SELECTOR</div>
+        <div class="knob-housing">
+            <span class="case-scale c-pos-1">Ⅰ</span>
+            <span class="case-scale c-pos-2">Ⅱ</span>
+            <span class="case-scale c-pos-3">Ⅲ</span>
+            <svg class="physical-knob" id="mainKnob" viewBox="0 0 100 100">
+                <polygon points="50,2 92,25 92,75 50,98 8,75 8,25" fill="#1e201c" stroke="#141613" stroke-width="2"/>
+                <circle cx="50" cy="50" r="34" fill="#3a3e35" stroke="#141613" stroke-width="2" />
+                <path d="M 25 50 A 25 25 0 0 1 75 50 L 75 42 L 25 42 Z" fill="#887953" stroke="#141613" stroke-width="2.5" />
+                <rect x="47" y="50" width="6" height="26" fill="#141613" />
+            </svg>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="dual-potentiometer-row">
+            <div class="sub-knob-unit">
+                <div class="case-print-text" style="font-size:9px;">🔊 VOL</div>
+                <div class="sub-knob-dial">
+                    <svg class="potentiometer-axis" viewBox="0 0 60 60">
+                        <circle cx="30" cy="30" r="24" fill="#222520" stroke="#141613" stroke-width="2"/>
+                        <circle cx="30" cy="30" r="18" fill="#42483d" stroke="#141613" stroke-width="1.5" stroke-dasharray="3,1"/>
+                        <circle cx="30" cy="18" r="2" fill="#7d8577" />
+                    </svg>
+                </div>
+            </div>
+            <div class="sub-knob-unit">
+                <div class="case-print-text" style="font-size:9px;">🔆 BRIGHT</div>
+                <div class="sub-knob-dial">
+                    <svg class="potentiometer-axis" style="transform:rotate(80deg);" viewBox="0 0 60 60">
+                        <circle cx="30" cy="30" r="24" fill="#222520" stroke="#141613" stroke-width="2"/>
+                        <circle cx="30" cy="30" r="18" fill="#42483d" stroke="#141613" stroke-width="1.5" stroke-dasharray="3,1"/>
+                        <circle cx="30" cy="18" r="2" fill="#7d8577" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="case-print-text">AUDIO MONITOR MESH</div>
+        <div class="circular-speaker-grille">
+            <div class="circular-mesh"></div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="power-module">
+            <div class="toggle-switch"></div>
+            <div class="hardware-led-lamp"></div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <div class="banana-terminals-row">
+            <div class="terminal-post">
+                <div class="jack-hole jack-red">✚</div>
+                <span>500V_MAX</span>
+            </div>
+            <div class="terminal-post">
+                <div class="jack-hole jack-black">━</div>
+                <span>COM_GND</span>
+            </div>
+        </div>
+
+        <div class="reset-and-info">
+            <div class="reset-button-hole"><div class="reset-red-dot"></div></div>
+            <div class="case-sticker">
+                [QA_PASS_2004]<br>
+                MODEL: STARDUST-01<br>
+                *BARE AXIS CONFIGURATION*
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { supabase, checkAuth } from './script.js';
+
+    const galleryGrid = document.getElementById('galleryGrid');
+    const galleryCount = document.getElementById('galleryCount');
+
+    // 卡片类型列表
+    const cardTypes = ['dotmatrix', 'oscilloscope', 'segment', 'thermal', 'terminal', 'flipclock'];
+
+    function formatDateForUI(isoDate) {
+        if (!isoDate) return '----/--/--';
+        const parts = isoDate.split('-');
+        if (parts.length === 3) return `${parts[0]}/${parts[1]}/${parts[2]}`;
+        return isoDate;
+    }
+
+    // 生成示波器随机波形 — 每种波形种子基于 cardId 确保稳定
+    function generateOscWaveform(seed) {
+        let path = 'M0 52 ';
+        let y = 52;
+        for (let x = 5; x <= 195; x += 5) {
+            const pseudoRand = ((seed * 7 + x * 13) % 67) / 67;
+            y = 28 + pseudoRand * 48;
+            path += `L${x} ${Math.round(y)} `;
+        }
+        return path;
+    }
+
+    // 生成随机 LED 点亮模式
+    function generateLedPattern(seed) {
+        const count = 6;
+        let html = '<div class="led-strip">';
+        for (let i = 0; i < count; i++) {
+            const on = ((seed + i * 3) % 5) < 2;
+            html += `<div class="led-dot${on ? ' on' : ''}"></div>`;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // 生成段码指示器
+    function generateSegIndicators(seed) {
+        const count = 3;
+        let html = '<div class="seg-indicators">';
+        for (let i = 0; i < count; i++) {
+            const active = ((seed + i * 5) % 3) === 0;
+            html += `<div class="seg-ind${active ? ' active' : ''}"></div>`;
+        }
+        html += '</div>';
+        return html;
+    }
+
+    // 解析日期为翻页钟数字
+    function parseFlipDigits(isoDate) {
+        if (!isoDate) return { y: '----', m: '--', d: '--' };
+        const parts = isoDate.split('-');
+        return {
+            y: parts[0] || '----',
+            m: parts[1] || '--',
+            d: parts[2] || '--'
+        };
+    }
+
+    // 渲染单张卡片
+    function renderCard(diary) {
+        const cardType = cardTypes[diary.id % cardTypes.length];
+        const highlights = diary.highlights || [];
+
+        let html = `<a class="gallery-card card-${cardType}" href="diary.html?date=${diary.dateRaw}" target="_blank" title="打开完整日记: ${diary.title}">`;
+
+        // 卡片类型特有装饰
+        switch (cardType) {
+            case 'dotmatrix':
+                html += '<span class="card-screw-bl"></span><span class="card-screw-br"></span>';
+                html += `<span class="card-date">${diary.date}</span>`;
+                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
+                if (highlights.length > 0) {
+                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                } else {
+                    html += '<p class="card-no-highlight">[ 未标注精华 ]</p>';
+                }
+                html += generateLedPattern(diary.id);
+                html += `<div class="card-footer"><span class="card-id">LED_MATRIX #${diary.id}</span></div>`;
+                break;
+
+            case 'oscilloscope':
+                html += '<div class="osc-grid"></div>';
+                html += `<svg class="osc-wave" viewBox="0 0 200 80" preserveAspectRatio="none"><path d="${generateOscWaveform(diary.id)}" fill="none" stroke="#3a6a3a" stroke-width="0.8"/></svg>`;
+                html += `<span class="card-date">${diary.date}</span>`;
+                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
+                if (highlights.length > 0) {
+                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                } else {
+                    html += '<p class="card-no-highlight">[ NO_SIGNAL ]</p>';
+                }
+                html += `<div class="card-footer"><span class="card-id">CH1_${diary.id.toString(16).toUpperCase().padStart(3, '0')}</span></div>`;
+                break;
+
+            case 'segment':
+                html += `<span class="seg-date">${diary.date}</span>`;
+                html += '<span class="seg-separator"></span>';
+                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
+                if (highlights.length > 0) {
+                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                } else {
+                    html += '<p class="card-no-highlight">[ -- ]</p>';
+                }
+                html += generateSegIndicators(diary.id);
+                html += `<div class="card-footer"><span class="card-id">SEG_${diary.id.toString(16).toUpperCase()}</span></div>`;
+                break;
+
+            case 'thermal':
+                html += `<span class="card-date">${diary.date}</span>`;
+                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
+                if (highlights.length > 0) {
+                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                } else {
+                    html += '<p class="card-no-highlight">[ * 未标注精华 * ]</p>';
+                }
+                html += `<div class="card-footer"><span class="card-id">RECEIPT #${diary.id.toString().padStart(4, '0')}</span></div>`;
+                html += '<div class="receipt-footer">THANK YOU FOR READING</div>';
+                break;
+
+            case 'terminal':
+                html += `<span class="term-prefix" style="color:#4a7a4a;">$ cat /diary/${diary.dateRaw}</span>`;
+                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
+                html += `<span class="term-prefix" style="color:#3a6a3a;">[${diary.date}]</span>`;
+                html += `<span class="term-prefix prompt" style="color:#4a7a4a;">$ cat /diary/${diary.dateRaw}/highlights</span>`;
+                if (highlights.length > 0) {
+                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                } else {
+                    html += '<p class="card-no-highlight"># no highlights found</p>';
+                }
+                html += `<span class="term-prefix" style="color:#4a7a4a;">$ <span class="cursor-blink"></span></span>`;
+                html += `<div class="card-footer"><span class="card-id">tty${diary.id.toString(16)}</span></div>`;
+                break;
+
+            case 'flipclock':
+                const fd = parseFlipDigits(diary.dateRaw);
+                html += '<div class="flip-date">';
+                html += `<div class="flip-digit">${fd.y}</div>`;
+                html += '<span class="flip-sep">/</span>';
+                html += `<div class="flip-digit">${fd.m}</div>`;
+                html += '<span class="flip-sep">/</span>';
+                html += `<div class="flip-digit">${fd.d}</div>`;
+                html += '</div>';
+                html += '<span class="rivet rivet-tl"></span><span class="rivet rivet-tr"></span><span class="rivet rivet-bl"></span><span class="rivet rivet-br"></span>';
+                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
+                if (highlights.length > 0) {
+                    highlights.forEach(h => { html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`; });
+                } else {
+                    html += '<p class="card-no-highlight">[ NO_HIGHLIGHTS ]</p>';
+                }
+                html += `<div class="card-footer"><span class="card-id">PANEL_${diary.id.toString(16).toUpperCase()}</span></div>`;
+                break;
+        }
+
+        html += '</a>';
+        return html;
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // 加载并渲染
+    async function loadGallery() {
+        galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... 加载中... <<<</div>';
+
+        const { data, error } = await supabase
+            .from('DIARIES')
+            .select('*')
+            .order('date', { ascending: false });
+
+        if (error) {
+            console.error('Gallery load error:', error);
+            galleryGrid.innerHTML = `<div class="gallery-status">>>> ERROR: 数据加载失败<br>CODE: ${error.code}<br>MSG: ${error.message}</div>`;
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            galleryGrid.innerHTML = '<div class="gallery-status">>>> EMPTY: 日记数据库中暂无记录。</div>';
+            galleryCount.textContent = '卡片 0';
+            return;
+        }
+
+        const diaries = data.map(row => ({
+            id: row.id,
+            title: row.title || '无标题',
+            date: formatDateForUI(row.date),
+            dateRaw: row.date,
+            highlights: Array.isArray(row.highlights) ? row.highlights : []
+        }));
+
+        galleryGrid.innerHTML = '';
+        diaries.forEach(diary => {
+            galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary));
+        });
+
+        galleryCount.textContent = `卡片 ${diaries.length}`;
+    }
+
+    // 更新系统状态栏
+    function updateSystemStatus(count) {
+        const statusCells = document.querySelectorAll('.screen-header-stats div');
+        if (statusCells.length >= 5) {
+            statusCells[4].textContent = `DIARY_DB: 0x${count.toString(16).toUpperCase().padStart(4, '0')} | SYNC: ${new Date().toISOString().slice(0, 10)}`;
+        }
+    }
+
+    // 初始化
+    async function init() {
+        const authed = await checkAuth();
+        if (!authed) return;
+        await loadGallery();
+    }
+
+    init();
+</script>
+
+<script>
+(function(){
+    var k=document.getElementById('mainKnob');
+    k.style.transform='rotate(0deg)';
+    var pages=['list.html','style.html','ledger.html'];
+    document.querySelectorAll('.case-scale').forEach(function(e,i){
+        e.title=pages[i];
+        e.onclick=function(){location.href=pages[i];};
+    });
+    k.title='点击切换: gallery > style > diary';
+    k.onclick=function(){location.href='style.html';};
+})();
+</script>
+</body>
+</html>
