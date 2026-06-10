@@ -383,6 +383,7 @@
 
     const galleryGrid = document.getElementById('galleryGrid');
     const galleryCount = document.getElementById('galleryCount');
+    let currentDiaries = [];
 
     // 卡片类型列表（7 种 GBA LCD 终端风）
     const cardTypes = ['default', 'repair', 'print', 'overheat', 'tamagotchi', 'api-debt', 'panic'];
@@ -506,16 +507,49 @@
             highlights: Array.isArray(row.highlights) ? row.highlights : []
         }));
 
-        // CSS Grid 会自动处理列数（1~4），直接将所有卡片追加到网格
-        galleryGrid.innerHTML = '';
-        diaries.forEach(diary => {
-            galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary));
-        });
+        currentDiaries = diaries;
+
+        // 行优先重排：较新日记出现在第一行而非第一列
+        renderAll();
         galleryCount.textContent = `卡片 ${diaries.length}`;
         updateSystemStatus(diaries.length);
     }
 
-    // 窗口缩放宽高时 Grid 自动重排，无需手动监听 resize
+    // 视口列数（与 CSS 媒体查询同步）
+    function getColumnCount() {
+        const w = window.innerWidth;
+        if (w >= 1200) return 4;
+        if (w >= 900) return 3;
+        if (w >= 600) return 2;
+        return 1;
+    }
+
+    // 将行优先数组重排为列优先（适配 CSS columns 的填充顺序）
+    function reorderRowToColumn(items, colCount) {
+        if (colCount <= 1) return items.slice();
+        const cols = Array.from({ length: colCount }, () => []);
+        items.forEach((item, i) => cols[i % colCount].push(item));
+        return cols.flat();
+    }
+
+    function renderAll() {
+        const colCount = getColumnCount();
+        const reordered = reorderRowToColumn(currentDiaries, colCount);
+        galleryGrid.innerHTML = '';
+        reordered.forEach(diary => {
+            galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary));
+        });
+    }
+
+    // 窗口缩放导致列数变化时重新渲染
+    let lastColCount = getColumnCount();
+    window.addEventListener('resize', () => {
+        const newColCount = getColumnCount();
+        if (newColCount !== lastColCount) {
+            lastColCount = newColCount;
+            renderAll();
+        }
+    });
 
     // 更新系统状态栏
     function updateSystemStatus(count) {
