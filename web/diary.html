@@ -759,13 +759,19 @@
         const diary = diaryData[currentDiaryIndex];
         if (diary.highlights.includes(selectedText)) { hideHighlightToolbar(); return; }
         const newHighlights = [...diary.highlights, selectedText];
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('DIARIES')
             .update({ highlights: newHighlights })
-            .eq('id', diary.id);
+            .eq('id', diary.id)
+            .select('id');
         if (error) {
             console.error('Highlight save error:', error);
-            alert('精华标注保存失败: ' + error.message);
+            alert('[ERR] 精华标注保存失败: ' + error.message);
+            return;
+        }
+        if (!data || data.length === 0) {
+            console.error('Highlight save blocked: RLS may deny UPDATE, or row not found');
+            alert('[BLOCKED] 更新被拒绝：请检查 DIARIES 表的 RLS UPDATE 策略是否已配置');
             return;
         }
         diary.highlights = newHighlights;
@@ -782,13 +788,19 @@
         if (!text) return;
         const diary = diaryData[currentDiaryIndex];
         const newHighlights = diary.highlights.filter(h => h !== text);
-        const { error } = await supabase
+        const { data, error } = await supabase
             .from('DIARIES')
             .update({ highlights: newHighlights })
-            .eq('id', diary.id);
+            .eq('id', diary.id)
+            .select('id');
         if (error) {
             console.error('Highlight remove error:', error);
-            alert('精华标注移除失败: ' + error.message);
+            alert('[ERR] 精华标注移除失败: ' + error.message);
+            return;
+        }
+        if (!data || data.length === 0) {
+            console.error('Highlight remove blocked: RLS may deny UPDATE');
+            alert('[BLOCKED] 更新被拒绝：请检查 DIARIES 表的 RLS UPDATE 策略');
             return;
         }
         diary.highlights = newHighlights;
