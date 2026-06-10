@@ -490,7 +490,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     async function updateStatus(status) {
-        const comment = document.getElementById('approvalComment').value;
+        const commentEl = document.getElementById('approvalComment');
+        const comment = commentEl ? commentEl.value : '';
         
         const { error } = await supabase
             .from('wishlists')
