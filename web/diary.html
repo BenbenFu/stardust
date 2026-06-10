@@ -717,8 +717,11 @@
         if (top < 50) top = rect.bottom + 8;
         hlToolbar.style.left = left + 'px';
         hlToolbar.style.top = top + 'px';
-        hlToolbar.style.display = selectedInHighlight ? 'none' : 'flex';
-        if (!selectedInHighlight) {
+        hlToolbar.style.display = 'flex';
+        if (selectedInHighlight) {
+            hlBtnMark.style.display = 'none';
+            hlBtnUnmark.style.display = '';
+        } else {
             hlBtnMark.style.display = '';
             hlBtnUnmark.style.display = 'none';
         }
@@ -772,6 +775,31 @@
         if (!data || data.length === 0) {
             console.error('Highlight save blocked: RLS may deny UPDATE, or row not found');
             alert('[BLOCKED] 更新被拒绝：请检查 DIARIES 表的 RLS UPDATE 策略是否已配置');
+            return;
+        }
+        diary.highlights = newHighlights;
+        updateDiaryDisplay();
+        hideHighlightToolbar();
+    });
+
+    hlBtnUnmark.addEventListener('click', async function() {
+        if (!selectedText) return;
+        const diary = diaryData[currentDiaryIndex];
+        if (!diary.highlights.includes(selectedText)) { hideHighlightToolbar(); return; }
+        const newHighlights = diary.highlights.filter(h => h !== selectedText);
+        const { data, error } = await supabase
+            .from('DIARIES')
+            .update({ highlights: newHighlights })
+            .eq('id', diary.id)
+            .select('id');
+        if (error) {
+            console.error('Highlight remove error:', error);
+            alert('[ERR] 取消标注失败: ' + error.message);
+            return;
+        }
+        if (!data || data.length === 0) {
+            console.error('Highlight remove blocked: RLS may deny UPDATE');
+            alert('[BLOCKED] 更新被拒绝：请检查 DIARIES 表的 RLS UPDATE 策略');
             return;
         }
         diary.highlights = newHighlights;
