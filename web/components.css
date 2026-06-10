@@ -247,10 +247,10 @@
     box-shadow: 0 0 3px var(--pixel-alert);
 }
 
-/* 完成 — 蓝色常亮 */
+/* 完成 — 暖黄常亮 */
 .status-completed::before {
-    background: var(--pixel-blue);
-    box-shadow: 0 0 3px var(--pixel-blue);
+    background: #b8a040;
+    box-shadow: 0 0 3px #b8a040;
 }
 
 /* 失败 — 暗灰常亮 */
