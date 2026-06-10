@@ -8,63 +8,43 @@
 <script type="module" src="script.js?v=20260602"></script>
 <style>
     /* === gallery 页面布局 === */
-    .gallery-grid {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        padding: 12px 8px;
-        flex: 1;
+    /* 外层 LCD 屏幕需要可滚动 */
+    .embedded-lcd {
         overflow-y: auto;
-        min-height: 0;
-        align-items: flex-start;
-        align-content: flex-start;
     }
 
-    /* 卡片宽度 — 按列数精确分配，不影响高度 */
-    .gallery-card {
-        flex: 0 0 100%;
-        max-width: 100%;
+    .gallery-grid {
+        column-count: 1;
+        column-gap: 16px;
+        padding: 12px 8px;
     }
 
     /* 2 列 */
     @media (min-width: 600px) {
-        .gallery-card {
-            flex: 0 0 calc(50% - 8px);
-            max-width: calc(50% - 8px);
-        }
+        .gallery-grid { column-count: 2; }
     }
 
     /* 3 列 */
     @media (min-width: 900px) {
-        .gallery-card {
-            flex: 0 0 calc(33.333% - 10.667px);
-            max-width: calc(33.333% - 10.667px);
-        }
+        .gallery-grid { column-count: 3; }
     }
 
     /* 4 列 */
     @media (min-width: 1200px) {
-        .gallery-card {
-            flex: 0 0 calc(25% - 12px);
-            max-width: calc(25% - 12px);
-        }
-    }
-
-    .gallery-col {
-        display: none;
+        .gallery-grid { column-count: 4; }
     }
 
     /* === 基础卡片 === */
     .gallery-card {
         display: block;
-        width: 100%;
         box-sizing: border-box;
         padding: 16px 14px;
         text-decoration: none;
         cursor: pointer;
         transition: transform 0.12s, box-shadow 0.12s;
         position: relative;
-        overflow: hidden;
+        break-inside: avoid;
+        margin-bottom: 16px;
     }
 
     .gallery-card:hover {
@@ -425,12 +405,12 @@
         color: var(--pixel-dim);
     }
 
-    /* 滚动条 */
-    .gallery-grid::-webkit-scrollbar { width: 8px; }
-    .gallery-grid::-webkit-scrollbar-track { background: var(--screen-bg); border-left: 1px solid var(--pixel-dim); }
-    .gallery-grid::-webkit-scrollbar-thumb { background: var(--pixel-dim); border: 1px solid var(--pixel-dark); }
-    .gallery-grid::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
-    .gallery-grid { scrollbar-width: thin; scrollbar-color: var(--pixel-dim) var(--screen-bg); }
+    /* 滚动条（在 LCD 屏幕上） */
+    .embedded-lcd::-webkit-scrollbar { width: 8px; }
+    .embedded-lcd::-webkit-scrollbar-track { background: var(--screen-bg); border-left: 1px solid var(--pixel-dim); }
+    .embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dim); border: 1px solid var(--pixel-dark); }
+    .embedded-lcd::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
+    .embedded-lcd { scrollbar-width: thin; scrollbar-color: var(--pixel-dim) var(--screen-bg); }
 
     /* 加载/空状态 */
     .gallery-status {
