@@ -7,429 +7,211 @@
 <link rel="stylesheet" href="style.css?v=20260610">
 <script type="module" src="script.js?v=20260602"></script>
 <style>
-    /* === gallery 页面布局 === */
-    /* 外层 LCD 屏幕需要可滚动 */
-    .embedded-lcd {
-        overflow-y: auto;
+    /* === GBA LCD 美学变量 === */
+    :root {
+        --gba-bg: #cadbb7;
+        --pixel-dark: #1e2622;
+        --pixel-dim: #707a65;
+        --pixel-alert: #8f341d;
+        --repair-tape: #d2c89f;
     }
+
+    * { image-rendering: pixelated; }
+
+    /* === 瀑布流布局 === */
+    .embedded-lcd { overflow-y: auto; }
 
     .gallery-grid {
         column-count: 1;
-        column-gap: 16px;
-        padding: 12px 8px;
+        column-gap: 20px;
+        padding: 16px 12px;
     }
+    @media (min-width: 600px) { .gallery-grid { column-count: 2; } }
+    @media (min-width: 900px) { .gallery-grid { column-count: 3; } }
+    @media (min-width: 1200px) { .gallery-grid { column-count: 4; } }
 
-    /* 2 列 */
-    @media (min-width: 600px) {
-        .gallery-grid { column-count: 2; }
-    }
-
-    /* 3 列 */
-    @media (min-width: 900px) {
-        .gallery-grid { column-count: 3; }
-    }
-
-    /* 4 列 */
-    @media (min-width: 1200px) {
-        .gallery-grid { column-count: 4; }
-    }
-
-    /* === 基础卡片 === */
+    /* === 卡片基础（废旧电子墨水质感） === */
     .gallery-card {
-        display: block;
-        box-sizing: border-box;
-        padding: 16px 14px;
-        text-decoration: none;
-        cursor: pointer;
-        transition: transform 0.12s, box-shadow 0.12s;
-        position: relative;
+        background-color: transparent;
+        border: 3px solid var(--pixel-dark);
+        margin-bottom: 20px;
         break-inside: avoid;
-        margin-bottom: 16px;
+        padding: 10px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        text-decoration: none;
+        color: var(--pixel-dark);
+        cursor: pointer;
+        transition: transform 0.1s steps(2);
     }
-
     .gallery-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 3px 4px 0 var(--pixel-dark);
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 var(--pixel-dark);
     }
 
-    .gallery-card .card-date {
-        font-family: var(--font-mono);
-        font-size: 9px;
-        display: block;
-        margin-bottom: 6px;
+    /* 卡片头部信息栏 */
+    .card-meta {
+        font-size: 10px;
+        color: var(--pixel-dim);
+        border-bottom: 1px dashed var(--pixel-dim);
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        flex-shrink: 0;
     }
 
-    .gallery-card .card-title {
-        font-family: var(--font-mono);
-        font-size: 13px;
-        font-weight: bold;
-        margin: 0 0 10px 0;
-        line-height: 1.3;
-        word-break: break-all;
-        overflow-wrap: break-word;
-    }
-
+    /* 精华句 */
     .gallery-card .card-highlight-item {
         font-family: var(--font-mono);
-        font-size: 11px;
+        font-size: 12px;
         line-height: 1.5;
-        margin: 0 0 6px 0;
+        margin: 0 0 3px 0;
+        text-align: justify;
         word-break: break-all;
-        overflow-wrap: break-word;
     }
-
+    .gallery-card .card-highlight-item::before { content: "> "; color: var(--pixel-dim); }
     .gallery-card .card-highlight-item:last-child { margin-bottom: 0; }
-
-    /* === 精华句分隔符 === */
-    .hl-sep {
-        display: block;
-        text-align: center;
-        margin: 6px 0;
-        font-family: var(--font-mono);
-        font-size: 10px;
-        user-select: none;
-        pointer-events: none;
-        opacity: 0.35;
-    }
-
-    /* dotmatrix: 暗绿色 LED 指示灯行 */
-    .card-dotmatrix .hl-sep { color: #2a3a2a; letter-spacing: 4px; }
-
-    /* oscilloscope: 细横线（信号基线） */
-    .card-oscilloscope .hl-sep {
-        height: 0;
-        border-top: 1px solid rgba(42, 90, 42, 0.3);
-        margin: 8px 0;
-        opacity: 1;
-    }
-
-    /* segment: 段码风破折号 */
-    .card-segment .hl-sep { color: #2a2f2c; letter-spacing: 2px; }
-
-    /* thermal: 收据齿孔虚线 */
-    .card-thermal .hl-sep {
-        height: 0;
-        border-top: 1px dashed rgba(0, 0, 0, 0.15);
-        margin: 8px 0;
-        opacity: 1;
-    }
-
-    /* terminal: shell 注释符 */
-    .card-terminal .hl-sep { color: #1a3a1a; text-align: left; letter-spacing: 0; }
-
-    /* flipclock: 机械面板圆点 */
-    .card-flipclock .hl-sep { color: #2a2e2b; letter-spacing: 6px; }
 
     .gallery-card .card-no-highlight {
         font-family: var(--font-mono);
         font-size: 10px;
+        color: var(--pixel-dim);
         font-style: italic;
         margin: 0;
     }
 
-    .gallery-card .card-footer {
-        margin-top: 12px;
-        padding-top: 8px;
-        border-top: 1px solid;
-    }
-
-    .gallery-card .card-id {
-        font-family: var(--font-mono);
-        font-size: 9px;
-    }
-
-    /* ================================================================
-       类型1: LED 点阵屏卡
-       ================================================================ */
-    .card-dotmatrix {
-        background:
-            linear-gradient(rgba(0,0,0,0.08) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.06) 1px, transparent 1px),
-            #111a14;
-        background-size: 3px 3px;
-        border: 2px solid #3a4438;
-    }
-
-    .card-dotmatrix::before,
-    .card-dotmatrix::after {
-        content: "";
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        border: 1px solid #3a4438;
-        background: transparent;
-    }
-
-    .card-dotmatrix::before { top: 6px; left: 6px; }
-    .card-dotmatrix::after  { top: 6px; right: 6px; }
-
-    .card-dotmatrix .card-screw-bl,
-    .card-dotmatrix .card-screw-br {
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        border: 1px solid #3a4438;
-        background: transparent;
-        bottom: 6px;
-    }
-
-    .card-dotmatrix .card-screw-bl { left: 6px; }
-    .card-dotmatrix .card-screw-br { right: 6px; }
-
-    .card-dotmatrix .card-date { color: #4a6a3a; }
-    .card-dotmatrix .card-title { color: #6b8c42; }
-    .card-dotmatrix .card-highlight-item { color: #5a8a4a; padding-left: 8px; border-left: 2px solid #3a583a; }
-    .card-dotmatrix .card-no-highlight { color: #3a4a2a; }
-    .card-dotmatrix .card-footer { border-color: #2a3828; color: #3a583a; }
-    .card-dotmatrix .card-id { color: #3a583a; }
-
-    .card-dotmatrix .led-strip {
-        display: flex;
-        gap: 3px;
-        margin-top: 8px;
-    }
-
-    .card-dotmatrix .led-dot {
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: #3a583a;
-    }
-
-    .card-dotmatrix .led-dot.on { background: #6b8c42; }
-
-    /* ================================================================
-       类型2: CRT 示波器卡
-       ================================================================ */
-    .card-oscilloscope {
-        background: #0a1a0a;
-        border: 2px solid #2a4a2a;
-        border-radius: 8px;
-        box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
-    }
-
-    .card-oscilloscope .osc-grid {
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        opacity: 0.12;
-        background:
-            repeating-linear-gradient(0deg, transparent, transparent 19px, #3a6a3a 19px, #3a6a3a 20px);
-    }
-
-    .card-oscilloscope .osc-wave {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        pointer-events: none;
-        opacity: 0.15;
-    }
-
-    .card-oscilloscope .card-date { color: #2a5a2a; }
-    .card-oscilloscope .card-title { color: #4a8a4a; text-shadow: 0 0 4px #2a6a2a; }
-    .card-oscilloscope .card-highlight-item { color: #5a9a5a; text-shadow: 0 0 2px #3a7a3a; }
-    .card-oscilloscope .card-no-highlight { color: #2a4a2a; }
-    .card-oscilloscope .card-footer { border-color: #1a3a1a; color: #2a5a2a; }
-    .card-oscilloscope .card-id { color: #2a5a2a; }
-
-    /* ================================================================
-       类型3: 段码液晶卡
-       ================================================================ */
-    .card-segment {
-        background: #1a1f1c;
-        border: 2px solid #3a3f3c;
-    }
-
-    .card-segment .seg-date {
-        font-family: var(--font-mono);
-        font-size: 16px;
-        font-weight: bold;
+    /* === 句间分隔符（7 种） === */
+    .hl-sep {
         display: block;
-        letter-spacing: 4px;
-        margin-bottom: 8px;
-    }
-
-    .card-segment .seg-separator {
-        display: block;
-        border-top: 1px solid #2a2f2c;
-        margin: 6px 0 10px 0;
-    }
-
-    .card-segment .card-date { display: none; }
-    .card-segment .card-title { color: #7d8577; font-size: 11px; }
-    .card-segment .card-highlight-item { color: #5c6654; padding-left: 10px; position: relative; }
-    .card-segment .card-highlight-item::before { content: ">"; position: absolute; left: 0; color: #3a3f3c; }
-    .card-segment .card-no-highlight { color: #3a3f3c; }
-    .card-segment .card-footer { border-color: #2a2f2c; color: #3a3f3c; }
-    .card-segment .card-id { color: #3a3f3c; }
-
-    .card-segment .seg-indicators {
-        display: flex;
-        gap: 6px;
-        margin-top: 8px;
-    }
-
-    .card-segment .seg-ind {
-        width: 16px;
-        height: 8px;
-        border: 1px solid #3a3f3c;
-        background: transparent;
-    }
-
-    .card-segment .seg-ind.active { background: #3a3f3c; }
-
-    /* ================================================================
-       类型4: 热敏纸收据卡
-       ================================================================ */
-    .card-thermal {
-        background:
-            repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px),
-            var(--paper-worn);
-        border: 1px solid #b8b088;
-    }
-
-    .card-thermal::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 8px;
-        right: 8px;
-        height: 1px;
-        border-top: 1px dashed rgba(0,0,0,0.15);
-    }
-
-    .card-thermal::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 8px;
-        right: 8px;
-        height: 1px;
-        border-bottom: 1px dashed rgba(0,0,0,0.15);
-    }
-
-    .card-thermal .card-date { color: #5a5a3a; }
-    .card-thermal .card-title { color: #2a2a1a; }
-    .card-thermal .card-highlight-item { color: #3a3a1a; border-left: 2px solid rgba(0,0,0,0.1); padding-left: 8px; }
-    .card-thermal .card-no-highlight { color: #7a7a5a; }
-    .card-thermal .card-footer { border-color: rgba(0,0,0,0.08); color: #6a6a4a; }
-    .card-thermal .card-id { color: #6a6a4a; }
-
-    .card-thermal .receipt-footer {
-        font-family: var(--font-mono);
-        font-size: 8px;
         text-align: center;
-        margin-top: 6px;
-    }
-
-    /* ================================================================
-       类型5: 终端命令行卡
-       ================================================================ */
-    .card-terminal {
-        background: #0d1110;
-        border: 2px solid #2a302a;
-    }
-
-    .card-terminal .term-prefix {
+        margin: 5px 0;
         font-family: var(--font-mono);
         font-size: 10px;
-        display: block;
-        margin-bottom: 4px;
+        user-select: none;
+        pointer-events: none;
+        opacity: 0.3;
+    }
+    .card-type-default .hl-sep { color: var(--pixel-dim); letter-spacing: 4px; }
+    .card-type-repair .hl-sep { color: #837b5a; letter-spacing: 3px; }
+    .card-type-print .hl-sep { color: #8a8f7c; letter-spacing: 4px; }
+    .card-type-overheat .hl-sep {
+        height: 0; border-top: 1px solid rgba(202,219,183,0.15);
+        margin: 8px 0; opacity: 1;
+    }
+    .card-type-tamagotchi .hl-sep { color: var(--pixel-dim); letter-spacing: 4px; }
+    .card-type-api-debt .hl-sep { color: var(--pixel-alert); letter-spacing: 4px; opacity: 0.4; }
+    .card-type-panic .hl-sep { color: #43473b; letter-spacing: 6px; }
+
+    /* ============ 卡片类型 1: 标准工业单色屏 ============ */
+    .card-type-default {
+        border: 2px solid var(--pixel-dark);
+        background-color: rgba(0,0,0,0.03);
     }
 
-    .card-terminal .term-prefix.prompt { margin-top: 8px; }
-
-    .card-terminal .card-date { display: none; }
-    .card-terminal .card-title { color: #5a8a5a; font-family: var(--font-mono); }
-    .card-terminal .card-highlight-item { color: #4a7a4a; font-family: var(--font-mono); padding-left: 12px; }
-    .card-terminal .card-highlight-item::before { content: ">"; margin-left: -12px; margin-right: 6px; color: #3a6a3a; }
-    .card-terminal .card-no-highlight { color: #2a4a2a; font-family: var(--font-mono); }
-    .card-terminal .card-footer { border-color: #1a2a1a; color: #2a4a2a; }
-    .card-terminal .card-id { color: #2a4a2a; font-family: var(--font-mono); }
-
-    .card-terminal .cursor-blink {
-        display: inline-block;
-        width: 7px;
-        height: 13px;
-        background: #5a8a5a;
-        vertical-align: middle;
-        margin-left: 2px;
-        animation: terminal-blink 1s steps(1) infinite;
+    /* ============ 卡片类型 2: 维修用黄色便签 ============ */
+    .card-type-repair {
+        background-color: var(--repair-tape);
+        border-color: #615a42;
+        color: #403d30;
+        transform: rotate(1deg);
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    }
+    .card-type-repair:hover { transform: rotate(1deg) translate(-2px,-2px); }
+    .card-type-repair .card-meta { color: #837b5a; border-color: #837b5a; }
+    .card-type-repair::after {
+        content: ""; position: absolute; bottom: 5px; right: 5px; width: 30px; height: 30px;
+        background-image: radial-gradient(rgba(0,0,0,0.15) 30%, transparent 60%);
+        pointer-events: none;
     }
 
-    @keyframes terminal-blink {
-        0%, 49% { opacity: 1; }
-        50%, 100% { opacity: 0; }
+    /* ============ 卡片类型 3: 断码针式打印纸 ============ */
+    .card-type-print {
+        border-width: 0;
+        background-color: #e5ebda;
+        color: var(--pixel-dark);
+        padding: 10px 15px;
     }
-
-    /* ================================================================
-       类型6: 翻页钟面板卡
-       ================================================================ */
-    .card-flipclock {
-        background: #1e221f;
-        border: 2px solid #3a3e3b;
+    .card-type-print::before,
+    .card-type-print::after {
+        content: ""; position: absolute; top: 0; bottom: 0; width: 6px;
+        background-image: radial-gradient(var(--gba-bg) 40%, transparent 42%);
+        background-size: 6px 6px;
     }
+    .card-type-print::before { left: 0; }
+    .card-type-print::after { right: 0; }
+    .card-type-print .card-meta { color: #8a8f7c; border-color: #8a8f7c; }
 
-    .card-flipclock .rivet {
-        position: absolute;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        border: 1px solid #5c6654;
-        background: #2a2e2b;
+    /* ============ 卡片类型 4: 过热蓝屏终端 ============ */
+    .card-type-overheat {
+        background-color: #1e2669;
+        color: var(--gba-bg);
+        border-color: var(--pixel-dark);
+        outline: 1px solid #4a5d8f;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
     }
-
-    .card-flipclock .rivet-tl { top: 6px; left: 6px; }
-    .card-flipclock .rivet-tr { top: 6px; right: 6px; }
-    .card-flipclock .rivet-bl { bottom: 6px; left: 6px; }
-    .card-flipclock .rivet-br { bottom: 6px; right: 6px; }
-
-    .card-flipclock .flip-date {
-        display: flex;
-        gap: 4px;
-        justify-content: center;
-        margin-bottom: 10px;
+    .card-type-overheat::after {
+        content: " "; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 100% 2px; pointer-events: none;
+        animation: scanline-jitter 0.1s infinite steps(2);
     }
+    .card-type-overheat .card-meta { color: #7f86ba; border-color: #7f86ba; }
+    .card-type-overheat .card-highlight-item::before { color: #7f86ba; }
 
-    .card-flipclock .flip-digit {
-        font-family: var(--font-mono);
-        font-size: 20px;
-        font-weight: bold;
-        background: #111311;
-        color: #7d8577;
-        padding: 4px 6px;
-        border: 1px solid #3a3e3b;
-        position: relative;
-        min-width: 22px;
-        text-align: center;
+    /* ============ 卡片类型 5: 初代电子宠物字符画 ============ */
+    .card-type-tamagotchi {
+        border: 4px solid var(--pixel-dark);
+        font-family: monospace;
+    }
+    .ascii-art {
+        color: var(--pixel-dim);
+        font-size: 10px;
         line-height: 1;
+        margin-bottom: 8px;
+        white-space: pre;
     }
 
-    .card-flipclock .flip-digit::after {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 50%;
-        right: 0;
-        height: 1px;
-        background: #1e221f;
-        box-shadow: 0 -1px 0 rgba(0,0,0,0.3);
+    /* ============ 卡片类型 6: API欠费警告 ============ */
+    .card-type-api-debt {
+        border-color: var(--pixel-alert);
+    }
+    .card-type-api-debt .card-meta { color: var(--pixel-alert); border-color: var(--pixel-alert); }
+    .api-seal {
+        position: absolute; top: 20%; right: 8%;
+        border: 2px solid var(--pixel-alert);
+        color: var(--pixel-alert);
+        font-size: 12px;
+        padding: 3px 5px;
+        transform: rotate(-20deg);
+        user-select: none;
+        pointer-events: none;
     }
 
-    .card-flipclock .flip-sep {
-        font-family: var(--font-mono);
-        font-size: 18px;
-        color: #3a3e3b;
-        align-self: center;
+    /* ============ 卡片类型 7: 系统底层故障日志 ============ */
+    .card-type-panic {
+        border: 1px solid var(--pixel-dark);
+        background-color: #0b0c0a;
+        color: var(--pixel-dim);
+    }
+    .card-type-panic .card-meta { color: #43473b; border-color: #43473b; }
+    .card-type-panic .card-highlight-item::before { color: #43473b; }
+    .panic-dump {
+        font-size: 11px;
+        color: var(--gba-bg);
+        border: 1px solid var(--pixel-dim);
+        padding: 5px;
+        transform: scaleY(-1);
+        text-align: right;
+        margin-top: 5px;
     }
 
-    .card-flipclock .card-date { display: none; }
-    .card-flipclock .card-title { color: #b0b99a; text-align: center; }
-    .card-flipclock .card-highlight-item { color: #7d8577; font-size: 10px; text-align: center; letter-spacing: 1px; }
-    .card-flipclock .card-no-highlight { color: #3a3e3b; text-align: center; }
-    .card-flipclock .card-footer { border-color: #2a2e2b; color: #3a3e3b; }
-    .card-flipclock .card-id { color: #3a3e3b; }
+    /* === 动画 === */
+    @keyframes scanline-jitter {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(2px); }
+    }
 
     /* === gallery 页面特有 === */
     .gallery-footer {
@@ -438,21 +220,19 @@
         align-items: center;
         flex-wrap: wrap;
     }
-
     .gallery-count {
         font-family: var(--font-mono);
         font-size: 11px;
         color: var(--pixel-dim);
     }
 
-    /* 滚动条（在 LCD 屏幕上） */
+    /* 滚动条 */
     .embedded-lcd::-webkit-scrollbar { width: 8px; }
-    .embedded-lcd::-webkit-scrollbar-track { background: var(--screen-bg); border-left: 1px solid var(--pixel-dim); }
+    .embedded-lcd::-webkit-scrollbar-track { background: var(--gba-bg); border-left: 1px solid var(--pixel-dim); }
     .embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dim); border: 1px solid var(--pixel-dark); }
     .embedded-lcd::-webkit-scrollbar-thumb:hover { background: var(--pixel-dark); }
-    .embedded-lcd { scrollbar-width: thin; scrollbar-color: var(--pixel-dim) var(--screen-bg); }
+    .embedded-lcd { scrollbar-width: thin; scrollbar-color: var(--pixel-dim) var(--gba-bg); }
 
-    /* 加载/空状态 */
     .gallery-status {
         font-family: var(--font-mono);
         font-size: 12px;
@@ -604,61 +384,44 @@
     const galleryGrid = document.getElementById('galleryGrid');
     const galleryCount = document.getElementById('galleryCount');
 
-    // 卡片类型列表
-    const cardTypes = ['dotmatrix', 'oscilloscope', 'segment', 'thermal', 'terminal', 'flipclock'];
+    // 卡片类型列表（7 种 GBA LCD 终端风）
+    const cardTypes = ['default', 'repair', 'print', 'overheat', 'tamagotchi', 'api-debt', 'panic'];
+
+    // 硬件标签
+    const hwTags = {
+        'default':    'HW: LCD_v01',
+        'repair':     'NOTE: USED_PAPER',
+        'print':      'ROM: ST-2.04',
+        'overheat':   'ALERT: 88C_TEMP',
+        'tamagotchi': 'HW: DOT_v0.0',
+        'api-debt':   'BAL: LOW!!',
+        'panic':      'Panic_Dump'
+    };
+
+    // 句间分隔符
+    const sepChars = {
+        'default':    '*  *  *',
+        'repair':     '- - - - -',
+        'print':      '· · · · ·',
+        'overheat':   '',
+        'tamagotchi': '+ + + + +',
+        'api-debt':   '! ! ! ! !',
+        'panic':      '0x0 0x0'
+    };
+
+    // ASCII 宠物池
+    const asciiPets = [
+        ' /\\_/\\\n( o.o )\n > ^ <\n',
+        '  ___\n (>.<)\n (___)\n',
+        ' /\\_/\\\n( -.- )\n(\")(\")\n',
+        '  __\n (--)\n/(  )\\\n'
+    ];
 
     function formatDateForUI(isoDate) {
         if (!isoDate) return '----/--/--';
         const parts = isoDate.split('-');
         if (parts.length === 3) return `${parts[0]}/${parts[1]}/${parts[2]}`;
         return isoDate;
-    }
-
-    // 生成示波器随机波形 — 每种波形种子基于 cardId 确保稳定
-    function generateOscWaveform(seed) {
-        let path = 'M0 52 ';
-        let y = 52;
-        for (let x = 5; x <= 195; x += 5) {
-            const pseudoRand = ((seed * 7 + x * 13) % 67) / 67;
-            y = 28 + pseudoRand * 48;
-            path += `L${x} ${Math.round(y)} `;
-        }
-        return path;
-    }
-
-    // 生成随机 LED 点亮模式
-    function generateLedPattern(seed) {
-        const count = 6;
-        let html = '<div class="led-strip">';
-        for (let i = 0; i < count; i++) {
-            const on = ((seed + i * 3) % 5) < 2;
-            html += `<div class="led-dot${on ? ' on' : ''}"></div>`;
-        }
-        html += '</div>';
-        return html;
-    }
-
-    // 生成段码指示器
-    function generateSegIndicators(seed) {
-        const count = 3;
-        let html = '<div class="seg-indicators">';
-        for (let i = 0; i < count; i++) {
-            const active = ((seed + i * 5) % 3) === 0;
-            html += `<div class="seg-ind${active ? ' active' : ''}"></div>`;
-        }
-        html += '</div>';
-        return html;
-    }
-
-    // 解析日期为翻页钟数字
-    function parseFlipDigits(isoDate) {
-        if (!isoDate) return { y: '----', m: '--', d: '--' };
-        const parts = isoDate.split('-');
-        return {
-            y: parts[0] || '----',
-            m: parts[1] || '--',
-            d: parts[2] || '--'
-        };
     }
 
     // 渲染精华句列表（含句间分隔符）
@@ -674,96 +437,34 @@
 
     // 渲染单张卡片
     function renderCard(diary) {
-        const cardType = cardTypes[diary.id % cardTypes.length];
+        const cardType = cardTypes[Math.abs(diary.id) % cardTypes.length];
         const highlights = diary.highlights || [];
+        const dateRaw = diary.dateRaw || diary.date;
 
-        let html = `<a class="gallery-card card-${cardType}" href="diary.html?date=${diary.dateRaw}" target="_blank" title="打开完整日记: ${diary.title}" data-id="${diary.id}" data-title="${escapeHtml(diary.title)}" data-date="${diary.date}" data-date-raw="${diary.dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;
+        let html = `<a class="gallery-card card-type-${cardType}" href="diary.html?date=${dateRaw}" target="_blank" title="${escapeHtml(diary.title)}" data-id="${diary.id}" data-title="${escapeHtml(diary.title)}" data-date="${diary.date}" data-date-raw="${dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;
 
-        // 卡片类型特有装饰
-        switch (cardType) {
-            case 'dotmatrix':
-                html += '<span class="card-screw-bl"></span><span class="card-screw-br"></span>';
-                html += `<span class="card-date">${diary.date}</span>`;
-                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
-                if (highlights.length > 0) {
-                    html += renderHighlights(highlights, '· · · · ·');
-                } else {
-                    html += '<p class="card-no-highlight">[ 未标注精华 ]</p>';
-                }
-                html += generateLedPattern(diary.id);
-                html += `<div class="card-footer"><span class="card-id">LED_MATRIX #${diary.id}</span></div>`;
-                break;
+        // 卡片头部信息栏
+        html += `<div class="card-meta"><span>D_SEQ: #${diary.id}</span><span>${hwTags[cardType]}</span></div>`;
 
-            case 'oscilloscope':
-                html += '<div class="osc-grid"></div>';
-                html += `<svg class="osc-wave" viewBox="0 0 200 80" preserveAspectRatio="none"><path d="${generateOscWaveform(diary.id)}" fill="none" stroke="#3a6a3a" stroke-width="0.8"/></svg>`;
-                html += `<span class="card-date">${diary.date}</span>`;
-                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
-                if (highlights.length > 0) {
-                    html += renderHighlights(highlights, '');
-                } else {
-                    html += '<p class="card-no-highlight">[ NO_SIGNAL ]</p>';
-                }
-                html += `<div class="card-footer"><span class="card-id">CH1_${diary.id.toString(16).toUpperCase().padStart(3, '0')}</span></div>`;
-                break;
+        // 特有装饰（高亮前）
+        if (cardType === 'tamagotchi') {
+            const pet = asciiPets[Math.abs(diary.id) % asciiPets.length];
+            html += `<div class="ascii-art">${pet}</div>`;
+        }
+        if (cardType === 'api-debt') {
+            html += '<div class="api-seal">[!] API_DEBT</div>';
+        }
 
-            case 'segment':
-                html += `<span class="seg-date">${diary.date}</span>`;
-                html += '<span class="seg-separator"></span>';
-                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
-                if (highlights.length > 0) {
-                    html += renderHighlights(highlights, '-- -- -- --');
-                } else {
-                    html += '<p class="card-no-highlight">[ -- ]</p>';
-                }
-                html += generateSegIndicators(diary.id);
-                html += `<div class="card-footer"><span class="card-id">SEG_${diary.id.toString(16).toUpperCase()}</span></div>`;
-                break;
+        // 精华句
+        if (highlights.length > 0) {
+            html += renderHighlights(highlights, sepChars[cardType]);
+        } else {
+            html += '<p class="card-no-highlight">[ NO_HIGHLIGHTS ]</p>';
+        }
 
-            case 'thermal':
-                html += `<span class="card-date">${diary.date}</span>`;
-                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
-                if (highlights.length > 0) {
-                    html += renderHighlights(highlights, '');
-                } else {
-                    html += '<p class="card-no-highlight">[ * 未标注精华 * ]</p>';
-                }
-                html += `<div class="card-footer"><span class="card-id">RECEIPT #${diary.id.toString().padStart(4, '0')}</span></div>`;
-                html += '<div class="receipt-footer">THANK YOU FOR READING</div>';
-                break;
-
-            case 'terminal':
-                html += `<span class="term-prefix" style="color:#4a7a4a;">$ cat /diary/${diary.dateRaw}</span>`;
-                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
-                html += `<span class="term-prefix" style="color:#3a6a3a;">[${diary.date}]</span>`;
-                html += `<span class="term-prefix prompt" style="color:#4a7a4a;">$ cat /diary/${diary.dateRaw}/highlights</span>`;
-                if (highlights.length > 0) {
-                    html += renderHighlights(highlights, '# ------');
-                } else {
-                    html += '<p class="card-no-highlight"># no highlights found</p>';
-                }
-                html += `<span class="term-prefix" style="color:#4a7a4a;">$ <span class="cursor-blink"></span></span>`;
-                html += `<div class="card-footer"><span class="card-id">tty${diary.id.toString(16)}</span></div>`;
-                break;
-
-            case 'flipclock':
-                const fd = parseFlipDigits(diary.dateRaw);
-                html += '<div class="flip-date">';
-                html += `<div class="flip-digit">${fd.y}</div>`;
-                html += '<span class="flip-sep">/</span>';
-                html += `<div class="flip-digit">${fd.m}</div>`;
-                html += '<span class="flip-sep">/</span>';
-                html += `<div class="flip-digit">${fd.d}</div>`;
-                html += '</div>';
-                html += '<span class="rivet rivet-tl"></span><span class="rivet rivet-tr"></span><span class="rivet rivet-bl"></span><span class="rivet rivet-br"></span>';
-                html += `<h3 class="card-title">${escapeHtml(diary.title)}</h3>`;
-                if (highlights.length > 0) {
-                    html += renderHighlights(highlights, '·  ·  ·');
-                } else {
-                    html += '<p class="card-no-highlight">[ NO_HIGHLIGHTS ]</p>';
-                }
-                html += `<div class="card-footer"><span class="card-id">PANEL_${diary.id.toString(16).toUpperCase()}</span></div>`;
-                break;
+        // 特有装饰（高亮后）
+        if (cardType === 'panic') {
+            html += `<div class="panic-dump">EIP: 0x${diary.id.toString(16).toUpperCase().padStart(8,'0')}<br>EBX: 0xDEADBEEF<br>KERNEL_PANIC: DUMPING...</div>`;
         }
 
         html += '</a>';

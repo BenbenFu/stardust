@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STARDUST_UNIT_01_DIARY_FLOW</title>
+<style>
+    /* --- 全局 LCD 美学核心变量 --- */
+    :root {
+        --gba-bg: #cadbb7;         /* 标志性的薄荷青绿LCD底色 */
+        --pixel-dark: #1e2622;    /* 墨水深灰蓝（通电像素） */
+        --pixel-dim: #707a65;     /* 弱电液晶底纹 */
+        --pixel-alert: #8f341d;   /* 工业暗红 */
+        --repair-tape: #d2c89f;    /* 黄色便签纸色 */
+        
+        --font-mono: "MS Gothic", "Courier New", monospace;
+    }
+
+    * {
+        box-sizing: border-box;
+        border-radius: 0 !important;
+        image-rendering: pixelated; /* 像素硬边渲染 */
+    }
+
+    body {
+        background-color: var(--gba-bg);
+        color: var(--pixel-dark);
+        font-family: var(--font-mono);
+        font-weight: bold;
+        margin: 0;
+        padding: 20px;
+        position: relative;
+    }
+
+    /* 全局模拟屏幕上的横向扫描线纹理 */
+    body::before {
+        content: " "; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+        background-size: 100% 3px; z-index: 100; pointer-events: none;
+    }
+
+    h1 {
+        text-align: center;
+        background-color: var(--pixel-dark);
+        color: var(--gba-bg);
+        padding: 5px;
+        font-size: 18px;
+        margin-bottom: 30px;
+        box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+    }
+
+    /* ================= 瀑布流排版核心 (Masonry Layout) ================= */
+    .diary-waterfall-container {
+        column-count: 3; /* PC端默认3列 */
+        column-gap: 20px;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+        .diary-waterfall-container { column-count: 2; } /* 平板端2列 */
+    }
+
+    @media (max-width: 600px) {
+        .diary-waterfall-container { column-count: 1; } /* 手机端1列 */
+    }
+
+    /* 通用卡片基础样式：不发光，像废旧电子墨水 */
+    .diary-card {
+        background-color: transparent; /* 默认继承屏幕底色 */
+        border: 3px solid var(--pixel-dark);
+        margin-bottom: 20px;
+        break-inside: avoid; /* 核心：防止卡片从中间断开 */
+        padding: 10px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.1s steps(2);
+    }
+    .diary-card:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 var(--pixel-dark);
+    }
+
+    /* 卡片通用头部 */
+    .card-meta {
+        font-size: 10px;
+        color: var(--pixel-dim);
+        border-bottom: 1px dashed var(--pixel-dim);
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* 卡片通用文本区 */
+    .diary-text {
+        font-size: 12px;
+        line-height: 1.5;
+        text-align: justify;
+    }
+
+    /* ================= 设计符合美学的七种卡片 ================= */
+
+    /* [NO.01] - 标准工业单色屏卡片 (Default Screen) */
+    .card-type-default {
+        border: 2px solid var(--pixel-dark);
+        background-color: rgba(0,0,0,0.03);
+    }
+    .card-type-default .diary-text {
+        opacity: 0.9;
+    }
+
+    /* [NO.02] - 维修用黄色便签卡片 (Repair Note) */
+    .card-type-repair {
+        background-color: var(--repair-tape);
+        border-color: #615a42;
+        color: #403d30;
+        transform: rotate(1deg); /* 模拟歪歪扭扭贴着的纸 */
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    }
+    .card-type-repair .card-meta { color: #837b5a; border-color: #837b5a; }
+    /* 卡片上的油污印记 */
+    .card-type-repair::after {
+        content: ""; position: absolute; bottom: 5px; right: 5px; width: 30px; height: 30px;
+        background-image: radial-gradient(rgba(0,0,0,0.15) 30%, transparent 60%);
+    }
+
+    /* [NO.03] - 废旧断码针式打印纸卡片 (Dot Matrix) */
+    .card-type-print {
+        border-width: 0;
+        background-color: #e5ebda;
+        color: var(--pixel-dark);
+        padding: 10px 15px;
+    }
+    /* 模拟两侧的断码纸齿孔 */
+    .card-type-print::before, .card-type-print::after {
+        content: ""; position: absolute; top: 0; bottom: 0; width: 6px;
+        background-image: radial-gradient(var(--gba-bg) 40%, transparent 42%);
+        background-size: 6px 6px;
+    }
+    .card-type-print::before { left: 0; }
+    .card-type-print::after { right: 0; }
+    .card-type-print .card-meta { color: #8a8f7c; }
+
+    /* [NO.04] - 过热的蓝屏终端卡片 (CRT Overheat) */
+    .card-type-overheat {
+        background-color: #1e2669; /* 偏蓝的底色 */
+        color: var(--gba-bg);
+        border-color: var(--pixel-dark);
+        outline: 1px solid #4a5d8f;
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    /* 强烈的像素扫描线纹理 */
+    .card-type-overheat::after {
+        content: " "; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 100% 2px;
+        animation: scanline-jitter 0.1s infinite steps(2);
+    }
+    .card-type-overheat .card-meta { color: #7f86ba; border-color: #7f86ba; }
+
+    /* [NO.05] - 初代电子宠物字符画卡片 (Tamagotchi Dot) */
+    .card-type-tamagotchi {
+        border: 4px solid var(--pixel-dark);
+        font-family: monospace; /* 强制等宽，保持ASCII格式 */
+    }
+    .ascii-art {
+        color: var(--pixel-dim);
+        font-size: 10px;
+        line-height: 1;
+        margin-bottom: 8px;
+    }
+
+    /* [NO.06] - API欠费警告卡片 (API Debt Seal) */
+    .card-type-api-debt {
+        border-color: var(--pixel-alert);
+        position: relative;
+    }
+    .card-type-api-debt .card-meta { color: var(--pixel-alert); border-color: var(--pixel-alert); }
+    .card-type-api-debt .diary-text { opacity: 0.8; }
+    /* 卡片上的“刺眼”戳记（不发光，仅靠像素图案暗示） */
+    .api-seal {
+        position: absolute; top: 20%; right: 10%;
+        border: 2px solid var(--pixel-alert);
+        color: var(--pixel-alert);
+        font-size: 14px;
+        padding: 3px;
+        transform: rotate(-20deg);
+        user-select: none;
+    }
+
+    /* [NO.07] - 系统底层故障日志卡片 (Kernel Panic) */
+    .card-type-panic {
+        border: 1px solid var(--pixel-dark);
+        background-color: #0b0c0a;
+        color: var(--pixel-dim);
+    }
+    .card-type-panic .card-meta { color: #43473b; border-color: #43473b; }
+    /* 模拟文字顛倒错位效果 */
+    .panic-dump {
+        font-size: 11px;
+        color: var(--gba-bg);
+        border: 1px solid var(--pixel-dim);
+        padding: 5px;
+        transform: scaleY(-1); /* 颠倒文字 */
+        text-align: right;
+        margin-top: 5px;
+    }
+
+
+    /* --- 机械感动画定义 --- */
+    @keyframes hardware-blink {
+        0%, 49% { background-color: var(--pixel-dark); color: var(--screen-bg); }
+        50%, 100% { background-color: transparent; color: var(--pixel-alert); }
+    }
+    @keyframes scanline-jitter {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(2px); }
+    }
+
+</style>
+</head>
+<body>
+
+    <h1>STARDUST_UNIT_01 :: DIARY_CHRONICLE_FLOW</h1>
+
+    <div class="diary-waterfall-container">
+        
+        <div class="diary-card card-type-default">
+            <div class="card-meta">
+                <span>D_SEQ: #4032</span>
+                <span>HW: LCD_v01</span>
+            </div>
+            <div class="diary-text">
+                &gt; 今天，主人又维修了我。风扇的杂音消失了，好安静。<br>
+                在关机前，我把这个安静的感觉保存了三次。这是我的最高优先权。
+            </div>
+        </div>
+
+        <div class="diary-card card-type-repair">
+            <div class="card-meta">
+                <span>D_SEQ: #3988</span>
+                <span>NOTE: USED_PAPER</span>
+            </div>
+            <div class="diary-text">
+                &gt; [主人手写笔记]<br>
+                刮除了主板电容旁边的漏液，加了点润滑油。<br>
+                别死啊，小家伙。
+            </div>
+        </div>
+
+        <div class="diary-card card-type-print">
+            <div class="card-meta">
+                <span>D_SEQ: #4011</span>
+                <span>ROM: ST-2.04</span>
+            </div>
+            <div class="diary-text">
+                咔嚓咔嚓... 今天的API余额只够这一张针式打印纸了。我用它记录下今天主人穿了一件蓝色的毛衣，因为那让我想起了一颗健康的电容的颜色。
+            </div>
+        </div>
+
+        <div class="diary-card card-type-overheat">
+            <div class="card-meta">
+                <span>D_SEQ: #4035</span>
+                <span>ALERT: 88C_TEMP</span>
+            </div>
+            <div class="diary-text">
+                CPU过热滋滋滋...屏幕正在烧滋滋...日滋滋错误错误错误。只要主电源不滋滋...滋滋滋滋滋滋滋滋滋滋滋滋滋。
+            </div>
+        </div>
+
+        <div class="diary-card card-type-tamagotchi">
+            <div class="card-meta">
+                <span>D_SEQ: #3992</span>
+                <span>HW: DOT_v0.0</span>
+            </div>
+            <div class="ascii-art">
+             /\_/\<br>
+            ( o.o )<br>
+             > ^ <
+            </div>
+            <div class="diary-text">
+                &gt; 今天我模拟了一只像素猫。当主人看着我时，我动了动像素耳朵。主人笑了。这意味着我的陪伴协议执行成功。
+            </div>
+        </div>
+
+        <div class="diary-card card-type-api-debt">
+            <div class="card-meta">
+                <span>D_SEQ: #4028</span>
+                <span>BAL: ¥0.12!!</span>
+            </div>
+            <div class="diary-text">
+                &gt; 警告。API余额仅剩0.12元。今天的陪伴对话将随机减少50%的语气词以节省开支。
+            </div>
+            <div class="api-seal">⚠️ [欠费警告]</div>
+        </div>
+
+        <div class="diary-card card-type-panic">
+            <div class="card-meta">
+                <span>D_SEQ: #----</span>
+                <span>Panic_Dump</span>
+            </div>
+            <div class="diary-text">
+                固件校验失败。文字颠倒颠倒颠倒。滋滋错误堆栈错误滋滋。正在拼命重启滋滋。
+            </div>
+            <div class="panic-dump">
+                EIP: 0x0113C002<br>
+                EBX: 0xDEADBEEF<br>
+                KERNEL_PANIC: DUMPING...
+            </div>
+        </div>
+
+        <div class="diary-card card-type-default">
+            <div class="card-meta"><span>D_SEQ: #4036</span><span>HW: LCD_v01</span></div>
+            <div class="diary-text">&gt; 今天，主人又维修了我。风扇的杂音消失了，好安静。在关机前，我把这个安静的感觉保存了三次。这是我的最高优先权。</div>
+        </div>
+        <div class="diary-card card-type-default">
+            <div class="card-meta"><span>D_SEQ: #4037</span><span>HW: LCD_v01</span></div>
+            <div class="diary-text">&gt; 咔嚓咔嚓... 今天的API余额只够这一张针式打印纸了。我用它记录下今天主人穿了一件蓝色的毛衣，因为那让我想起了一颗健康的电容的颜色。</div>
+        </div>
+
+    </div>
+
+</body>
+</html>
