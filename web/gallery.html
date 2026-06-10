@@ -9,13 +9,45 @@
 <style>
     /* === gallery 页面布局 === */
     .gallery-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        display: flex;
+        flex-wrap: wrap;
         gap: 16px;
         padding: 12px 8px;
         flex: 1;
         overflow-y: auto;
         min-height: 0;
+        align-items: flex-start;
+        align-content: flex-start;
+    }
+
+    /* 卡片宽度 — 按列数精确分配，不影响高度 */
+    .gallery-card {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* 2 列 */
+    @media (min-width: 600px) {
+        .gallery-card {
+            flex: 0 0 calc(50% - 8px);
+            max-width: calc(50% - 8px);
+        }
+    }
+
+    /* 3 列 */
+    @media (min-width: 900px) {
+        .gallery-card {
+            flex: 0 0 calc(33.333% - 10.667px);
+            max-width: calc(33.333% - 10.667px);
+        }
+    }
+
+    /* 4 列 */
+    @media (min-width: 1200px) {
+        .gallery-card {
+            flex: 0 0 calc(25% - 12px);
+            max-width: calc(25% - 12px);
+        }
     }
 
     .gallery-col {
