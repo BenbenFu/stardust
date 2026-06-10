@@ -9,23 +9,29 @@
 <style>
     /* === gallery 页面布局 === */
     .gallery-grid {
-        column-count: 4;
-        column-gap: 16px;
+        display: flex;
+        gap: 16px;
         padding: 12px 8px;
         flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
         min-height: 0;
+        align-items: flex-start;
     }
 
-    @media (max-width: 1280px) { .gallery-grid { column-count: 3; } }
-    @media (max-width: 960px)  { .gallery-grid { column-count: 2; } }
-    @media (max-width: 640px)  { .gallery-grid { column-count: 1; } }
+    .gallery-col {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
 
     /* === 基础卡片 === */
     .gallery-card {
         display: block;
-        break-inside: avoid;
-        margin-bottom: 16px;
+        width: 100%;
+        box-sizing: border-box;
         padding: 16px 14px;
         text-decoration: none;
         cursor: pointer;
@@ -613,7 +619,7 @@
         const cardType = cardTypes[diary.id % cardTypes.length];
         const highlights = diary.highlights || [];
 
-        let html = `<a class="gallery-card card-${cardType}" href="diary.html?date=${diary.dateRaw}" target="_blank" title="打开完整日记: ${diary.title}">`;
+        let html = `<a class="gallery-card card-${cardType}" href="diary.html?date=${diary.dateRaw}" target="_blank" title="打开完整日记: ${diary.title}" data-id="${diary.id}" data-title="${escapeHtml(diary.title)}" data-date="${diary.date}" data-date-raw="${diary.dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;
 
         // 卡片类型特有装饰
         switch (cardType) {
@@ -741,13 +747,46 @@
             highlights: Array.isArray(row.highlights) ? row.highlights : []
         }));
 
-        galleryGrid.innerHTML = '';
-        diaries.forEach(diary => {
-            galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary));
-        });
-
+        // 手动分列渲染（避免 CSS columns 的水平溢出问题）
+        renderColumns(diaries);
         galleryCount.textContent = `卡片 ${diaries.length}`;
     }
+
+    function renderColumns(diaries) {
+        galleryGrid.innerHTML = '';
+        const gridW = galleryGrid.clientWidth;
+        const colW = 280;
+        const gap = 16;
+        const colCount = Math.max(1, Math.floor((gridW + gap) / (colW + gap)));
+        const cols = [];
+        for (let i = 0; i < colCount; i++) {
+            const col = document.createElement('div');
+            col.className = 'gallery-col';
+            galleryGrid.appendChild(col);
+            cols.push(col);
+        }
+        diaries.forEach((diary, i) => {
+            const col = cols[i % colCount];
+            col.insertAdjacentHTML('beforeend', renderCard(diary));
+        });
+    }
+
+    // 窗口缩放宽高时重排
+    window.addEventListener('resize', function() {
+        const cards = galleryGrid.querySelectorAll('.gallery-card');
+        if (cards.length > 0) {
+            // 从 DOM 中重建日记数据
+            const cardEls = Array.from(cards);
+            const diaries = cardEls.map(el => ({
+                id: parseInt(el.dataset.id),
+                title: el.dataset.title,
+                date: el.dataset.date,
+                dateRaw: el.dataset.dateRaw,
+                highlights: JSON.parse(el.dataset.highlights || '[]')
+            }));
+            renderColumns(diaries);
+        }
+    });
 
     // 更新系统状态栏
     function updateSystemStatus(count) {
