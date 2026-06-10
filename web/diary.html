@@ -420,15 +420,12 @@
     let diaryDates = new Set(); // 缓存有日记的日期，用于日历标记
 
     // ===== Supabase 数据加载 =====
-    // 将 Supabase date (YYYY-MM-DD) 转为 UI 格式
-    // 如果年份是 202X 则保留科幻感，否则用真实年份
+    // 将 Supabase date (YYYY-MM-DD) 转为 UI 格式 (YYYY/MM/DD)
     function formatDateForUI(isoDate) {
         if (!isoDate) return '----/--/--';
         const parts = isoDate.split('-');
         if (parts.length === 3) {
-            let year = parts[0];
-            // 如果年份包含'X'则保留，否则补'X'后缀维持科幻风格
-            if (!year.includes('X')) year = year + 'X';
+            const year = parts[0];
             return `${year}/${parts[1]}/${parts[2]}`;
         }
         return isoDate;
@@ -528,7 +525,7 @@
         const firstDay = getFirstDayOfMonth(currentYear, currentMonth);
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
         
-        calendarTitle.textContent = `${currentYear}X/${currentMonth.toString().padStart(2, '0')}`;
+        calendarTitle.textContent = `${currentYear}/${currentMonth.toString().padStart(2, '0')}`;
         calendarGrid.innerHTML = '';
         
         weekdays.forEach(day => {
@@ -545,7 +542,7 @@
         }
         
         for (let day = 1; day <= daysInMonth; day++) {
-            const dateStr = `${currentYear}X/${currentMonth.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
+            const dateStr = `${currentYear}/${currentMonth.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}`;
             const el = document.createElement('div');
             el.className = 'calendar-day';
             el.textContent = day;
