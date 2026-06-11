@@ -86,7 +86,7 @@
         // --- 类型特有头部 ---
         switch (cardType) {
             case 'overheat':
-                html += '<div class="card-status-bar"><span>WARNING: OVERHEAT</span><span>88°C</span></div>';
+                html += `<div class="card-status-bar"><span>WARNING: OVERHEAT</span><span>${styleName}</span></div>`;
                 break;
             case 'api-debt':
                 html += '<div class="warning-bar"><span>API DEBT</span><span>'+styleName+'</span></div>';
@@ -96,10 +96,10 @@
                 html += '<div class="tech-seal">APPROVED</div>';
                 break;
             case 'work-bench':
-                html += `<div class="email-header"><span class="email-from">stardust@unit01.internal</span><span class="email-date">${diary.date}</span></div>`;
+                html += `<div class="email-header"><span class="email-from">stardust@unit01.internal</span><span class="email-date">${diary.date} · ${styleName}</span></div>`;
                 break;
             case 'social-broadcast':
-                html += '<div class="user-bar"><div class="social-avatar"></div><div class="user-info"><div class="social-username">星尘单元01</div><div class="social-handle">@stardust_unit01</div></div></div>';
+                html += `<div class="user-bar"><div class="social-avatar"></div><div class="user-info"><div class="social-username">星尘单元01</div><div class="social-handle">@stardust_unit01 · ${styleName}</div></div></div>`;
                 break;
             case 'role-engine':
                 html += '<div class="role-header"><div class="role-avatar"></div><div class="role-info">';
@@ -114,7 +114,8 @@
         if (cardType === 'role-engine') {
             html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
             html += `<div class="card-date">${diary.date}</div>`;
-            html += '<div class="role-stat">亲和力<div class="role-bar"><div class="role-bar-fill" style="width:95%"></div></div></div></div></div>';
+            html += `<div class="role-stat">亲和力<div class="role-bar"><div class="role-bar-fill" style="width:95%"></div></div></div>`;
+            html += `<div class="role-stat" style="font-size:9px;color:#6b5a45;">${styleName}</div></div></div>`;
         } else if (cardType === 'work-bench') {
             html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
             // date is in email-header
