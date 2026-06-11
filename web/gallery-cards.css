@@ -383,24 +383,41 @@
     }
     .card-type-media-stream:hover { box-shadow: 4px 4px 0 #cccccc; }
 
-    /* ============ 扭蛋机 8: ROLE_ENGINE 角色扮演 ============ */
+    /* ============ 扭蛋机 8: ROLE_ENGINE 作家人格模拟器 ============ */
     .card-type-role-engine {
         background-color: #f5f0e6; color: #3d3529; border: 3px double #8b7355;
     }
     .card-type-role-engine .role-header {
-        display: flex; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #8b7355;
+        display: flex; align-items: center; margin-bottom: 10px;
+        padding-bottom: 10px; border-bottom: 2px solid #8b7355;
     }
     .card-type-role-engine .role-avatar {
-        width: 60px; height: 60px; border: 2px solid #8b7355;
-        margin-right: 10px; background-color: #e6dcc8; flex-shrink: 0;
+        width: 56px; height: 56px; border: 2px solid #8b7355;
+        margin-right: 12px; background-color: #e6dcc8; flex-shrink: 0;
+        position: relative;
     }
-    .card-type-role-engine .role-info { flex: 1; }
-    .card-type-role-engine .card-title { font-size: 13px; font-weight: bold; margin-bottom: 5px; }
-    .card-type-role-engine .card-date { font-size: 9px; color: #6b5a45; }
-    .card-type-role-engine .card-style { font-size: 8px; color: #6b5a45; text-align: right; margin-top: 8px; }
-    .card-type-role-engine .role-stat { margin: 3px 0; font-size: 10px; }
-    .card-type-role-engine .role-bar { height: 6px; background-color: #d4c8b0; margin-top: 2px; }
+    .card-type-role-engine .role-avatar::after {
+        content: "?"; position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%); font-size: 22px; color: #8b7355;
+    }
+    .card-type-role-engine .role-info { flex: 1; min-width: 0; }
+    .card-type-role-engine .role-name {
+        font-size: 14px; font-weight: bold; color: #3d3529; margin-bottom: 2px;
+        letter-spacing: 1px;
+    }
+    .card-type-role-engine .role-date { font-size: 9px; color: #6b5a45; }
+    .card-type-role-engine .card-title {
+        font-size: 12px; font-weight: bold; margin-bottom: 8px;
+        padding-left: 8px; border-left: 3px solid #8b7355; color: #5a4a35;
+    }
+    .card-type-role-engine .card-date { display: none; }
+    .card-type-role-engine .card-style { display: none; }
+    .card-type-role-engine .role-stat { margin: 4px 0 0 0; font-size: 10px; color: #6b5a45; }
+    .card-type-role-engine .role-bar { height: 7px; background-color: #d4c8b0; margin-top: 3px; }
     .card-type-role-engine .role-bar-fill { height: 100%; background-color: #3a7d44; }
+    .card-type-role-engine .role-inject {
+        margin-top: 4px; font-size: 8px; color: #8b7355; text-align: right;
+    }
     .card-type-role-engine:hover { box-shadow: 4px 4px 0 #8b7355; }
 
     /* ============ 扭蛋机 9: FICTION_REALM 小说类型 ============ */

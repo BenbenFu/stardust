@@ -110,12 +110,17 @@
         }
 
         // --- 标题、日期 ---
-        // role-engine: title and date inside role-info
+        // role-engine: 作家人格模拟器布局
         if (cardType === 'role-engine') {
+            const injectLabels = ['人格注入', '相似度', '文风匹配', '灵魂复现', '意识同步'];
+            const label = injectLabels[nid % injectLabels.length];
+            const pct = 30 + (nid % 71); // 30~100%
+            html += `<div class="role-name">${escapeHtml(styleName)}</div>`;
+            html += `<div class="role-date">${diary.date}</div>`;
+            html += `<div class="role-stat">${label}<div class="role-bar"><div class="role-bar-fill" style="width:${pct}%"></div></div></div>`;
+            html += `<div class="role-inject">${pct}% · #${nid % 10000}号实验体</div></div></div>`;
+            // 日记标题作为卡片标题
             html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            html += `<div class="card-date">${diary.date}</div>`;
-            html += `<div class="role-stat">亲和力<div class="role-bar"><div class="role-bar-fill" style="width:95%"></div></div></div>`;
-            html += `<div class="role-stat" style="font-size:9px;color:#6b5a45;">${styleName}</div></div></div>`;
         } else if (cardType === 'work-bench') {
             html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
             // date is in email-header
