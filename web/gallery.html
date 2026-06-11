@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STARDUST_v0.1_DIARY_GALLERY</title>
 <link rel="stylesheet" href="style.css?v=20260610">
+<link rel="stylesheet" href="gallery-cards.css?v=20260611">
 <script type="module" src="script.js?v=20260602"></script>
 <style>
-    /* === GBA LCD 美学变量 === */
     :root {
         --gba-bg: #cadbb7;
         --pixel-dark: #1e2622;
@@ -18,7 +18,6 @@
 
     * { image-rendering: pixelated; }
 
-    /* === 瀑布流布局 === */
     .embedded-lcd { overflow-y: auto; }
 
     .gallery-grid {
@@ -30,481 +29,6 @@
     @media (min-width: 900px) { .gallery-grid { column-count: 3; } }
     @media (min-width: 1200px) { .gallery-grid { column-count: 4; } }
 
-    /* === 卡片基础（废旧电子墨水质感） === */
-    .gallery-card {
-        background-color: transparent;
-        border: 3px solid var(--pixel-dark);
-        margin-bottom: 20px;
-        break-inside: avoid;
-        padding: 10px;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        text-decoration: none;
-        color: var(--pixel-dark);
-        cursor: pointer;
-        transition: transform 0.1s steps(2);
-    }
-    .gallery-card:hover {
-        transform: translate(-2px, -2px);
-        box-shadow: 4px 4px 0 var(--pixel-dark);
-    }
-
-    /* 卡片头部信息栏 */
-    .card-meta {
-        font-size: 10px;
-        color: var(--pixel-dim);
-        border-bottom: 1px dashed var(--pixel-dim);
-        padding-bottom: 4px;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        flex-shrink: 0;
-    }
-
-    /* 精华句 */
-    .gallery-card .card-highlight-item {
-        font-family: var(--font-mono);
-        font-size: 12px;
-        line-height: 1.5;
-        margin: 0 0 3px 0;
-        text-align: justify;
-        word-break: break-all;
-    }
-    .gallery-card .card-highlight-item::before { content: "> "; color: var(--pixel-dim); }
-    .gallery-card .card-highlight-item:last-child { margin-bottom: 0; }
-
-    .gallery-card .card-no-highlight {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        color: var(--pixel-dim);
-        font-style: italic;
-        margin: 0;
-    }
-
-    /* === 句间分隔符（7 种） === */
-    .hl-sep {
-        display: block;
-        text-align: center;
-        margin: 5px 0;
-        font-family: var(--font-mono);
-        font-size: 10px;
-        user-select: none;
-        pointer-events: none;
-        opacity: 0.3;
-    }
-    .card-type-default .hl-sep { color: var(--pixel-dim); letter-spacing: 4px; }
-    .card-type-repair .hl-sep { color: #837b5a; letter-spacing: 3px; }
-    .card-type-print .hl-sep { color: #8a8f7c; letter-spacing: 4px; }
-    .card-type-overheat .hl-sep {
-        height: 0; border-top: 1px solid rgba(202,219,183,0.15);
-        margin: 8px 0; opacity: 1;
-    }
-    .card-type-tamagotchi .hl-sep { color: var(--pixel-dim); letter-spacing: 4px; }
-    .card-type-api-debt .hl-sep { color: var(--pixel-alert); letter-spacing: 4px; opacity: 0.4; }
-    .card-type-panic .hl-sep { color: #43473b; letter-spacing: 6px; }
-
-    /* 卡片通用元素 */
-    .gallery-card .card-title {
-        font-family: var(--font-mono);
-        font-size: 13px;
-        font-weight: bold;
-        margin: 0 0 8px 0;
-        word-break: break-all;
-    }
-    .gallery-card .card-date {
-        font-family: var(--font-mono);
-        font-size: 10px;
-        color: var(--pixel-dim);
-    }
-    .gallery-card .card-style {
-        font-family: var(--font-mono);
-        font-size: 9px;
-        color: var(--pixel-dim);
-        margin-top: 8px;
-    }
-    .card-footer-h {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 8px;
-        padding-top: 4px;
-        font-size: 9px;
-    }
-
-    /* ============ 卡片类型 1: 标准工业单色屏 ============ */
-    .card-type-default {
-        border: 2px solid var(--pixel-dark);
-        background-color: rgba(0,0,0,0.03);
-    }
-    .card-type-default .card-title { border-bottom: 1px solid var(--pixel-dark); padding-bottom: 4px; }
-    .card-type-default .card-date { float: right; }
-    .card-type-default .card-style { text-align: right; padding-top: 4px; border-top: 1px dashed var(--pixel-dim); }
-
-    /* ============ 卡片类型 2: 维修用黄色便签 ============ */
-    .card-type-repair {
-        background-color: var(--repair-tape);
-        border-color: #615a42;
-        color: #403d30;
-        transform: rotate(1deg);
-        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-        padding-top: 25px;
-    }
-    .card-type-repair::before {
-        content: ""; position: absolute; top: 0; left: 0; right: 0;
-        height: 20px;
-        background: linear-gradient(135deg, var(--repair-tape) 50%, transparent 50%);
-        background-size: 15px 15px;
-    }
-    .card-type-repair::after {
-        content: ""; position: absolute; bottom: 5px; right: 5px; width: 30px; height: 30px;
-        background-image: radial-gradient(rgba(0,0,0,0.15) 30%, transparent 60%);
-        pointer-events: none;
-    }
-    .card-type-repair:hover { transform: rotate(1deg) translate(-2px,-2px); box-shadow: 6px 6px 0 #615a42; }
-    .card-type-repair .card-meta { color: #837b5a; border-color: #837b5a; }
-    .card-type-repair .card-title { font-size: 14px; font-family: cursive; text-decoration: underline; }
-    .card-type-repair .card-date { font-size: 9px; color: #837b5a; text-align: right; }
-    .card-type-repair .card-style { position: absolute; top: 5px; left: 10px; font-size: 8px; color: #837b5a; transform: rotate(-2deg); }
-
-    /* ============ 卡片类型 3: 断码针式打印纸 ============ */
-    .card-type-print {
-        border-width: 0;
-        background-color: #e5ebda;
-        color: var(--pixel-dark);
-        padding: 10px 18px;
-    }
-    .card-type-print::before {
-        content: ""; position: absolute; top: 0; left: 6px; right: 6px;
-        height: 3px;
-        background: repeating-linear-gradient(90deg, #8a8f7c 0px, #8a8f7c 2px, transparent 2px, transparent 4px);
-    }
-    .card-type-print::after { /* 右侧齿孔 */ }
-    .card-type-print .left-holes, .card-type-print .right-holes {
-        position: absolute; top: 0; bottom: 0; width: 6px;
-        background-image: radial-gradient(var(--gba-bg) 40%, transparent 42%);
-        background-size: 6px 6px;
-    }
-    .card-type-print .left-holes { left: 0; }
-    .card-type-print .right-holes { right: 0; }
-    .card-type-print .card-meta { color: #8a8f7c; border-color: #8a8f7c; }
-    .card-type-print .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
-    .card-type-print .card-date, .card-type-print .card-style { font-size: 9px; color: #8a8f7c; }
-    .card-type-print .card-footer-h { color: #8a8f7c; border-top: 1px dashed #8a8f7c; }
-
-    /* ============ 卡片类型 4: 过热蓝屏终端 ============ */
-    .card-type-overheat {
-        background-color: #1e2669;
-        color: var(--gba-bg);
-        border-color: var(--pixel-dark);
-        outline: 1px solid #4a5d8f;
-        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        padding-top: 24px;
-    }
-    .card-type-overheat .card-status-bar {
-        position: absolute; top: 0; left: 0; right: 0;
-        background-color: var(--pixel-alert); color: white;
-        padding: 2px 5px; font-size: 9px;
-        display: flex; justify-content: space-between;
-        animation: hardware-blink 2s infinite steps(2);
-    }
-    .card-type-overheat::after {
-        content: " "; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        background: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
-        background-size: 100% 2px; pointer-events: none;
-        animation: scanline-jitter 0.1s infinite steps(2);
-    }
-    .card-type-overheat .card-meta { color: #7f86ba; border-color: #7f86ba; }
-    .card-type-overheat .card-title { animation: scanline-jitter 0.5s infinite steps(2); }
-    .card-type-overheat .card-style { font-size: 9px; color: #7f86ba; text-align: right; margin-top: 8px; }
-    .card-type-overheat .card-highlight-item::before { color: #7f86ba; }
-    .card-type-overheat:hover { box-shadow: 4px 4px 0 var(--pixel-dark), inset 0 0 10px rgba(0,0,0,0.5); }
-
-    /* ============ 卡片类型 5: 初代电子宠物字符画 ============ */
-    .card-type-tamagotchi {
-        border: 4px solid var(--pixel-dark);
-        font-family: monospace;
-        padding-top: 28px;
-    }
-    .card-type-tamagotchi::before {
-        content: "TAMAGOTCHI"; position: absolute; top: 5px; left: 50%;
-        transform: translateX(-50%); font-size: 10px; color: var(--pixel-dark); letter-spacing: 1px;
-    }
-    .card-type-tamagotchi .card-title { font-size: 11px; text-align: center; background-color: rgba(0,0,0,0.05); padding: 2px; }
-    .card-type-tamagotchi .card-date, .card-type-tamagotchi .card-style { font-size: 8px; color: var(--pixel-dim); }
-    .ascii-art { color: var(--pixel-dim); font-size: 10px; line-height: 1; margin-bottom: 8px; white-space: pre; text-align: center; }
-
-    /* ============ 卡片类型 6: API欠费警告 ============ */
-    .card-type-api-debt {
-        border-color: var(--pixel-alert);
-        padding-top: 30px;
-    }
-    .card-type-api-debt .warning-bar {
-        position: absolute; top: 0; left: 0; right: 0;
-        background-color: var(--pixel-alert); color: white;
-        padding: 3px 5px; font-size: 9px;
-        display: flex; justify-content: space-between;
-    }
-    .card-type-api-debt .card-meta { color: var(--pixel-alert); border-color: var(--pixel-alert); }
-    .card-type-api-debt .card-title { color: var(--pixel-alert); text-align: center; }
-    .card-type-api-debt .card-date { font-size: 9px; color: var(--pixel-alert); text-align: right; margin-top: 8px; }
-    .card-type-api-debt .diary-text { opacity: 0.8; }
-    .card-type-api-debt:hover { box-shadow: 4px 4px 0 var(--pixel-alert); }
-    .api-seal {
-        position: absolute; top: 35%; right: 8%;
-        border: 2px solid var(--pixel-alert); color: var(--pixel-alert);
-        font-size: 12px; padding: 3px 5px; transform: rotate(-20deg);
-        user-select: none; pointer-events: none;
-        animation: hardware-blink 1s infinite steps(2);
-    }
-
-    /* ============ 卡片类型 7: 系统底层故障日志 ============ */
-    .card-type-panic {
-        border: 1px solid var(--pixel-dark);
-        background-color: #0b0c0a;
-        color: var(--pixel-dim);
-    }
-    .card-type-panic .card-meta { color: #43473b; border-color: #43473b; }
-    .card-type-panic .card-title { letter-spacing: 2px; transform: scaleX(-1); }
-    .card-type-panic .card-date, .card-type-panic .card-style { font-size: 9px; color: #43473b; }
-    .card-type-panic .card-highlight-item::before { color: #43473b; }
-    .panic-dump {
-        font-size: 11px; color: var(--gba-bg);
-        border: 1px solid var(--pixel-dim); padding: 5px;
-        transform: scaleY(-1); text-align: right; margin-top: 5px;
-    }
-
-    /* ============ 扭蛋机 1: CODE_FORGE 代码编程 ============ */
-    .card-type-code-forge {
-        background-color: #0f1419;
-        color: #cadbb7;
-        border-left: 6px solid #3a7d44;
-        font-family: "Consolas", "Monaco", monospace;
-        padding-left: 40px;
-    }
-    .card-type-code-forge .card-style { font-size: 9px; color: #858585; text-align: right; margin-top: 8px; }
-    .card-type-code-forge .card-style::before { content: "// STYLE: "; }
-    .card-type-code-forge .card-date { font-size: 10px; color: #6a9955; font-style: italic; margin-bottom: 8px; }
-    .card-type-code-forge .card-date::before { content: "// "; }
-    .card-type-code-forge .card-title { font-size: 13px; color: #7ab8ff; margin-bottom: 8px; }
-    .card-type-code-forge .card-title::before { content: "function "; color: #569cd6; }
-    .card-type-code-forge .card-title::after { content: "() {"; color: #d4d4d4; }
-    .card-type-code-forge::before {
-        content: "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12";
-        position: absolute; left: 5px; top: 10px;
-        font-size: 10px; color: #3a4036; line-height: 1.5;
-        text-align: right; width: 25px; pointer-events: none;
-        border-right: 1px solid #2a3027; padding-right: 5px;
-    }
-    .card-type-code-forge:hover { box-shadow: 4px 4px 0 #3a7d44; }
-
-    /* ============ 扭蛋机 2: TECH_ARCHIVE 技术文档 ============ */
-    .card-type-tech-archive {
-        background-color: #f0f2eb; color: #1e2622;
-        border: 1px solid #8a8f7c; padding-top: 35px;
-    }
-    .card-type-tech-archive .doc-header {
-        position: absolute; top: 0; left: 0; right: 0;
-        background-color: #d2d8c8; padding: 3px 5px;
-        font-size: 9px; display: flex; justify-content: space-between;
-        border-bottom: 1px solid #8a8f7c;
-    }
-    .card-type-tech-archive .card-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; text-align: center; text-transform: uppercase; }
-    .card-type-tech-archive .card-date, .card-type-tech-archive .card-style {
-        display: inline; font-size: 9px; color: #5a6352;
-    }
-    .card-type-tech-archive .card-footer-h {
-        display: flex; justify-content: space-between; margin-top: 8px; padding-top: 4px;
-        border-top: 1px solid #8a8f7c; font-size: 9px; color: #5a6352;
-    }
-    .tech-seal {
-        position: absolute; top: 35px; right: 10px; font-size: 8px;
-        border: 1px solid #5a6352; padding: 2px 4px; color: #5a6352; pointer-events: none;
-    }
-    .card-type-tech-archive:hover { box-shadow: 4px 4px 0 #8a8f7c; }
-
-    /* ============ 扭蛋机 3: WORK_BENCH 工作办公 ============ */
-    .card-type-work-bench {
-        background-color: #ffffff; color: #2d333b; border: 1px solid #d1d9e0;
-    }
-    .card-type-work-bench .email-header {
-        background-color: #f6f8fa; padding: 5px;
-        margin: -10px -10px 10px -10px; border-bottom: 1px solid #e1e7ed;
-        font-size: 11px; display: flex; justify-content: space-between;
-    }
-    .card-type-work-bench .email-from { color: #0969da; font-weight: bold; }
-    .card-type-work-bench .email-date { color: #656d76; }
-    .card-type-work-bench .card-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; }
-    .card-type-work-bench .card-style { font-size: 9px; color: #656d76; text-align: right; margin-top: 8px; padding-top: 4px; border-top: 1px solid #e1e7ed; }
-    .card-type-work-bench .card-date { display: none; }
-    .card-type-work-bench:hover { box-shadow: 4px 4px 0 #d1d9e0; }
-
-    /* ============ 扭蛋机 4: LIFE_LOGBOOK 生活记录 ============ */
-    .card-type-life-logbook {
-        background-color: #faf7e8; color: #4a453d; border: 2px dotted #c9c2b0;
-        transform: rotate(-0.5deg); padding: 15px;
-    }
-    .card-type-life-logbook .card-title {
-        background-color: #ffefb3; padding: 2px 8px;
-        margin: -20px auto 15px auto; width: fit-content;
-        font-size: 13px; transform: rotate(-2deg);
-        box-shadow: 2px 2px 3px rgba(0,0,0,0.1);
-    }
-    .card-type-life-logbook .card-date { font-size: 10px; color: #9a9385; font-family: cursive; text-align: right; margin-bottom: 8px; }
-    .card-type-life-logbook .card-style {
-        position: absolute; bottom: 10px; right: 10px;
-        width: 40px; height: 20px; background-color: #bae1ff;
-        font-size: 8px; text-align: center; line-height: 20px; transform: rotate(3deg);
-    }
-    .card-type-life-logbook:hover { transform: rotate(-1deg) translate(-2px,-2px); box-shadow: 4px 4px 0 #c9c2b0; }
-
-    /* ============ 扭蛋机 5: SOCIAL_BROADCAST 社交网络 ============ */
-    .card-type-social-broadcast {
-        background-color: #ffffff; color: #14171a; border: 1px solid #e6ecf0;
-        border-radius: 8px !important; padding: 15px;
-    }
-    .card-type-social-broadcast .user-bar {
-        display: flex; align-items: center; margin-bottom: 10px;
-    }
-    .card-type-social-broadcast .social-avatar {
-        width: 32px; height: 32px; background-color: #cadbb7;
-        border: 2px solid #1e2622; margin-right: 10px;
-    }
-    .card-type-social-broadcast .social-username { font-weight: bold; color: #14171a; font-size: 12px; }
-    .card-type-social-broadcast .social-handle { color: #657786; font-size: 10px; }
-    .card-type-social-broadcast .card-date { font-size: 9px; color: #657786; }
-    .card-type-social-broadcast .card-title { font-size: 13px; margin-bottom: 8px; }
-    .card-type-social-broadcast .card-style { font-size: 8px; color: #657786; text-align: right; margin-top: 8px; }
-    .card-type-social-broadcast:hover { box-shadow: 4px 4px 0 #e6ecf0; }
-
-    /* ============ 扭蛋机 6: CREATIVE_ENGINE 创意写作 ============ */
-    .card-type-creative-engine {
-        background-color: #fffef5; color: #2c2c2c; border: 2px solid #e0d9c8;
-        background-image: linear-gradient(#e0d9c8 1px, transparent 1px);
-        background-size: 100% 24px; background-position: 0 30px;
-    }
-    .card-type-creative-engine .card-title {
-        font-size: 14px; font-family: serif; margin-bottom: 8px;
-        text-decoration: underline; text-decoration-style: wavy; text-decoration-color: #8f341d;
-    }
-    .card-type-creative-engine .card-date {
-        position: absolute; top: 35px; right: 10px;
-        font-size: 9px; color: #8a8273; transform: rotate(5deg);
-    }
-    .card-type-creative-engine .card-style {
-        position: absolute; bottom: 10px; left: 10px;
-        font-size: 8px; color: #8a8273; font-style: italic;
-    }
-    .card-type-creative-engine:hover { box-shadow: 4px 4px 0 #e0d9c8; }
-
-    /* ============ 扭蛋机 7: MEDIA_STREAM 媒体格式 ============ */
-    .card-type-media-stream {
-        background-color: #ffffff; color: #000000; border: 1px solid #cccccc;
-    }
-    .card-type-media-stream .card-title {
-        font-size: 15px; font-weight: bold; text-align: center;
-        margin-bottom: 5px; border-bottom: 2px solid #000000; padding-bottom: 5px;
-    }
-    .card-type-media-stream .media-dateline { font-size: 10px; font-weight: bold; margin-bottom: 8px; text-align: center; color: #666666; }
-    .card-type-media-stream .card-date, .card-type-media-stream .card-style {
-        display: inline; font-size: 9px; color: #999999;
-    }
-    .card-type-media-stream .card-footer-h {
-        display: flex; justify-content: space-between; margin-top: 8px;
-        padding-top: 4px; border-top: 1px solid #cccccc; font-size: 9px; color: #999999;
-    }
-    .card-type-media-stream:hover { box-shadow: 4px 4px 0 #cccccc; }
-
-    /* ============ 扭蛋机 8: ROLE_ENGINE 角色扮演 ============ */
-    .card-type-role-engine {
-        background-color: #f5f0e6; color: #3d3529; border: 3px double #8b7355;
-    }
-    .card-type-role-engine .role-header {
-        display: flex; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #8b7355;
-    }
-    .card-type-role-engine .role-avatar {
-        width: 60px; height: 60px; border: 2px solid #8b7355;
-        margin-right: 10px; background-color: #e6dcc8; flex-shrink: 0;
-    }
-    .card-type-role-engine .role-info { flex: 1; }
-    .card-type-role-engine .card-title { font-size: 13px; font-weight: bold; margin-bottom: 5px; }
-    .card-type-role-engine .card-date { font-size: 9px; color: #6b5a45; }
-    .card-type-role-engine .card-style { font-size: 8px; color: #6b5a45; text-align: right; margin-top: 8px; }
-    .card-type-role-engine .role-stat { margin: 3px 0; font-size: 10px; }
-    .card-type-role-engine .role-bar { height: 6px; background-color: #d4c8b0; margin-top: 2px; }
-    .card-type-role-engine .role-bar-fill { height: 100%; background-color: #3a7d44; }
-    .card-type-role-engine:hover { box-shadow: 4px 4px 0 #8b7355; }
-
-    /* ============ 扭蛋机 9: FICTION_REALM 小说类型 ============ */
-    .card-type-fiction-realm {
-        background-color: #f8f5f0; color: #2a2520; border: none;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 15px;
-    }
-    .card-type-fiction-realm .card-title {
-        font-size: 16px; font-weight: bold; text-align: center;
-        margin-bottom: 15px; font-family: serif;
-        border-bottom: 1px solid #d4ccc4; padding-bottom: 8px;
-    }
-    .card-type-fiction-realm .card-date { font-size: 9px; color: #7a726a; text-align: center; margin-bottom: 10px; }
-    .card-type-fiction-realm .card-style { font-size: 9px; color: #9a928a; }
-    .card-type-fiction-realm .card-footer-h {
-        display: flex; justify-content: space-between; margin-top: 10px;
-        padding-top: 8px; border-top: 1px solid #d4ccc4; font-size: 9px; color: #9a928a;
-    }
-    .card-type-fiction-realm:hover { transform: translate(-2px,-2px); box-shadow: 4px 4px 0 #d4ccc4; }
-
-    /* ============ 扭蛋机 10: FORMAT_DECK 格式规范 ============ */
-    .card-type-format-deck {
-        background-color: #ffffff; color: #1e2622; border: 2px solid #1e2622;
-        background-image:
-            linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
-        background-size: 20px 20px;
-    }
-    .card-type-format-deck .card-title {
-        background-color: #1e2622; color: #cadbb7; padding: 5px;
-        margin: -10px -10px 10px -10px; text-align: center; font-size: 13px;
-    }
-    .card-type-format-deck .card-date, .card-type-format-deck .card-style {
-        display: inline; font-size: 9px; color: #707a65;
-    }
-    .card-type-format-deck .card-footer-h {
-        display: flex; justify-content: space-between; margin-top: 8px;
-        padding-top: 4px; border-top: 1px solid #1e2622; font-size: 9px; color: #707a65;
-    }
-    .card-type-format-deck:hover { box-shadow: 4px 4px 0 #1e2622; }
-
-    /* ============ 扭蛋机 11: MISC_MYSTERY 未知分类 ============ */
-    .card-type-misc-mystery {
-        background-color: #2a2a2a; color: #9a9a9a; border: 1px dashed #555555;
-        filter: blur(0.3px);
-    }
-    .card-type-misc-mystery .card-title { font-size: 13px; margin-bottom: 8px; position: relative; }
-    .card-type-misc-mystery .card-title::after {
-        content: ""; position: absolute; top: 0; right: 0;
-        width: 40%; height: 100%; background-color: #000000;
-    }
-    .card-type-misc-mystery .card-date { font-size: 9px; color: #666666; filter: blur(1px); text-align: right; margin-bottom: 8px; }
-    .card-type-misc-mystery .card-style {
-        position: absolute; bottom: 5px; left: 10px;
-        font-size: 8px; color: #444444; opacity: 0.5;
-    }
-    .card-type-misc-mystery::after {
-        content: "?"; position: absolute; bottom: 5px; right: 10px;
-        font-size: 24px; color: #444444; opacity: 0.5; pointer-events: none;
-    }
-    .card-type-misc-mystery:hover { filter: blur(0); box-shadow: 4px 4px 0 #555555; }
-
-    /* === 动画 === */
-    @keyframes scanline-jitter {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(2px); }
-    }
-    @keyframes hardware-blink {
-        0%, 49% { background-color: var(--pixel-dark); color: var(--gba-bg); }
-        50%, 100% { background-color: transparent; color: var(--pixel-alert); }
-    }
-
-    /* === gallery 页面特有 === */
     .gallery-footer {
         display: flex;
         gap: 10px;
@@ -517,7 +41,6 @@
         color: var(--pixel-dim);
     }
 
-    /* 滚动条 */
     .embedded-lcd::-webkit-scrollbar { width: 8px; }
     .embedded-lcd::-webkit-scrollbar-track { background: var(--gba-bg); border-left: 1px solid var(--pixel-dim); }
     .embedded-lcd::-webkit-scrollbar-thumb { background: var(--pixel-dim); border: 1px solid var(--pixel-dark); }
@@ -671,221 +194,15 @@
 
 <script type="module">
     import { supabase, checkAuth } from './script.js';
+    import { renderCard } from './gallery-cards.js';
 
     const galleryGrid = document.getElementById('galleryGrid');
     const galleryCount = document.getElementById('galleryCount');
     let currentDiaries = [];
 
-    // 基础卡片池（capsule 为 "/" 时使用）
-    const baseTypes = ['default', 'repair', 'print', 'overheat', 'tamagotchi', 'api-debt', 'panic'];
-
-    // 扭蛋机卡片池（capsule 有值时使用）
-    const gashaponTypes = ['code-forge','tech-archive','work-bench','life-logbook','social-broadcast','creative-engine','media-stream','role-engine','fiction-realm','format-deck','misc-mystery'];
-
-    // 风格中文标签
-    const styleLabels = {
-        'default':'标准工业屏','repair':'维修便签','print':'针式打印','overheat':'过热终端',
-        'tamagotchi':'电子宠物','api-debt':'欠费警告','panic':'故障日志',
-        'code-forge':'代码编程','tech-archive':'技术文档','work-bench':'工作办公',
-        'life-logbook':'生活记录','social-broadcast':'社交网络','creative-engine':'创意写作',
-        'media-stream':'媒体通稿','role-engine':'角色扮演','fiction-realm':'小说叙事',
-        'format-deck':'格式规范','misc-mystery':'未知分类'
-    };
-
-    // 句间分隔符（7 基础 + 11 扭蛋）
-    const sepChars = {
-        'default':'*  *  *','repair':'- - - - -','print':'· · · · ·','overheat':'',
-        'tamagotchi':'+ + + + +','api-debt':'! ! ! ! !','panic':'0x0 0x0',
-        'code-forge':'/* ---- */','tech-archive':'','work-bench':'',
-        'life-logbook':'~ ~ ~ ~ ~','social-broadcast':'·  ·  ·','creative-engine':'',
-        'media-stream':'','role-engine':'','fiction-realm':'* * *',
-        'format-deck':'','misc-mystery':'? ? ? ? ?'
-    };
-
-    // category → slug 映射（兼容中英文）
-    function categoryToSlug(cat) {
-        if (!cat) return null;
-        const lower = cat.toLowerCase().trim();
-        const map = {
-            'code-forge':'code-forge','代码编程':'code-forge',
-            'tech-archive':'tech-archive','技术文档':'tech-archive',
-            'work-bench':'work-bench','工作办公':'work-bench',
-            'life-logbook':'life-logbook','生活记录':'life-logbook',
-            'social-broadcast':'social-broadcast','社交网络':'social-broadcast',
-            'creative-engine':'creative-engine','创意写作':'creative-engine',
-            'media-stream':'media-stream','媒体通稿':'media-stream',
-            'role-engine':'role-engine','角色扮演':'role-engine',
-            'fiction-realm':'fiction-realm','小说叙事':'fiction-realm',
-            'format-deck':'format-deck','格式规范':'format-deck',
-            'misc-mystery':'misc-mystery','未知分类':'misc-mystery',
-        };
-        return map[lower] || map[cat] || null;
-    }
-
-    // ASCII 宠物池
-    const asciiPets = [
-        ' /\\_/\\\n( o.o )\n > ^ <\n',
-        '  ___\n (>.<)\n (___)\n',
-        ' /\\_/\\\n( -.- )\n(\")(\")\n',
-        '  __\n (--)\n/(  )\\\n'
-    ];
-
-    function formatDateForUI(isoDate) {
-        if (!isoDate) return '----/--/--';
-        const parts = isoDate.split('-');
-        if (parts.length === 3) return `${parts[0]}/${parts[1]}/${parts[2]}`;
-        return isoDate;
-    }
-
-    // 渲染精华句列表（含句间分隔符）
-    function renderHighlights(highlights, sepChar) {
-        if (!highlights || highlights.length === 0) return '';
-        let html = '';
-        highlights.forEach((h, i) => {
-            if (i > 0) html += `<div class="hl-sep">${sepChar}</div>`;
-            html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`;
-        });
-        return html;
-    }
-
-    // 渲染单张卡片（18 种类型）
-    function renderCard(diary) {
-        const cardType = diary.cardType || 'default';
-        const highlights = diary.highlights || [];
-        const dateRaw = diary.dateRaw || diary.date;
-        const styleName = styleLabels[cardType] || cardType;
-        const sep = sepChars[cardType] || '';
-
-        let html = `<a class="gallery-card card-type-${cardType}" href="diary.html?date=${dateRaw}" target="_blank" title="${escapeHtml(diary.title)}" data-id="${diary.id}" data-title="${escapeHtml(diary.title)}" data-date="${diary.date}" data-date-raw="${dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;
-
-        const nid = numericId(diary.id);
-
-        // --- 类型特有头部 ---
-        switch (cardType) {
-            case 'overheat':
-                html += '<div class="card-status-bar"><span>WARNING: OVERHEAT</span><span>88°C</span></div>';
-                break;
-            case 'api-debt':
-                html += '<div class="warning-bar"><span>API DEBT</span><span>'+styleName+'</span></div>';
-                break;
-            case 'tech-archive':
-                html += `<div class="doc-header"><span>RFC-${diary.id}</span><span>STARDUST-SPEC</span></div>`;
-                html += '<div class="tech-seal">APPROVED</div>';
-                break;
-            case 'work-bench':
-                html += `<div class="email-header"><span class="email-from">stardust@unit01.internal</span><span class="email-date">${diary.date}</span></div>`;
-                break;
-            case 'social-broadcast':
-                html += '<div class="user-bar"><div class="social-avatar"></div><div class="user-info"><div class="social-username">星尘单元01</div><div class="social-handle">@stardust_unit01</div></div></div>';
-                break;
-            case 'role-engine':
-                html += '<div class="role-header"><div class="role-avatar"></div><div class="role-info">';
-                break;
-            case 'print':
-                html += '<div class="left-holes"></div><div class="right-holes"></div>';
-                break;
-        }
-
-        // --- 标题、日期 ---
-        // role-engine: title and date inside role-info
-        if (cardType === 'role-engine') {
-            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            html += `<div class="card-date">${diary.date}</div>`;
-            html += '<div class="role-stat">亲和力<div class="role-bar"><div class="role-bar-fill" style="width:95%"></div></div></div></div></div>';
-        } else if (cardType === 'work-bench') {
-            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            // date is in email-header
-        } else if (cardType === 'life-logbook') {
-            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            html += `<div class="card-date">${diary.date}</div>`;
-        } else if (cardType === 'creative-engine') {
-            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            html += `<div class="card-date">${diary.date}</div>`;
-        } else if (cardType === 'fiction-realm') {
-            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            html += `<div class="card-date">${diary.date}</div>`;
-        } else if (cardType === 'media-stream') {
-            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            html += `<div class="media-dateline">【星尘通讯社 ${diary.date}电】</div>`;
-        } else {
-            // 通用布局：标题 + 日期
-            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
-            if (cardType !== 'tamagotchi' || true) {
-                html += `<div class="card-date">${diary.date}</div>`;
-            }
-        }
-
-        // --- 特有装饰（高亮前） ---
-        if (cardType === 'tamagotchi') {
-            const pet = asciiPets[nid % asciiPets.length];
-            html += `<div class="ascii-art">${pet}</div>`;
-        }
-        if (cardType === 'api-debt') {
-            html += '<div class="api-seal">[!] API_DEBT</div>';
-        }
-
-        // --- 精华句 ---
-        if (highlights.length > 0) {
-            html += renderHighlights(highlights, sep);
-        } else {
-            html += '<p class="card-no-highlight">[ NO_HIGHLIGHTS ]</p>';
-        }
-
-        // --- 特有装饰（高亮后） ---
-        if (cardType === 'panic') {
-            html += `<div class="panic-dump">EIP: 0x${nid.toString(16).toUpperCase().padStart(8,'0')}<br>EBX: 0xDEADBEEF<br>KERNEL_PANIC: DUMPING...</div>`;
-        }
-
-        // --- 风格标签 ---
-        // 某些类型已将 style 嵌入头部/底部，其余用通用 .card-style
-        const styleInHeader = ['api-debt','tech-archive','work-bench','social-broadcast','role-engine','overheat'].includes(cardType);
-        const styleInFooter = ['print','media-stream','fiction-realm','format-deck','tech-archive'].includes(cardType);
-
-        if (cardType === 'print') {
-            html += `<div class="card-footer-h"><span>${diary.date}</span><span>${styleName}</span></div>`;
-        } else if (cardType === 'media-stream') {
-            html += `<div class="card-footer-h"><span>${diary.date}</span><span>${styleName}</span></div>`;
-        } else if (cardType === 'fiction-realm') {
-            html += `<div class="card-footer-h"><span>${styleName}</span><span>- ${nid % 99 + 1} -</span></div>`;
-        } else if (cardType === 'format-deck') {
-            html += `<div class="card-footer-h"><span>${diary.date}</span><span>${styleName}</span></div>`;
-        } else if (cardType === 'tech-archive') {
-            html += `<div class="card-footer-h"><span>${diary.date}</span><span>${styleName}</span></div>`;
-        } else if (['repair','life-logbook','creative-engine','misc-mystery'].includes(cardType)) {
-            html += `<div class="card-style">${styleName}</div>`;
-        } else if (!styleInHeader) {
-            html += `<div class="card-style">${styleName}</div>`;
-        }
-
-        html += '</a>';
-        return html;
-    }
-
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    // 将 id（可能是 UUID 或数字）转为数值，用于哈希分配
-    function numericId(id) {
-        if (typeof id === 'number') return id;
-        if (typeof id === 'string') {
-            let hash = 0;
-            for (let i = 0; i < id.length; i++) {
-                hash = ((hash << 5) - hash) + id.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash);
-        }
-        return 0;
-    }
-
-    // 加载并渲染
     async function loadGallery() {
         galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... 加载中... <<<</div>';
 
-        // 并行查询 DIARIES 和 STYLE_POOL
         const [diaryRes, styleRes] = await Promise.all([
             supabase.from('DIARIES').select('*').order('date', { ascending: false }),
             supabase.from('STYLE_POOL').select('category').eq('active', true)
@@ -904,35 +221,50 @@
             return;
         }
 
-        // 构建胶囊→卡片类型映射
+        function cat2slug(cat) {
+            if (!cat) return null;
+            const lower = cat.toLowerCase().trim();
+            const map = {
+                'code-forge':'code-forge','\u4ee3\u7801\u7f16\u7a0b':'code-forge',
+                'tech-archive':'tech-archive','\u6280\u672f\u6587\u6863':'tech-archive',
+                'work-bench':'work-bench','\u5de5\u4f5c\u529e\u516c':'work-bench',
+                'life-logbook':'life-logbook','\u751f\u6d3b\u8bb0\u5f55':'life-logbook',
+                'social-broadcast':'social-broadcast','\u793e\u4ea4\u7f51\u7edc':'social-broadcast',
+                'creative-engine':'creative-engine','\u521b\u610f\u5199\u4f5c':'creative-engine',
+                'media-stream':'media-stream','\u5a92\u4f53\u901a\u7a3f':'media-stream',
+                'role-engine':'role-engine','\u89d2\u8272\u626e\u6f14':'role-engine',
+                'fiction-realm':'fiction-realm','\u5c0f\u8bf4\u53d9\u4e8b':'fiction-realm',
+                'format-deck':'format-deck','\u683c\u5f0f\u89c4\u8303':'format-deck',
+                'misc-mystery':'misc-mystery','\u672a\u77e5\u5206\u7c7b':'misc-mystery',
+            };
+            return map[lower] || map[cat] || null;
+        }
+
         const capsuleMap = {};
         if (styleRes.data && !styleRes.error) {
             styleRes.data.forEach(row => {
                 if (row.category) {
-                    const slug = categoryToSlug(row.category);
+                    const slug = cat2slug(row.category);
                     if (slug) capsuleMap[row.category.trim()] = slug;
                 }
             });
         }
 
+        const baseTypes = ['default','repair','print','overheat','tamagotchi','api-debt','panic'];
+
         const diaries = data.map((row, i) => {
             let cardType;
             const capsule = (row.capsule || '').trim();
             if (!capsule || capsule === '/') {
-                // 无胶囊 → 从 7 种基础卡片中按序号轮换
                 cardType = baseTypes[i % baseTypes.length];
             } else {
-                // 有胶囊 → 匹配 STYLE_POOL.category
-                cardType = capsuleMap[capsule] || categoryToSlug(capsule);
-                if (!cardType) {
-                    // 兜底：无法匹配时随机基础卡片
-                    cardType = baseTypes[i % baseTypes.length];
-                }
+                cardType = capsuleMap[capsule] || cat2slug(capsule);
+                if (!cardType) cardType = baseTypes[i % baseTypes.length];
             }
             return {
                 id: row.id,
-                title: row.title || '无标题',
-                date: formatDateForUI(row.date),
+                title: row.title || '\u65e0\u6807\u9898',
+                date: (function(d){if(!d)return'----/--/--';var p=d.split('-');return p.length===3?p[0]+'/'+p[1]+'/'+p[2]:d;})(row.date),
                 dateRaw: row.date,
                 highlights: Array.isArray(row.highlights) ? row.highlights : [],
                 cardType: cardType
@@ -940,14 +272,11 @@
         });
 
         currentDiaries = diaries;
-
-        // 行优先重排：较新日记出现在第一行而非第一列
         renderAll();
-        galleryCount.textContent = `卡片 ${diaries.length}`;
+        galleryCount.textContent = `\u5361\u7247 ${diaries.length}`;
         updateSystemStatus(diaries.length);
     }
 
-    // 视口列数（与 CSS 媒体查询同步）
     function getColumnCount() {
         const w = window.innerWidth;
         if (w >= 1200) return 4;
@@ -956,7 +285,6 @@
         return 1;
     }
 
-    // 将行优先数组重排为列优先（适配 CSS columns 的填充顺序）
     function reorderRowToColumn(items, colCount) {
         if (colCount <= 1) return items.slice();
         const cols = Array.from({ length: colCount }, () => []);
@@ -973,7 +301,6 @@
         });
     }
 
-    // 窗口缩放导致列数变化时重新渲染
     let lastColCount = getColumnCount();
     window.addEventListener('resize', () => {
         const newColCount = getColumnCount();
@@ -983,15 +310,13 @@
         }
     });
 
-    // 更新系统状态栏
     function updateSystemStatus(count) {
         const statusCells = document.querySelectorAll('.screen-header-stats div');
         if (statusCells.length >= 5) {
-            statusCells[4].textContent = `DIARY_DB: 0x${count.toString(16).toUpperCase().padStart(4, '0')} | SYNC: ${new Date().toISOString().slice(0, 10)}`;
+            statusCells[4].textContent = `DIARY_DB: 0x${count.toString(16).toUpperCase().padStart(4,'0')} | SYNC: ${new Date().toISOString().slice(0,10)}`;
         }
     }
 
-    // 初始化
     async function init() {
         const authed = await checkAuth();
         if (!authed) return;
