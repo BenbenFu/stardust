@@ -27,7 +27,6 @@
     }
     @media (min-width: 600px) { .gallery-grid { column-count: 2; } }
     @media (min-width: 900px) { .gallery-grid { column-count: 3; } }
-    @media (min-width: 1200px) { .gallery-grid { column-count: 4; } }
 
     .gallery-footer {
         display: flex;
@@ -290,7 +289,6 @@
 
     function getColumnCount() {
         const w = window.innerWidth;
-        if (w >= 1200) return 4;
         if (w >= 900) return 3;
         if (w >= 600) return 2;
         return 1;
