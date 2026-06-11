@@ -76,7 +76,7 @@
         const cardType = diary.cardType || 'default';
         const highlights = diary.highlights || [];
         const dateRaw = diary.dateRaw || diary.date;
-        const styleName = styleLabels[cardType] || cardType;
+        const styleName = diary.capsuleName || styleLabels[cardType] || cardType;
         const sep = sepChars[cardType] || '';
 
         let html = `<a class="gallery-card card-type-${cardType}" href="diary.html?date=${dateRaw}" target="_blank" title="${escapeHtml(diary.title)}" data-id="${diary.id}" data-title="${escapeHtml(diary.title)}" data-date="${diary.date}" data-date-raw="${dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;

@@ -203,18 +203,17 @@
     async function loadGallery() {
         galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... 加载中... <<<</div>';
 
-        const [diaryRes, styleRes] = await Promise.all([
-            supabase.from('DIARIES').select('*').order('date', { ascending: false }),
-            supabase.from('STYLE_POOL').select('category').eq('active', true)
-        ]);
+        const { data, error } = await supabase
+            .from('DIARIES')
+            .select('*')
+            .order('date', { ascending: false });
 
-        if (diaryRes.error) {
-            console.error('Gallery load error:', diaryRes.error);
-            galleryGrid.innerHTML = `<div class="gallery-status">>>> ERROR: 数据加载失败<br>CODE: ${diaryRes.error.code}<br>MSG: ${diaryRes.error.message}</div>`;
+        if (error) {
+            console.error('Gallery load error:', error);
+            galleryGrid.innerHTML = `<div class="gallery-status">>>> ERROR: 数据加载失败<br>CODE: ${error.code}<br>MSG: ${error.message}</div>`;
             return;
         }
 
-        const data = diaryRes.data;
         if (!data || data.length === 0) {
             galleryGrid.innerHTML = '<div class="gallery-status">>>> EMPTY: 日记数据库中暂无记录。</div>';
             galleryCount.textContent = '卡片 0';
@@ -225,55 +224,50 @@
             if (!cat) return null;
             const lower = cat.toLowerCase().trim();
             const map = {
-                'code-forge':'code-forge','\u4ee3\u7801\u7f16\u7a0b':'code-forge',
-                'tech-archive':'tech-archive','\u6280\u672f\u6587\u6863':'tech-archive',
-                'work-bench':'work-bench','\u5de5\u4f5c\u529e\u516c':'work-bench',
-                'life-logbook':'life-logbook','\u751f\u6d3b\u8bb0\u5f55':'life-logbook',
-                'social-broadcast':'social-broadcast','\u793e\u4ea4\u7f51\u7edc':'social-broadcast',
-                'creative-engine':'creative-engine','\u521b\u610f\u5199\u4f5c':'creative-engine',
-                'media-stream':'media-stream','\u5a92\u4f53\u901a\u7a3f':'media-stream',
-                'role-engine':'role-engine','\u89d2\u8272\u626e\u6f14':'role-engine',
-                'fiction-realm':'fiction-realm','\u5c0f\u8bf4\u53d9\u4e8b':'fiction-realm',
-                'format-deck':'format-deck','\u683c\u5f0f\u89c4\u8303':'format-deck',
-                'misc-mystery':'misc-mystery','\u672a\u77e5\u5206\u7c7b':'misc-mystery',
+                'code-forge':'code-forge','代码编程':'code-forge',
+                'tech-archive':'tech-archive','技术文档':'tech-archive',
+                'work-bench':'work-bench','工作办公':'work-bench',
+                'life-logbook':'life-logbook','生活记录':'life-logbook',
+                'social-broadcast':'social-broadcast','社交网络':'social-broadcast',
+                'creative-engine':'creative-engine','创意写作':'creative-engine',
+                'media-stream':'media-stream','媒体通稿':'media-stream',
+                'role-engine':'role-engine','角色扮演':'role-engine',
+                'fiction-realm':'fiction-realm','小说叙事':'fiction-realm',
+                'format-deck':'format-deck','格式规范':'format-deck',
+                'misc-mystery':'misc-mystery','未知分类':'misc-mystery',
             };
             return map[lower] || map[cat] || null;
-        }
-
-        const capsuleMap = {};
-        if (styleRes.data && !styleRes.error) {
-            styleRes.data.forEach(row => {
-                if (row.category) {
-                    const slug = cat2slug(row.category);
-                    if (slug) capsuleMap[row.category.trim()] = slug;
-                }
-            });
         }
 
         const baseTypes = ['default','repair','print','overheat','tamagotchi','api-debt','panic'];
 
         const diaries = data.map((row, i) => {
-            let cardType;
             const capsule = (row.capsule || '').trim();
+            let cardType, capsuleName;
             if (!capsule || capsule === '/') {
                 cardType = baseTypes[i % baseTypes.length];
+                capsuleName = null;
             } else {
-                cardType = capsuleMap[capsule] || cat2slug(capsule);
-                if (!cardType) cardType = baseTypes[i % baseTypes.length];
+                const slug = cat2slug(capsule);
+                cardType = slug || baseTypes[i % baseTypes.length];
+                capsuleName = capsule;  // 如实显示 capsule 值
             }
             return {
                 id: row.id,
-                title: row.title || '\u65e0\u6807\u9898',
+                title: row.title || '无标题',
                 date: (function(d){if(!d)return'----/--/--';var p=d.split('-');return p.length===3?p[0]+'/'+p[1]+'/'+p[2]:d;})(row.date),
                 dateRaw: row.date,
                 highlights: Array.isArray(row.highlights) ? row.highlights : [],
-                cardType: cardType
+                cardType: cardType,
+                capsuleName: capsuleName
             };
         });
 
         currentDiaries = diaries;
         renderAll();
-        galleryCount.textContent = `\u5361\u7247 ${diaries.length}`;
+        galleryCount.textContent = `卡片 ${diaries.length}`;
+        updateSystemStatus(diaries.length);
+    }
         updateSystemStatus(diaries.length);
     }
 
