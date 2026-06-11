@@ -230,6 +230,7 @@
         }
         console.log('[GALLERY] styleRes:', styleRes);
         console.log('[GALLERY] nameToCategory:', nameToCategory);
+        console.log('[GALLERY] all categories:', [...new Set(Object.values(nameToCategory))]);
 
         function cat2slug(cat) {
             if (!cat) return null;
