@@ -228,6 +228,8 @@
                 if (row.name) nameToCategory[row.name] = row.category;
             });
         }
+        console.log('[GALLERY] styleRes:', styleRes);
+        console.log('[GALLERY] nameToCategory:', nameToCategory);
 
         function cat2slug(cat) {
             if (!cat) return null;
@@ -275,6 +277,9 @@
         });
 
         currentDiaries = diaries;
+        console.log('[GALLERY] sample:', diaries.slice(0, 5).map((d, j) => ({
+            title: d.title, capsule: data[j]?.capsule, cardType: d.cardType
+        })));
         renderAll();
         galleryCount.textContent = `卡片 ${diaries.length}`;
         updateSystemStatus(diaries.length);
