@@ -203,21 +203,30 @@
     async function loadGallery() {
         galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... 加载中... <<<</div>';
 
-        const { data, error } = await supabase
-            .from('DIARIES')
-            .select('*')
-            .order('date', { ascending: false });
+        const [diaryRes, styleRes] = await Promise.all([
+            supabase.from('DIARIES').select('*').order('date', { ascending: false }),
+            supabase.from('STYLE_POOL').select('name, category')
+        ]);
 
-        if (error) {
-            console.error('Gallery load error:', error);
-            galleryGrid.innerHTML = `<div class="gallery-status">>>> ERROR: 数据加载失败<br>CODE: ${error.code}<br>MSG: ${error.message}</div>`;
+        if (diaryRes.error) {
+            console.error('Gallery load error:', diaryRes.error);
+            galleryGrid.innerHTML = `<div class="gallery-status">>>> ERROR: 数据加载失败<br>CODE: ${diaryRes.error.code}<br>MSG: ${diaryRes.error.message}</div>`;
             return;
         }
 
+        const data = diaryRes.data;
         if (!data || data.length === 0) {
             galleryGrid.innerHTML = '<div class="gallery-status">>>> EMPTY: 日记数据库中暂无记录。</div>';
             galleryCount.textContent = '卡片 0';
             return;
+        }
+
+        // 构建 STYLE_POOL.name → category 映射
+        const nameToCategory = {};
+        if (styleRes.data && !styleRes.error) {
+            styleRes.data.forEach(row => {
+                if (row.name) nameToCategory[row.name] = row.category;
+            });
         }
 
         function cat2slug(cat) {
@@ -248,9 +257,11 @@
                 cardType = baseTypes[i % baseTypes.length];
                 capsuleName = null;
             } else {
-                const slug = cat2slug(capsule);
+                // capsule → STYLE_POOL.name → category → 卡片类型
+                const category = nameToCategory[capsule];
+                const slug = cat2slug(category || capsule);
                 cardType = slug || baseTypes[i % baseTypes.length];
-                capsuleName = capsule;  // 如实显示 capsule 值
+                capsuleName = capsule;
             }
             return {
                 id: row.id,
