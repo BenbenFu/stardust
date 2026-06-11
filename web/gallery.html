@@ -228,14 +228,18 @@
                 if (row.name) nameToCategory[row.name] = row.category;
             });
         }
-        console.log('[GALLERY] styleRes:', styleRes);
-        console.log('[GALLERY] nameToCategory:', nameToCategory);
-        console.log('[GALLERY] all categories:', [...new Set(Object.values(nameToCategory))]);
+        console.log('[GALLERY] categories:', [...new Set(Object.values(nameToCategory))]);
+        console.log('[GALLERY] sample:', data.slice(0, 5).map(r => ({ title: r.title, capsule: r.capsule })));
+
 
         function cat2slug(cat) {
             if (!cat) return null;
             const lower = cat.toLowerCase().trim();
             const map = {
+                'code':'code-forge','tech':'tech-archive','work':'work-bench',
+                'life':'life-logbook','social':'social-broadcast','creative':'creative-engine',
+                'media':'media-stream','format':'format-deck','misc':'misc-mystery',
+                'fiction':'fiction-realm','roleplay':'role-engine',
                 'code-forge':'code-forge','代码编程':'code-forge',
                 'tech-archive':'tech-archive','技术文档':'tech-archive',
                 'work-bench':'work-bench','工作办公':'work-bench',
@@ -278,9 +282,7 @@
         });
 
         currentDiaries = diaries;
-        console.log('[GALLERY] sample:', diaries.slice(0, 5).map((d, j) => ({
-            title: d.title, capsule: data[j]?.capsule, cardType: d.cardType
-        })));
+        console.log('[GALLERY] mapped:', diaries.slice(0, 5).map(d => ({ title: d.title, cardType: d.cardType, cap: d.capsuleName })));
         renderAll();
         galleryCount.textContent = `卡片 ${diaries.length}`;
         updateSystemStatus(diaries.length);
