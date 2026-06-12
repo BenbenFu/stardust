@@ -77,12 +77,28 @@
         const highlights = diary.highlights || [];
         const dateRaw = diary.dateRaw || diary.date;
         const styleName = diary.capsuleName || styleLabels[cardType] || cardType;
-        const sep = sepChars[cardType] || '';
-        const csAttr = diary.capsuleCSS ? ` data-cs="${escapeHtml(styleName)}"` : '';
+        const sep = sepChars[cardType] || '*  *  *';
+        const isCustom = !!diary.capsuleCSS;
+        const csAttr = isCustom ? ` data-cs="${escapeHtml(styleName)}"` : '';
+        const typeClass = isCustom ? '' : ` card-type-${cardType}`;
 
-        let html = `<a class="gallery-card card-type-${cardType}"${csAttr} href="diary.html?date=${dateRaw}" target="_blank" title="${escapeHtml(diary.title)}" data-id="${diary.id}" data-title="${escapeHtml(diary.title)}" data-date="${diary.date}" data-date-raw="${dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;
+        let html = `<a class="gallery-card${typeClass}"${csAttr} href="diary.html?date=${dateRaw}" target="_blank" title="${escapeHtml(diary.title)}" data-id="${diary.id}" data-title="${escapeHtml(diary.title)}" data-date="${diary.date}" data-date-raw="${dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;
 
         const nid = numericId(diary.id);
+
+        // custom 类型：最简骨架，无类型特有装饰
+        if (isCustom) {
+            html += `<div class="card-title">${escapeHtml(diary.title)}</div>`;
+            html += `<div class="card-date">${diary.date}</div>`;
+            if (highlights.length > 0) {
+                html += renderHighlights(highlights, sep);
+            } else {
+                html += '<p class="card-no-highlight">[ NO_HIGHLIGHTS ]</p>';
+            }
+            html += `<div class="card-style">${escapeHtml(styleName)}</div>`;
+            html += '</a>';
+            return html;
+        }
 
         // --- 类型特有头部 ---
         switch (cardType) {

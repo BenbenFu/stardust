@@ -269,6 +269,8 @@
                 cardType = slug || baseTypes[i % baseTypes.length];
                 capsuleName = capsule;
                 capsuleCSS = (style && style.card_css) ? style.card_css : null;
+                // 有自定义 CSS 时完全替换，不用 18 种硬编码类型
+                if (capsuleCSS) cardType = 'custom';
             }
             return {
                 id: row.id,
