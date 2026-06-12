@@ -204,7 +204,7 @@
 
         const [diaryRes, styleRes] = await Promise.all([
             supabase.from('DIARIES').select('*').order('date', { ascending: false }),
-            supabase.from('STYLE_POOL').select('name, category')
+            supabase.from('STYLE_POOL').select('name, category, card_css')
         ]);
 
         if (diaryRes.error) {
@@ -220,15 +220,14 @@
             return;
         }
 
-        // 构建 STYLE_POOL.name → category 映射
-        const nameToCategory = {};
+        // 构建 STYLE_POOL.name → { category, card_css } 映射
+        const styleMap = {};
         if (styleRes.data && !styleRes.error) {
             styleRes.data.forEach(row => {
-                if (row.name) nameToCategory[row.name] = row.category;
+                if (row.name) styleMap[row.name] = { category: row.category, card_css: row.card_css || null };
             });
         }
-        console.log('[GALLERY] categories:', [...new Set(Object.values(nameToCategory))]);
-        console.log('[GALLERY] sample:', data.slice(0, 5).map(r => ({ title: r.title, capsule: r.capsule })));
+        console.log('[GALLERY] custom css count:', Object.values(styleMap).filter(s => s.card_css).length);
 
 
         function cat2slug(cat) {
@@ -258,16 +257,18 @@
 
         const diaries = data.map((row, i) => {
             const capsule = (row.capsule || '').trim();
-            let cardType, capsuleName;
+            let cardType, capsuleName, capsuleCSS;
             if (!capsule || capsule === '/') {
                 cardType = baseTypes[i % baseTypes.length];
                 capsuleName = null;
+                capsuleCSS = null;
             } else {
-                // capsule → STYLE_POOL.name → category → 卡片类型
-                const category = nameToCategory[capsule];
+                const style = styleMap[capsule];
+                const category = style ? style.category : null;
                 const slug = cat2slug(category || capsule);
                 cardType = slug || baseTypes[i % baseTypes.length];
                 capsuleName = capsule;
+                capsuleCSS = (style && style.card_css) ? style.card_css : null;
             }
             return {
                 id: row.id,
@@ -276,15 +277,45 @@
                 dateRaw: row.date,
                 highlights: Array.isArray(row.highlights) ? row.highlights : [],
                 cardType: cardType,
-                capsuleName: capsuleName
+                capsuleName: capsuleName,
+                capsuleCSS: capsuleCSS
             };
         });
 
         currentDiaries = diaries;
-        console.log('[GALLERY] mapped:', diaries.slice(0, 5).map(d => ({ title: d.title, cardType: d.cardType, cap: d.capsuleName })));
+
+        // 注入数据库中的自定义 CSS（去重，每个胶囊只注入一次）
+        const injectedCSS = new Set();
+        let styleEl = document.getElementById('capsule-custom-css');
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = 'capsule-custom-css';
+            document.head.appendChild(styleEl);
+        }
+        diaries.forEach(d => {
+            if (d.capsuleCSS && !injectedCSS.has(d.capsuleName)) {
+                injectedCSS.add(d.capsuleName);
+                styleEl.textContent += '\n' + scopeCSS(d.capsuleCSS, d.capsuleName);
+            }
+        });
+
+        console.log('[GALLERY] mapped:', diaries.slice(0, 5).map(d => ({ title: d.title, cardType: d.cardType, cap: d.capsuleName, css: !!d.capsuleCSS })));
         renderAll();
         galleryCount.textContent = `卡片 ${diaries.length}`;
         updateSystemStatus(diaries.length);
+    }
+
+    // 将数据库中的 CSS 片段加上 [data-cs="name"] 作用域前缀
+    function scopeCSS(css, name) {
+        // 转义 name 中的特殊字符（引号、反斜杠）
+        const attr = CSS.escape(name);
+        // 在每个顶层选择器前加上作用域
+        return css.replace(/([^\n{]*)\s*\{/g, (match, selector) => {
+            const trimmed = selector.trim();
+            if (!trimmed || trimmed.startsWith('@')) return match;
+            const parts = trimmed.split(',').map(s => `[data-cs="${attr}"] ${s.trim()}`);
+            return parts.join(', ') + ' {';
+        });
     }
 
     function getColumnCount() {
