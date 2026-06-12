@@ -148,10 +148,7 @@ padding: 10px;
 background: transparent;
 color: var(--pixel-dark);
 transition: transform 0.1s steps(2);
-filter: grayscale(0.6) sepia(0.3) hue-rotate(50deg) saturate(0.5) contrast(1.05) brightness(0.92);
 ```
-
-基类自带一层做旧滤镜（模拟扭蛋机画面质感）。如不需要，在自定义 CSS 中使用 `filter: none` 覆盖。
 
 `.card-highlight-item::before` 默认 `content: "> "`，需自定义前缀时显式覆盖 `content`。
 

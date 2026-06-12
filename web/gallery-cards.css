@@ -13,8 +13,6 @@
         color: var(--pixel-dark);
         cursor: pointer;
         transition: transform 0.1s steps(2);
-        /* 同款扭蛋机滤镜：灰度 → 暖棕 → 绿偏移 → 降饱和 */
-        filter: grayscale(0.6) sepia(0.3) hue-rotate(50deg) saturate(0.5) contrast(1.05) brightness(0.92);
     }
     .gallery-card:hover {
         transform: translate(-2px, -2px);
