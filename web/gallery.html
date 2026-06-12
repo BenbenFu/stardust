@@ -197,96 +197,68 @@
 
     const galleryGrid = document.getElementById('galleryGrid');
     const galleryCount = document.getElementById('galleryCount');
+    const PAGE_SIZE = 20;
     let currentDiaries = [];
+    let styleMap = {};
+    let hasMore = true;
+    let isLoading = false;
+    let totalCount = null;
 
-    async function loadGallery() {
-        galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... 加载中... <<<</div>';
-
-        const [diaryRes, styleRes] = await Promise.all([
-            supabase.from('DIARIES').select('*').order('date', { ascending: false }),
-            supabase.from('STYLE_POOL').select('name, category, card_css')
-        ]);
-
-        if (diaryRes.error) {
-            console.error('Gallery load error:', diaryRes.error);
-            galleryGrid.innerHTML = `<div class="gallery-status">>>> ERROR: 数据加载失败<br>CODE: ${diaryRes.error.code}<br>MSG: ${diaryRes.error.message}</div>`;
-            return;
-        }
-
-        const data = diaryRes.data;
-        if (!data || data.length === 0) {
-            galleryGrid.innerHTML = '<div class="gallery-status">>>> EMPTY: 日记数据库中暂无记录。</div>';
-            galleryCount.textContent = '卡片 0';
-            return;
-        }
-
-        // 构建 STYLE_POOL.name → { category, card_css } 映射
-        const styleMap = {};
-        if (styleRes.data && !styleRes.error) {
-            styleRes.data.forEach(row => {
-                if (row.name) styleMap[row.name] = { category: row.category, card_css: row.card_css || null };
-            });
-        }
-        console.log('[GALLERY] custom css count:', Object.values(styleMap).filter(s => s.card_css).length);
-
-
-        function cat2slug(cat) {
-            if (!cat) return null;
-            const lower = cat.toLowerCase().trim();
-            const map = {
-                'code':'code-forge','tech':'tech-archive','work':'work-bench',
-                'life':'life-logbook','social':'social-broadcast','creative':'creative-engine',
-                'media':'media-stream','format':'format-deck','misc':'misc-mystery',
-                'fiction':'fiction-realm','roleplay':'role-engine',
-                'code-forge':'code-forge','代码编程':'code-forge',
-                'tech-archive':'tech-archive','技术文档':'tech-archive',
-                'work-bench':'work-bench','工作办公':'work-bench',
-                'life-logbook':'life-logbook','生活记录':'life-logbook',
-                'social-broadcast':'social-broadcast','社交网络':'social-broadcast',
-                'creative-engine':'creative-engine','创意写作':'creative-engine',
-                'media-stream':'media-stream','媒体通稿':'media-stream',
-                'role-engine':'role-engine','角色扮演':'role-engine',
-                'fiction-realm':'fiction-realm','小说叙事':'fiction-realm',
-                'format-deck':'format-deck','格式规范':'format-deck',
-                'misc-mystery':'misc-mystery','未知分类':'misc-mystery',
-            };
-            return map[lower] || map[cat] || null;
-        }
-
+    // 将原始 DIARIES 行映射为日记数据
+    function mapDiary(row, i) {
+        const capsule = (row.capsule || '').trim();
+        let cardType, capsuleName, capsuleCSS;
         const baseTypes = ['default','repair','print','overheat','tamagotchi','api-debt','panic'];
+        if (!capsule || capsule === '/') {
+            cardType = baseTypes[i % baseTypes.length];
+            capsuleName = null;
+            capsuleCSS = null;
+        } else {
+            const style = styleMap[capsule];
+            const category = style ? style.category : null;
+            const slug = cat2slug(category || capsule);
+            cardType = slug || baseTypes[i % baseTypes.length];
+            capsuleName = capsule;
+            capsuleCSS = (style && style.card_css) ? style.card_css : null;
+            if (capsuleCSS) cardType = 'custom';
+        }
+        return {
+            id: row.id,
+            title: row.title || '\u65e0\u6807\u9898',
+            date: (function(d){if(!d)return'----/--/--';var p=d.split('-');return p.length===3?p[0]+'/'+p[1]+'/'+p[2]:d;})(row.date),
+            dateRaw: row.date,
+            highlights: Array.isArray(row.highlights) ? row.highlights : [],
+            cardType: cardType,
+            capsuleName: capsuleName,
+            capsuleCSS: capsuleCSS
+        };
+    }
 
-        const diaries = data.map((row, i) => {
-            const capsule = (row.capsule || '').trim();
-            let cardType, capsuleName, capsuleCSS;
-            if (!capsule || capsule === '/') {
-                cardType = baseTypes[i % baseTypes.length];
-                capsuleName = null;
-                capsuleCSS = null;
-            } else {
-                const style = styleMap[capsule];
-                const category = style ? style.category : null;
-                const slug = cat2slug(category || capsule);
-                cardType = slug || baseTypes[i % baseTypes.length];
-                capsuleName = capsule;
-                capsuleCSS = (style && style.card_css) ? style.card_css : null;
-                // 有自定义 CSS 时完全替换，不用 18 种硬编码类型
-                if (capsuleCSS) cardType = 'custom';
-            }
-            return {
-                id: row.id,
-                title: row.title || '无标题',
-                date: (function(d){if(!d)return'----/--/--';var p=d.split('-');return p.length===3?p[0]+'/'+p[1]+'/'+p[2]:d;})(row.date),
-                dateRaw: row.date,
-                highlights: Array.isArray(row.highlights) ? row.highlights : [],
-                cardType: cardType,
-                capsuleName: capsuleName,
-                capsuleCSS: capsuleCSS
-            };
-        });
+    function cat2slug(cat) {
+        if (!cat) return null;
+        const lower = cat.toLowerCase().trim();
+        const map = {
+            'code':'code-forge','tech':'tech-archive','work':'work-bench',
+            'life':'life-logbook','social':'social-broadcast','creative':'creative-engine',
+            'media':'media-stream','format':'format-deck','misc':'misc-mystery',
+            'fiction':'fiction-realm','roleplay':'role-engine',
+            'code-forge':'code-forge','\u4ee3\u7801\u7f16\u7a0b':'code-forge',
+            'tech-archive':'tech-archive','\u6280\u672f\u6587\u6863':'tech-archive',
+            'work-bench':'work-bench','\u5de5\u4f5c\u529e\u516c':'work-bench',
+            'life-logbook':'life-logbook','\u751f\u6d3b\u8bb0\u5f55':'life-logbook',
+            'social-broadcast':'social-broadcast','\u793e\u4ea4\u7f51\u7edc':'social-broadcast',
+            'creative-engine':'creative-engine','\u521b\u610f\u5199\u4f5c':'creative-engine',
+            'media-stream':'media-stream','\u5a92\u4f53\u901a\u7a3f':'media-stream',
+            'role-engine':'role-engine','\u89d2\u8272\u626e\u6f14':'role-engine',
+            'fiction-realm':'fiction-realm','\u5c0f\u8bf4\u53d9\u4e8b':'fiction-realm',
+            'format-deck':'format-deck','\u683c\u5f0f\u89c4\u8303':'format-deck',
+            'misc-mystery':'misc-mystery','\u672a\u77e5\u5206\u7c7b':'misc-mystery',
+        };
+        return map[lower] || map[cat] || null;
+    }
 
-        currentDiaries = diaries;
-
-        // 注入数据库中的自定义 CSS（去重，每个胶囊只注入一次）
+    // 注入自定义 CSS
+    function injectCustomCSS(diaries) {
         const injectedCSS = new Set();
         let styleEl = document.getElementById('capsule-custom-css');
         if (!styleEl) {
@@ -300,11 +272,75 @@
                 styleEl.textContent += '\n' + scopeCSS(d.capsuleCSS, d.capsuleName);
             }
         });
+    }
 
-        console.log('[GALLERY] mapped:', diaries.slice(0, 5).map(d => ({ title: d.title, cardType: d.cardType, cap: d.capsuleName, css: !!d.capsuleCSS })));
+    // 加载更多（初始加载和滚动加载共用）
+    async function loadMoreDiaries() {
+        if (isLoading || !hasMore) return;
+        isLoading = true;
+
+        const offset = currentDiaries.length;
+        const showLoader = offset > 0;
+
+        const { data, error, count } = await supabase
+            .from('DIARIES')
+            .select('*', { count: 'exact' })
+            .order('date', { ascending: false })
+            .range(offset, offset + PAGE_SIZE - 1);
+
+        isLoading = false;
+
+        if (error) {
+            console.error('Load error:', error);
+            return;
+        }
+
+        if (count !== null) totalCount = count;
+
+        if (!data || data.length === 0) {
+            hasMore = false;
+            return;
+        }
+
+        if (data.length < PAGE_SIZE) hasMore = false;
+
+        const newDiaries = data.map((row, i) => mapDiary(row, offset + i));
+        currentDiaries = currentDiaries.concat(newDiaries);
+        injectCustomCSS(newDiaries);
         renderAll();
-        galleryCount.textContent = `卡片 ${diaries.length}`;
-        updateSystemStatus(diaries.length);
+        galleryCount.textContent = totalCount ? `\u5361\u7247 ${currentDiaries.length} / ${totalCount}` : `\u5361\u7247 ${currentDiaries.length}`;
+        updateSystemStatus(totalCount || currentDiaries.length);
+    }
+
+    // 首次加载：获取 STYLE_POOL + 首页日记
+    async function initGallery() {
+        galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... \u52a0\u8f7d\u4e2d... <<<</div>';
+
+        const styleRes = await supabase.from('STYLE_POOL').select('name, category, card_css');
+        if (styleRes.data && !styleRes.error) {
+            styleRes.data.forEach(row => {
+                if (row.name) styleMap[row.name] = { category: row.category, card_css: row.card_css || null };
+            });
+        }
+
+        await loadMoreDiaries();
+
+        if (currentDiaries.length === 0) {
+            galleryGrid.innerHTML = '<div class="gallery-status">>>> EMPTY: \u65e5\u8bb0\u6570\u636e\u5e93\u4e2d\u6682\u65e0\u8bb0\u5f55\u3002</div>';
+            galleryCount.textContent = '\u5361\u7247 0';
+            return;
+        }
+
+        // 滚动触底加载
+        const lcd = document.querySelector('.embedded-lcd');
+        if (lcd) {
+            lcd.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = lcd;
+                if (scrollHeight - scrollTop - clientHeight < 300) {
+                    loadMoreDiaries();
+                }
+            });
+        }
     }
 
     // 将数据库中的 CSS 片段加上 [data-cs="name"] 作用域前缀
@@ -342,12 +378,15 @@
     }
 
     function renderAll() {
+        const lcd = document.querySelector('.embedded-lcd');
+        const scrollTop = lcd ? lcd.scrollTop : 0;
         const colCount = getColumnCount();
         const reordered = reorderRowToColumn(currentDiaries, colCount);
         galleryGrid.innerHTML = '';
         reordered.forEach(diary => {
             galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary));
         });
+        if (lcd) lcd.scrollTop = scrollTop;
     }
 
     let lastColCount = getColumnCount();
@@ -369,7 +408,7 @@
     async function init() {
         const authed = await checkAuth();
         if (!authed) return;
-        await loadGallery();
+        await initGallery();
     }
 
     init();
