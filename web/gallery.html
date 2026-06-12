@@ -315,7 +315,14 @@
         return css.replace(/([^\n{]*)\s*\{/g, (match, selector) => {
             const trimmed = selector.trim();
             if (!trimmed || trimmed.startsWith('@')) return match;
-            const parts = trimmed.split(',').map(s => `[data-cs="${attr}"] ${s.trim()}`);
+            const parts = trimmed.split(',').map(s => {
+                const sel = s.trim();
+                // .gallery-card 和 data-cs 是同一个元素，紧贴不加空格
+                if (sel.startsWith('.gallery-card')) {
+                    return `[data-cs="${attr}"]${sel}`;
+                }
+                return `[data-cs="${attr}"] ${sel}`;
+            });
             return parts.join(', ') + ' {';
         });
     }
