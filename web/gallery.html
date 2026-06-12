@@ -23,7 +23,13 @@
     .gallery-grid {
         column-count: 1;
         column-gap: 20px;
-        padding: 16px 12px;
+        padding: 12px 12px 16px 12px;
+    }
+    .gallery-nav {
+        display: flex;
+        gap: 8px;
+        padding: 0 12px;
+        flex-shrink: 0;
     }
     @media (min-width: 600px) { .gallery-grid { column-count: 2; } }
     @media (min-width: 900px) { .gallery-grid { column-count: 3; } }
@@ -88,6 +94,12 @@
         </div>
 
         <div class="burn-in-ghost" style="top:140px;left:40%;">GALLERY_SECTOR_0x0A</div>
+
+        <!-- 快捷导航 -->
+        <div class="gallery-nav">
+            <a href="diary.html" class="hardware-btn btn-secondary">[ < BACK_TO_DIARY ]</a>
+            <a href="style.html" class="hardware-btn btn-secondary">[ STYLE_PICKER ]</a>
+        </div>
 
         <!-- 瀑布流卡片网格 -->
         <div class="gallery-grid" id="galleryGrid">
