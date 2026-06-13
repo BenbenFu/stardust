@@ -67,14 +67,29 @@
         padding: 16px;
         overflow-y: auto;
         display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-        align-content: flex-start;
+        justify-content: center;
+        align-items: flex-start;
         min-height: 200px;
     }
     .preview-area .gallery-card {
         width: 300px;
         flex-shrink: 0;
+    }
+
+    .info-panel {
+        background: rgba(0,0,0,0.03);
+        border: 1px solid var(--pixel-dim);
+        padding: 8px 10px;
+        font-size: 10px;
+        display: none;
+    }
+    .info-panel.show { display: block; }
+    .info-panel .info-row { margin-bottom: 4px; display: flex; gap: 6px; }
+    .info-panel .info-label { color: var(--pixel-dim); flex-shrink: 0; min-width: 50px; }
+    .info-panel .info-value { color: var(--pixel-dark); word-break: break-all; flex: 1; }
+    .info-panel button {
+        width: auto; font-size: 9px; padding: 2px 8px;
+        margin-top: 4px; background: var(--pixel-dark); color: var(--gba-bg);
     }
 
     .status {
@@ -109,6 +124,13 @@
     </div>
 
     <label>card_css 编辑区</label>
+
+    <div class="info-panel" id="infoPanel">
+        <div class="info-row"><span class="info-label">DESC:</span><span class="info-value" id="infoDesc"></span></div>
+        <div class="info-row"><span class="info-label">CATEGORY:</span><span class="info-value" id="infoCat"></span></div>
+        <button id="btnCopyInfo">[ COPY_复制到剪贴板 ]</button>
+    </div>
+
     <textarea id="cssEditor" placeholder="在此粘贴或编辑 CSS..."></textarea>
 
     <button id="btnPreview">[ PREVIEW_预览 ]</button>
@@ -142,15 +164,21 @@
     const editor = document.getElementById('cssEditor');
     const previewArea = document.getElementById('previewArea');
     const statusMsg = document.getElementById('statusMsg');
+    const infoPanel = document.getElementById('infoPanel');
+    const infoDesc = document.getElementById('infoDesc');
+    const infoCat = document.getElementById('infoCat');
     const btnPreview = document.getElementById('btnPreview');
     const btnSave = document.getElementById('btnSave');
     const btnLoad = document.getElementById('btnLoad');
     const btnClear = document.getElementById('btnClear');
     const btnReset = document.getElementById('btnResetFilter');
+    const btnCopyInfo = document.getElementById('btnCopyInfo');
 
     let stylePoolData = [];
     let currentCSS = null;
     let currentName = null;
+    let currentDesc = '';
+    let currentCat = '';
 
     function setStatus(msg, ok) {
         statusMsg.textContent = msg;
@@ -197,13 +225,13 @@
             capsuleCSS: css
         };
 
-        previewArea.innerHTML = '';
+        previewArea.innerHTML = '<div style="text-align:center;margin-bottom:12px;font-size:10px;color:var(--pixel-dim);">' + name + ' · ' + (currentCat || '?') + (currentDesc ? ' · ' + currentDesc : '') + '</div>';
         previewArea.insertAdjacentHTML('beforeend', renderCard(dummyDiary));
     }
 
     // 加载 STYLE_POOL 列表
     async function loadPool() {
-        const { data, error } = await supabase.from('STYLE_POOL').select('name, category, card_css').order('name');
+        const { data, error } = await supabase.from('STYLE_POOL').select('name, category, "desc", card_css').order('name');
         if (error) {
             setStatus('加载失败: ' + error.message, false);
             return;
@@ -225,7 +253,12 @@
         if (!row) { setStatus('未找到该扭蛋', false); return; }
         currentName = name;
         currentCSS = row.card_css || null;
+        currentDesc = row.desc || '';
+        currentCat = row.category || '';
         editor.value = currentCSS || '';
+        infoDesc.textContent = currentDesc || '(无)';
+        infoCat.textContent = currentCat || '(无)';
+        infoPanel.classList.add('show');
         setStatus(`已加载: ${name}` + (currentCSS ? ' (已有设计)' : ' (空白)'), true);
     });
 
@@ -286,7 +319,15 @@
         setStatus('编辑区已清空', true);
     });
 
-    // 重置
+    // 复制信息
+    btnCopyInfo.addEventListener('click', () => {
+        const text = `扭蛋名: ${currentName || '-'}\n描述: ${currentDesc || '-'}\n分类: ${currentCat || '-'}`;
+        navigator.clipboard.writeText(text).then(() => {
+            setStatus('已复制到剪贴板', true);
+        }).catch(() => {
+            setStatus('复制失败', false);
+        });
+    });
     btnReset.addEventListener('click', () => {
         editor.value = currentCSS || '';
         buildPreview(currentName, currentCSS || null);
