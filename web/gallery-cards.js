@@ -77,8 +77,8 @@
         const highlights = diary.highlights || [];
         const dateRaw = diary.dateRaw || diary.date;
         const styleName = diary.capsuleName || styleLabels[cardType] || cardType;
-        const sep = isCustom ? '' : (sepChars[cardType] || '');
         const isCustom = !!diary.capsuleCSS;
+        const sep = isCustom ? '' : (sepChars[cardType] || '');
         const csAttr = isCustom ? ` data-cs="${escapeHtml(styleName)}"` : '';
         const typeClass = isCustom ? '' : ` card-type-${cardType}`;
 
