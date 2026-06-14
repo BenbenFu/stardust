@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Card Preview</title>
 <link rel="stylesheet" href="style.css?v=20260614">
-<link rel="stylesheet" href="gallery-cards.css?v=20260614">
 <script type="module" src="script.js?v=20260602"></script>
 <style>
     :root {
@@ -166,6 +165,14 @@
     <div style="font-size:9px;color:var(--pixel-dim);">
         RESET: 清空编辑区并重新从DB加载。CLEAR: 仅清空编辑区。
     </div>
+
+    <div class="section-title" style="margin-top:12px;">引擎预设预览</div>
+    <div style="display:flex;gap:6px;align-items:center;">
+        <select id="presetSelect" style="flex:1;">
+            <option value="">-- 选择预设 --</option>
+        </select>
+        <button id="btnPreviewPreset" style="flex:1;">[ PREVIEW_预设 ]</button>
+    </div>
 </div>
 
 <div class="panel panel-center">
@@ -211,6 +218,7 @@
 <script type="module">
     import { supabase, checkAuth } from './script.js';
     import { renderCard } from './gallery-cards.js';
+    import { STYLE_PRESETS, renderStyleJson } from './style-engine.js';
 
     const select = document.getElementById('capsuleSelect');
     const editor = document.getElementById('cssEditor');
@@ -928,11 +936,45 @@
         setStatus('已重置', true);
     });
 
+    // 预设预览
+    const btnPreviewPreset = document.getElementById('btnPreviewPreset');
+    const presetSelect = document.getElementById('presetSelect');
+    btnPreviewPreset.addEventListener('click', () => {
+        const presetName = presetSelect.value;
+        if (!presetName) { setStatus('请先选择一个预设', false); return; }
+        const preset = STYLE_PRESETS[presetName];
+        if (!preset) { setStatus('未找到该预设', false); return; }
+
+        const sampleDiary = {
+            id: 20260614,
+            title: '预设预览 · ' + presetName,
+            date: '2026/06/14',
+            dateRaw: '2026-06-14',
+            highlights: [
+                '这是第一条精华句，用于预览预设样式效果。',
+                '这是第二条精华句，测试多句之间的排版表现。'
+            ],
+            capsuleName: presetName
+        };
+
+        previewArea.innerHTML = '<div style="color:var(--pixel-dim);font-size:10px;margin-bottom:8px;">预设: ' + presetName + '  [' + preset.palette + ']</div>';
+        previewArea.insertAdjacentHTML('beforeend', renderStyleJson(preset, sampleDiary));
+        setStatus('已预览预设: ' + presetName, true);
+    });
+
     // ========== 初始化 ==========
     async function init() {
         const authed = await checkAuth();
         if (!authed) return;
         await loadPool();
+        // 填充预设选择器
+        const presetNames = Object.keys(STYLE_PRESETS).sort();
+        presetNames.forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.textContent = name + ' [' + STYLE_PRESETS[name].palette + ']';
+            presetSelect.appendChild(opt);
+        });
     }
     init();
 </script>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Style Engine - Preset Preview</title>
+<link rel="stylesheet" href="style.css?v=20260614">
+<style>
+    :root {
+        --pixel-bg: #cadbb7;
+        --pixel-dark: #1e2622;
+        --pixel-dim: #707a65;
+    }
+    * { image-rendering: pixelated; box-sizing: border-box; }
+    body {
+        background: var(--pixel-bg);
+        color: var(--pixel-dark);
+        font-family: "Courier New", monospace;
+        margin: 0; padding: 16px;
+    }
+    h1 { font-size: 14px; border-bottom: 2px solid var(--pixel-dark); padding-bottom: 8px; }
+    .grid {
+        column-count: 3;
+        column-gap: 16px;
+        margin-top: 16px;
+    }
+    .grid .gallery-card { break-inside: avoid; margin-bottom: 16px; }
+    .preset-label {
+        font-size: 9px; color: var(--pixel-dim);
+        text-align: center; margin-top: 4px;
+        font-family: monospace;
+    }
+    .filter-bar { margin-bottom: 12px; display: flex; gap: 8px; align-items: center; }
+    select, button {
+        font-family: "Courier New", monospace;
+        font-size: 11px; background: var(--pixel-bg);
+        border: 1px solid var(--pixel-dark);
+        color: var(--pixel-dark); padding: 4px 8px;
+    }
+    button { cursor: pointer; }
+    button:hover { background: var(--pixel-dark); color: var(--pixel-bg); }
+</style>
+</head>
+<body>
+<h1>STYLE_ENGINE · 18 Preset Preview</h1>
+<div class="filter-bar">
+    <label>筛选：</label>
+    <select id="filterPalette">
+        <option value="">全部色板</option>
+    </select>
+    <button onclick="location.reload()">刷新</button>
+    <span id="count" style="font-size:10px;color:var(--pixel-dim);"></span>
+</div>
+<div class="grid" id="grid"></div>
+
+<script type="module">
+    import { injectCardEngineCss, renderStyleJson, STYLE_PRESETS, PALETTES } from './style-engine.js';
+
+    // 注入引擎 CSS
+    injectCardEngineCss();
+
+    const grid = document.getElementById('grid');
+    const filterSel = document.getElementById('filterPalette');
+    const countEl = document.getElementById('count');
+
+    // 填充色板筛选器
+    const paletteNames = Object.keys(PALETTES);
+    paletteNames.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p;
+        opt.textContent = p;
+        filterSel.appendChild(opt);
+    });
+
+    // 示例日记数据
+    const sampleDiary = {
+        id: 20260613,
+        title: '星屑陪伴机器人·自主进化愿望单',
+        date: '2026/06/13',
+        dateRaw: '2026-06-13',
+        highlights: [
+            '系统自检完成，所有模块正常。',
+            '用户情绪：平静，适合深度对话。',
+            '今日学习：ESP32-S3 PSRAM 稳定性优化。'
+        ],
+        capsuleName: 'default'
+    };
+
+    function renderAll(filterPalette) {
+        grid.innerHTML = '';
+        let count = 0;
+        const names = Object.keys(STYLE_PRESETS);
+        names.sort();
+        names.forEach(name => {
+            const preset = STYLE_PRESETS[name];
+            if (filterPalette && preset.palette !== filterPalette) return;
+            count++;
+
+            const wrapper = document.createElement('div');
+
+            const cardHtml = renderStyleJson(preset, { ...sampleDiary, capsuleName: name });
+            wrapper.insertAdjacentHTML('beforeend', cardHtml);
+
+            const label = document.createElement('div');
+            label.className = 'preset-label';
+            label.textContent = name + '  [' + preset.palette + ']';
+            wrapper.appendChild(label);
+
+            grid.appendChild(wrapper);
+        });
+        countEl.textContent = '共 ' + count + ' 个预设';
+    }
+
+    renderAll('');
+
+    filterSel.addEventListener('change', () => {
+        renderAll(filterSel.value);
+    });
+</script>
+</body>
+</html>
