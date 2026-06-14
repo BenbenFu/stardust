@@ -1,8 +1,8 @@
 # Gallery Card CSS 设计规范
 
-## DOM 骨架（不可变）
+## 一、DOM 骨架（不可变）
 
-你的 CSS 会被注入到以下结构，**不能增删任何元素或属性**：
+CSS 被注入到以下结构，**不能增删任何元素或属性**：
 
 ```html
 <a class="gallery-card" data-cs="扭蛋名" href="diary.html?date=日期" target="_blank">
@@ -21,7 +21,7 @@
 </a>
 ```
 
-## 可用选择器
+### 可用选择器
 
 | 选择器 | 对应元素 |
 |---|---|
@@ -33,93 +33,100 @@
 | `.card-no-highlight` | 无精华时的占位文本 |
 | `.card-style` | 扭蛋名标签 |
 
-全部可用 `::before` / `::after` / `:first-child` / `:last-child` / `:nth-child(n)` / `:first-letter` 等标准伪元素和伪类。
+全部可用 `::before` / `::after` / `:first-child` / `:last-child` / `:nth-child(n)` / `:first-letter` 等伪元素和伪类。
 
-## 必须遵守（红线）
+---
+
+## 二、设计总纲
+
+**核心目标：一卡一媒介，一卡一气质。** 以单卡品质为优先，拒绝通用模板感，拒绝换色式量产。每张卡片必须拥有明确的视觉锚点与独立的设计逻辑——遮挡纯文字后，仍可通过版式、配色、质感识别其主题或风格属性。
+
+### 双驱动统一设计框架
+
+主题驱动与风格驱动不是两套独立流程，而是同一件事的两个入口。前者从内容语义出发找最优载体，后者从视觉形式出发找适配主题——最终必须收敛到"风格与主题自洽、形式为内容服务"的同一终点。
+
+#### 路径 1：主题驱动（内容优先）
+
+适用场景：新增常规主题、补全内容品类、强化主题语义表达。
+
+1. **语义拆解** — 提炼主题的核心气质（严肃/活泼、理性/感性、复古/现代、正式/日常），明确其最原生的应用场景与媒介形态。
+2. **媒介锚定** — 为主题匹配 1 个最具辨识度的真实媒介作为视觉参照，优先选大众认知明确、视觉特征强烈的载体，避免模糊的泛化概念。
+   - **锚定多样性约束**：同一语义集群（如 tech/code 类）的多张卡片，禁止全部锚定到同一媒介（如全部用"VS Code 深色编辑器"）。必须从媒介候选池（深色编辑器/浅色编辑器/CRT 终端/打印稿/Notepad 无高亮 等）中分散选取，确保同集群内基底材质至少 2 种以上。
+3. **风格适配** — 基于媒介气质选视觉语言，禁止为炫技硬套与主题气质冲突的风格。
+   - 法律文书 → 适配正式、规整、无装饰的版式，禁止孟菲斯、故障艺术
+   - 创意随笔 → 可适配艺术化、实验性风格，发挥空间更大
+4. **差异化落地** — 从"四层设计维度"中选择匹配组合完成专属设计，禁止套用通用模板。
+
+#### 路径 2：风格驱动（形式优先）
+
+适用场景：拓展风格边界、补充视觉品类、打造稀有款/特色款卡片。
+
+1. **风格定义** — 明确风格的核心视觉特征（配色、质感、排版、装饰），提炼 3 个以内的标志性识别点，避免泛泛而谈。
+2. **主题匹配** — 从主题池中筛选气质最适配的载体。匹配原则："风格气质与主题场景有天然认知关联"，禁止强行跨界。
+   - ✅ 毛玻璃 → 天气预报（系统 UI 场景认知一致）
+   - ❌ 毛玻璃 → 法律判决书（场景气质完全冲突）
+3. **主题化改造** — 将通用风格语言转化为主题专属设计。风格必须服务于主题内容，不能让内容沦为风格的背景板。
+4. **边界校验** — 确认未触碰工程红线、未牺牲正文可读性、未为形式破坏内容表达。
+
+#### 共同校验标准
+
+无论哪条路径出发，最终成品必须同时满足：
+- **主题语义成立** — 卡片形式符合主题常规认知，不违和、不出戏
+- **风格辨识度成立** — 拥有明确的视觉风格特征，不属于无特征的通用模板
+- **内容可读性成立** — 正文清晰可辨，信息层级明确，不为形式牺牲功能
+
+---
+
+## 三、四层差异化设计法
+
+所有卡片必须在以下 4 个维度做出明确的专属决策。禁止沿用"白底 + 1px 边框 + 左对齐列表 + 居中细线分隔 + 底部页脚"的默认通用模板。**同一张卡片至少在 2 个以上维度有区别于通用模板的专属设计。**
+
+| 维度 | 核心作用 | 可选方向（持续扩充） |
+|---|---|---|
+| **基底材质层** | 奠定整体质感与年代感 | 纯色平涂、渐变过渡、纸张肌理、网点印刷、屏幕发光、织物纹理、金属哑光、玻璃半透 |
+| **排版骨架层** | 决定结构逻辑，破同质化的核心 | 标准纵向流（慎用）、左右分栏式、轴式排布、分块卡片式、居中诗行式、竖排右起式、对角错落式 |
+| **装饰符号层** | 强化媒介属性与风格特征 | 前缀体系（序号/图标/符号/无前置）、分隔体系（直线/虚线/波浪/符号/空白）、边角装饰（几何/纹理/标识/无装饰） |
+| **节奏细节层** | 控制阅读节奏与精细质感 | 行高松紧、字距大小、段落间距、字号层级、边角圆角、投影强弱 |
+
+**设计原则：**
+- **骨架优先于装饰** — 先定排版骨架，再补装饰细节。骨架不同，代码结构天然不同，从根源避免代码同质化。
+- **克制装饰数量** — 装饰服务于信息层级，不做无意义堆砌，同一张卡片装饰元素不超过 3 种。
+
+---
+
+## 四、单卡质量校验标准
+
+### 工程红线（硬标准，一票否决）
 
 1. **不改 DOM** — 不增删元素，不改 HTML 属性，不改标签类型。
-2. **`.gallery-card` 容器禁止 `position: fixed` / `absolute`** — 子元素和伪元素可在 `position: relative` 容器内使用 absolute 定位，但不得超出卡片边界改变容器的文档流占位。
-3. **禁止修改 `break-inside`** — 此属性控制瀑布流防断裂，改动会导致卡片被列截断。
-4. **不写 `[data-cs="xxx"]` 前缀** — 系统自动注入作用域，直接写裸选择器即可。
-5. **子元素设非透明背景时，`.gallery-card` 必须同时设实色背景** — 基类默认 `background: transparent`，LCD 薄荷绿底色（`#cadbb7`）会透出。禁止子元素带色块而容器透明（导致撞色）。子元素背景色需与卡片背景色调协调。
-6. **全属性禁止 emoji** — `content`、伪元素文本、背景图 base64 等所有 CSS 属性均不得含 emoji 字符。装饰用纯文本符号、CSS 几何图形或渐变实现。
-7. **禁止 hover 改变文档流尺寸** — 可用 `transform`、`opacity`、`box-shadow` 做 hover 效果，不可用 `margin`、`padding`、`width`、`height` 突变。
+2. **容器禁止 `position: fixed` / `absolute`** — 子元素和伪元素可在 `position: relative` 容器内使用 absolute 定位。
+3. **禁止修改 `break-inside`** — 瀑布流防断裂属性，改动会导致卡片被列截断。
+4. **不写 `[data-cs="xxx"]` 前缀** — 系统自动注入作用域。
+5. **子元素设非透明背景时，容器必须同时设实色背景** — 基类默认 `background: transparent`，LCD 薄荷绿底色（`#cadbb7`）会透出。禁止子元素带色块而容器透明导致撞色。
+6. **全属性禁止 emoji** — 用纯文本符号或 CSS 几何图形替代。
+7. **禁止 hover 改变文档流尺寸** — 用 `transform`/`opacity`/`box-shadow` 替代，禁用 `margin`/`padding`/`width`/`height` 突变。
 
-## 设计原则：媒介切片
+### 设计质量标准（软标准，必过校验）
 
-每张卡片应让人一眼认出"这是什么媒介"。不是"好看的卡片"，是"从某个媒介里撕下来的一页"。
+1. **辨识度测试** — 遮挡所有文字内容后，仅凭版式、配色、质感可判断出对应的媒介类型或风格属性。
+2. **自洽性测试** — 视觉风格与主题语义气质匹配，无强烈违和感，形式不凌驾于内容之上。
+3. **可读性底线** — 正文对比度 ≥ 4.5:1，字号 ≥ 10px，无纹理/装饰遮挡正文。
+4. **差异化校验** — 与已有卡片对比，排版骨架、基底材质、装饰体系三者至少 1 项存在明显差异，不属于换色式重复。
 
-**方法论：** 从扭蛋主题的原生载体出发，还原其排版逻辑和视觉符号。
+---
 
-| 主题 | 媒介参考 |
-|---|---|
-| 网络用语 | 贴吧/群聊/弹幕/评论区 |
-| 代码 | 终端/编辑器/Git diff |
-| 剧本 | 舞台脚本/分镜稿 |
-| 马尔克斯 | 拉美文学手稿/旧书店 |
-| 任意主题 | 找到该主题"原本出现在哪里"，还原那个载体 |
+## 五、风格复用的边界规则
 
-**合格标准：** 遮挡所有文字内容后，仅凭视觉样式即可判断卡片对应的主题品类。
+允许复用成熟的设计逻辑与风格语言，禁止直接复制整卡模板换色量产。
 
-**负面清单（视为不合格）：**
-- 仅修改颜色、圆角、字号的通用美化
-- 所有主题共用同一结构、仅换色的模板化产出
-- 无主题专属装饰、无对应媒介排版逻辑的"安全牌"
+- ✅ 允许：同一风格语言下，针对不同主题做不同排版骨架、不同装饰落点适配
+- ❌ 禁止：仅修改颜色值与前缀文字，排版结构、装饰位置、整体逻辑完全一致的"换皮式"设计
+- 同风格系列的卡片，控制在每个分类 2~3 款以内，避免单一风格泛滥导致新的同质化
+- **锚定惯性警示**：同一集群连续设计多张卡片时，容易无意识地复用上一个媒介锚定。每张新卡必须独立走完整媒介锚定流程，禁止沿用上一张的基底材质
 
-## 参考示例（纯基础 DOM，可直接填入 card_css）
+---
 
-**评论区/热评风** — 微博热评，`@博主` 前缀 + 热评等级 + `#话题#`
-
-```css
-background: #ffffff;
-border: 1px solid #e0e0e0;
-border-radius: 6px;
-padding: 12px;
-font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-}
-.card-title { font-size: 13px; color: #333; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
-.card-title::before { content: "@热门博主: "; color: #ff8200; font-weight: 600; font-size: 12px; }
-.card-date { font-size: 10px; color: #999; align-self: flex-end; }
-.card-highlight-item { font-size: 12px; color: #333; padding: 8px 10px; background: #fff8e8; border: 1px solid #ffe0b2; border-radius: 4px; }
-.card-highlight-item::before { display: block; font-size: 11px; color: #ff8200; font-weight: 600; margin-bottom: 4px; }
-.card-highlight-item:nth-of-type(1)::before { content: "热评第一 · 1.2w赞"; }
-.card-highlight-item:nth-of-type(2)::before { content: "热评第二 · 8.6k赞"; }
-.card-highlight-item:nth-of-type(3)::before { content: "热评第三 · 5.3k赞"; }
-.hl-sep { text-align: center; margin: 2px 0; }
-.hl-sep::before { content: "* * *"; font-size: 10px; color: #ccc; letter-spacing: 2px; }
-.card-no-highlight { font-size: 11px; color: #bbb; text-align: center; padding: 15px 0; }
-.card-no-highlight::before { content: "暂无热门评论"; }
-.card-style { font-size: 9px; color: #ff8200; background: #fff1e0; padding: 2px 8px; border-radius: 12px; align-self: flex-start; }
-.card-style::before { content: "#"; }
-.card-style::after { content: "#"; }
-```
-
-**代码编辑器风** — 行号列 + 语法高亮 + `function(){}` 包裹
-
-```css
-background: #0f1419;
-color: #cadbb7;
-border-left: 6px solid #3a7d44;
-font-family: "Consolas", "Monaco", monospace;
-padding-left: 40px;
-}
-.card-title { font-size: 13px; color: #7ab8ff; }
-.card-title::before { content: "function "; color: #569cd6; }
-.card-title::after { content: "() {"; color: #d4d4d4; }
-.card-date { font-size: 10px; color: #6a9955; font-style: italic; }
-.card-date::before { content: "// "; }
-.card-style { font-size: 9px; color: #858585; text-align: right; }
-.card-style::before { content: "// STYLE: "; }
-::before {
-  content: "1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9\A 10";
-  position: absolute; left: 5px; top: 10px;
-  font-size: 10px; color: #3a4036; line-height: 1.5;
-  text-align: right; width: 25px; pointer-events: none;
-  border-right: 1px solid #2a3027; padding-right: 5px;
-}
-```
-
-## 尺寸参考
+## 六、尺寸参考
 
 卡片在瀑布流中占据 250~400px 宽度（2~3 列）：
 
@@ -132,9 +139,11 @@ padding-left: 40px;
 | `.card-style` | 8~10px | 标签宜小巧 |
 | `.card-no-highlight` | 10~12px | 占位文本 |
 
-特殊排版（竖排书法、大字海报、点阵终端）可不受限制，但需保证在 **250px 最小宽度**下内容不溢出、基本可读。
+特殊排版（竖排书法、大字海报、点阵终端）可不受限制，但需保证 **250px 最小宽度**下内容不溢出、基本可读。
 
-## 基类默认样式
+---
+
+## 七、基类默认样式
 
 `.gallery-card` 基类已设置以下属性，**可全部覆盖**：
 
@@ -150,11 +159,11 @@ color: var(--pixel-dark);
 transition: transform 0.1s steps(2);
 ```
 
-`.card-highlight-item::before` 默认 `content: "> "`，需自定义前缀时显式覆盖 `content`。
+`.card-highlight-item::before` 默认 `content: "> "`，需自定义前缀时显式覆盖 `content`。其余子元素无预设样式。
 
-其余子元素无预设样式。
+---
 
-## 可用 CSS 变量
+## 八、可用 CSS 变量
 
 | 变量名 | 色值 | 用途 |
 |---|---|---|
@@ -164,17 +173,17 @@ transition: transform 0.1s steps(2);
 | `--pixel-alert` | `#8f341d` | 工业暗红、强调标识 |
 | `--repair-tape` | `#d2c89f` | 黄色便签、复古装饰 |
 
-## 动效约束
+## 九、动效约束
 
 - **允许** `transition` 做 hover 过渡，建议 0.2~0.3s
 - **允许** `animation` 做弱装饰动画（光标闪烁、扫描线），禁止高频/大幅/循环强动画
-- **禁止** hover 改变容器文档流占位尺寸（禁用 `margin`/`padding`/`width`/`height` 突变，用 `transform`/`opacity`/`box-shadow` 替代）
+- **禁止** hover 改变容器文档流占位尺寸
 
-## 填入方式
+## 十、填入方式
 
-Supabase → `STYLE_POOL` 表 → `card_css` 列（TEXT 类型），粘贴完整 CSS。`card_css` 为 NULL 时自动使用系统默认的 18 种通用风格。
+Supabase → `STYLE_POOL` 表 → `card_css` 列（TEXT 类型）。`card_css` 为 NULL 时自动使用系统默认的 18 种通用风格。
 
-## 上线自检清单
+## 十一、上线自检清单
 
 - [ ] 未修改 DOM 结构、属性、标签类型
 - [ ] `.gallery-card` 容器未使用 `fixed` / `absolute` 定位
@@ -183,4 +192,121 @@ Supabase → `STYLE_POOL` 表 → `card_css` 列（TEXT 类型），粘贴完整
 - [ ] 子元素有非透明背景时，容器已设实色背景
 - [ ] 全属性无 emoji 字符
 - [ ] hover 未改变容器文档流尺寸
-- [ ] 250px 宽度下内容可读不溢出
+- [ ] 250px 宽度下内容不横向溢出
+- [ ] 正文对比度 ≥ 4.5:1，字号 ≥ 10px
+- [ ] 排版骨架/基底材质/装饰体系与已有卡片至少 1 项明显不同
+
+---
+
+## 十二、CSS 代码格式规范
+
+所有入库卡片 CSS 必须通过 `css-formatter.js` 管线处理，输出格式统一如下。
+
+### 格式化规则（强制执行）
+
+| 规则 | 值 |
+|---|---|
+| 缩进 | 2 空格（禁用 tab、4 空格） |
+| 选择器与 `{` | 之间一个空格，`{` 独占一行 |
+| 声明 | 每个声明独占一行，末尾必须有分号 |
+| `}` | 独占一行，与下个规则块之间空一行 |
+| 多选择器 | 逗号后换行，每个选择器独立一行，缩进 2 空格 |
+| 属性顺序 | 按 `PROPERTY_ORDER` 预定义顺序排列（见管线源码） |
+| 颜色格式 | 统一 hex 小写（`#cadbb7` 而非 `#CADBB7`） |
+| 字符串引号 | 统一单引号（`content: '...'`） |
+| 小数点前导零 | 保留（`.2s` 而非 `0.2s`） |
+
+### 示例：格式化前后
+
+**格式化前**（AI 任意输出格式）：
+```css
+.gallery-card{background:#1a1a1a;border:1px solid #333;padding:16px}
+.gallery-card::before{content:"LOG";display:block;font-size:10px}
+.card-title{color:#cadbb7;font-size:14px;font-weight:bold}
+```
+
+**格式化后**（入库标准格式）：
+```css
+.gallery-card {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding: 16px;
+}
+
+.gallery-card::before {
+  content: "LOG";
+  display: block;
+  font-size: 10px;
+}
+
+.card-title {
+  color: #cadbb7;
+  font-size: 14px;
+  font-weight: bold;
+}
+```
+
+### 作用域化规则
+
+入库前必须运行 `scopeCSS(rawCSS, cardName)`，自动完成：
+
+| 原始选择器 | 作用域化后 |
+|---|---|
+| `.gallery-card` | `[data-cs="name"].gallery-card` |
+| `.gallery-card::before` | `[data-cs="name"].gallery-card::before` |
+| `.card-title` | `[data-cs="name"] .card-title` |
+| `.card-highlight-item::before` | `[data-cs="name"] .card-highlight-item::before` |
+
+`@media` 等 at-rule 内部选择器同样递归处理。`@keyframes` 不作用域化。
+
+### 工程红线（校验强制执行）
+
+`validateCSS()` 在入库前自动扫描，以下情况**阻止入库**（`errors`）：
+
+1. `position: fixed` — 破坏瀑布流文档流
+2. `content` 属性含 emoji — 与终端美学冲突
+3. 未作用域化（`[data-cs=` 前缀缺失）— 导致多卡片样式冲突
+
+以下情况给出**警告**（`warnings`），可酌情入库：
+
+1. 使用 `!important`
+2. 使用固定 `width`（建议 `max-width`）
+3. 色值未使用设计令牌（见第八节）
+
+---
+
+## 十三、入库管线（workflow）
+
+### 标准流程
+
+```
+AI 工具生成原始 CSS
+    ↓
+打开 capsule-preview.html
+    ↓
+① 填写「卡片名称」（与日记风格名一致）
+    ↓
+② 粘贴原始 CSS → 点击「格式化 & 校验」
+    ↓
+③ 查看评分（总分 ≥ 60 才可入库）
+    ↓
+④ 查看预览（用模拟数据渲染，检查空状态 / 窄宽）
+    ↓
+⑤ 确认无误 → 复制「格式化后 CSS」文本框内容
+    ↓
+⑥ 手动存入 Supabase STYLE_POOL.card_css 字段
+```
+
+### 多 AI 工具协作格式统一说明
+
+不同 AI 工具（GPT / Claude / Gemini / 本地模型）输出的 CSS 格式差异，在步骤 ② 被 `formatCSS()` 完全消除。只要原始 CSS **功能正确**，`formatCSS()` 保证输出格式 100% 一致。
+
+设计质量差异（风格同质化）由 `scoreCSS()` 的**差异化评分**暴露，评分 < 60 时页面给出警告，但不会阻止入库（由人工判断是否接受）。
+
+### 已入库 CSS 的后续维护
+
+- 禁止手动编辑 `card_css` 字段中的 CSS 文本（容易破坏格式）
+- 需要修改时，重新走完整管线：AI 生成 → 审核页面 → 格式化 → 覆盖入库
+- `css-formatter.js` 的 `PROPERTY_ORDER` 如需调整，必须同步更新 `CARD_DESIGN_SPEC.md` 本节的示例
+
+---
