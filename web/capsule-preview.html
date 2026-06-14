@@ -123,6 +123,8 @@
         font-family: "Courier New", monospace;
     }
     .btn-normalize:hover { background: var(--pixel-dark); color: var(--gba-bg); }
+    .suggest-panel { margin-top: 6px; border: 1px solid var(--pixel-dim); padding: 8px; font-size: 9px; display: none; }
+    .suggest-item { margin-bottom: 3px; color: var(--pixel-dark); line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -178,6 +180,11 @@
         <button id="btnNormalize" class="btn-normalize">[ NORMALIZE_规范化 ]</button>
     </div>
 
+    <div class="suggest-panel" id="suggestPanel">
+        <div class="section-title">差异化建议</div>
+        <div id="suggestContent"></div>
+    </div>
+
     <div class="section-title" style="margin-top:6px;">快速操作</div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;">
         <button id="btnClear" style="flex:1;font-size:10px;">[ CLEAR ]</button>
@@ -215,6 +222,22 @@
     const btnReset = document.getElementById('btnResetFilter');
     const btnCopyInfo = document.getElementById('btnCopyInfo');
     const auditPanel = document.getElementById('auditPanel');
+    const redLineScore = document.getElementById('redLineScore');
+    const redLineResult = document.getElementById('redLineResult');
+    const redLineDetails = document.getElementById('redLineDetails');
+    const qualityScoreDisplay = document.getElementById('qualityScoreDisplay');
+    const qualityBar = document.getElementById('qualityBar');
+    const qualityNum = document.getElementById('qualityNum');
+    const qualityResultEl = document.getElementById('qualityResult');
+    const qualityDetails = document.getElementById('qualityDetails');
+    const diffScoreDisplay = document.getElementById('diffScoreDisplay');
+    const diffBar = document.getElementById('diffBar');
+    const diffNum = document.getElementById('diffNum');
+    const diffResultEl = document.getElementById('diffResult');
+    const diffAgainst = document.getElementById('diffAgainst');
+    const diffDetails = document.getElementById('diffDetails');
+    const suggestPanel = document.getElementById('suggestPanel');
+    const suggestContent = document.getElementById('suggestContent');
 
     let stylePoolData = [];
     let currentCSS = null;
@@ -296,6 +319,202 @@
 
         while (result.length > 0 && result[result.length - 1] === '') result.pop();
         return result.join('\n') + '\n';
+    }
+
+    // ========== CSS 变量解析 ==========
+    const CSS_VARS = {
+        '--pixel-dark': '#1e2622',
+        '--pixel-dim': '#707a65',
+        '--pixel-alert': '#8f341d',
+        '--gba-bg': '#cadbb7',
+        '--repair-tape': '#d2c89f',
+    };
+
+    function resolveVars(css) {
+        return css.replace(/var\((--[\w-]+)\)/g, (m, v) => CSS_VARS[v] || m);
+    }
+
+    // ========== 背景色分类 ==========
+    const WARM_PAPERS = new Set(['#f5f0e6','#f8f5ee','#f0eee8','#f5f0e8','#f5ecd9','#efe0c4','#f8f6f0','#f8f7f2','#faf6ee','#e5dcc8','#fdf8ec']);
+    const COOL_PAPERS = new Set(['#f5f7fa','#fafafa','#f8f8f8','#f5f5f5','#f7f7f7','#ffffff','#fffdf7','#fff9e6']);
+    const DARK_BGS = new Set(['#1e1e1e','#1e293b','#0b0e11','#121212']);
+    const SEPIA_PAPERS = new Set(['#f5f0e1','#f5f0e8']);
+
+    function classifyBg(rawBg) {
+        const bg = rawBg.trim().toLowerCase().replace(/[\s"']/g, '');
+        if (!bg) return 'none';
+        if (bg.includes('gradient')) return 'gradient';
+        if (WARM_PAPERS.has(bg) || SEPIA_PAPERS.has(bg)) return 'warm_paper';
+        if (COOL_PAPERS.has(bg)) return 'cool_paper';
+        if (DARK_BGS.has(bg)) return 'dark';
+        const hexMatch = bg.match(/#([0-9a-f]{3,8})/);
+        if (hexMatch) {
+            let hex = hexMatch[1];
+            if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+            if (hex.length >= 6) {
+                const r = parseInt(hex.substring(0,2), 16);
+                const g = parseInt(hex.substring(2,4), 16);
+                const b = parseInt(hex.substring(4,6), 16);
+                const lum = 0.299*r + 0.587*g + 0.114*b;
+                if (lum < 80) return 'dark';
+                if (lum < 180) return 'mid';
+                if (r > g && r > b) return 'warm_paper';
+                if (b > r) return 'cool_paper';
+                return 'cool_paper';
+            }
+        }
+        return 'other';
+    }
+
+    // ========== 伪元素标签分类 ==========
+    function classifyPseudoLabel(text) {
+        if (!text) return 'none';
+        if (/^[【「『《〈]/.test(text)) return 'cjk_bracket';
+        if (/^\d{3}\s*[\|｜]/.test(text)) return 'http_code';
+        if (/^[A-Z]{2,}[:：]/.test(text)) return 'ascii_label';
+        if (/^\d+[.、)）]/.test(text)) return 'numbered';
+        return 'other';
+    }
+
+    // ========== 视觉指纹提取 ==========
+    function extractFingerprint(css) {
+        const resolved = resolveVars(css);
+        const lower = resolved.toLowerCase();
+        const fp = {};
+
+        // 1. 背景色
+        const bgMatches = lower.match(/background(?:-color)?:\s*([^;}{]+)/);
+        fp.bgRaw = bgMatches ? bgMatches[1].trim() : '';
+        fp.bgFamily = classifyBg(fp.bgRaw);
+
+        // 2. 字体族
+        const fontMatches = lower.match(/font-family:\s*([^;}{]+)/g) || [];
+        fp.fontFamily = 'default';
+        for (const f of fontMatches) {
+            if (/mono|consola|courier/.test(f)) { fp.fontFamily = 'monospace'; break; }
+            if (/sans/.test(f)) { fp.fontFamily = 'sans'; break; }
+            if (/serif/.test(f)) { fp.fontFamily = 'serif'; break; }
+        }
+
+        // 3. 视觉手法
+        const allFilterCount = (lower.match(/\bfilter\s*:/g) || []).length;
+        const prefixedFilterCount = (lower.match(/-\w+-filter\s*:/g) || []).length;
+        fp.features = {
+            gradient: lower.includes('gradient'),
+            shadow: lower.includes('shadow'),
+            borderRadius: lower.includes('border-radius'),
+            animation: lower.includes('animation') || lower.includes('transition'),
+            rotation: lower.includes('rotate'),
+            opacity: lower.includes('opacity'),
+            filter: allFilterCount > prefixedFilterCount,
+            monospaceFont: fp.fontFamily === 'monospace',
+            borderStrong: /[2-9]\d*px\s+solid/.test(lower),
+            pseudoLabel: /::(?:before|after)\s*\{[^}]*content:/.test(resolved),
+            textDecoration: lower.includes('text-decoration') || lower.includes('underline') || lower.includes('line-through'),
+            transform: lower.includes('transform') && lower.includes('scale'),
+            columns: lower.includes('column'),
+            pattern: lower.includes('repeating') || lower.includes('pattern'),
+            centerAligned: lower.includes('text-align: center'),
+        };
+
+        // 4. 伪元素文本
+        const befores = [...resolved.matchAll(/::before\s*\{[^}]*content:\s*["']([^"']{1,40})["']/g)].map(m => m[1]);
+        const afters = [...resolved.matchAll(/::after\s*\{[^}]*content:\s*["']([^"']{1,40})["']/g)].map(m => m[1]);
+        fp.pseudoTexts = befores.slice(0, 3).concat(afters.slice(0, 3));
+        fp.pseudoLabels = fp.pseudoTexts.map(t => classifyPseudoLabel(t));
+
+        // 5. 视觉层数
+        const pseudoCount = (css.match(/::(?:before|after)/g) || []).length;
+        const nestedRules = (css.match(/\.gallery-card\s+\./g) || []).length;
+        fp.layerCount = pseudoCount + nestedRules;
+
+        return fp;
+    }
+
+    // ========== 视觉相似度计算 ==========
+    function computeSimilarity(fpA, fpB) {
+        let score = 0;
+        let maxScore = 0;
+
+        // 维度1: 背景色系 (25%)
+        maxScore += 25;
+        if (fpA.bgFamily === fpB.bgFamily) {
+            score += 25;
+            if (fpA.bgRaw && fpB.bgRaw && fpA.bgRaw.trim() === fpB.bgRaw.trim()) {
+                score += 5;
+                maxScore += 5;
+            }
+        }
+
+        // 维度2: 字体族 (10%)
+        maxScore += 10;
+        if (fpA.fontFamily === fpB.fontFamily) score += 10;
+
+        // 维度3: 视觉手法 (40%)
+        maxScore += 40;
+        const fa = fpA.features, fb = fpB.features;
+        const aSet = new Set(Object.keys(fa).filter(k => fa[k]));
+        const bSet = new Set(Object.keys(fb).filter(k => fb[k]));
+        const commonIgnore = new Set(['shadow', 'animation']);
+        const aUnique = new Set([...aSet].filter(k => !commonIgnore.has(k)));
+        const bUnique = new Set([...bSet].filter(k => !commonIgnore.has(k)));
+        if (aUnique.size > 0 || bUnique.size > 0) {
+            const overlap = new Set([...aUnique].filter(k => bUnique.has(k)));
+            const union = new Set([...aUnique, ...bUnique]);
+            score += 40 * (overlap.size / union.size);
+        } else {
+            score += 40 * 0.8;
+        }
+
+        // 维度4: 层级复杂度 (10%)
+        maxScore += 10;
+        const layerDiff = Math.abs(fpA.layerCount - fpB.layerCount);
+        score += Math.max(0, 10 - layerDiff * 3);
+
+        // 维度5: 伪元素标签风格 (15%)
+        maxScore += 15;
+        if (fpA.pseudoLabels.length > 0 && fpB.pseudoLabels.length > 0) {
+            for (let i = 0; i < Math.min(2, fpA.pseudoLabels.length); i++) {
+                for (let j = 0; j < Math.min(2, fpB.pseudoLabels.length); j++) {
+                    if (fpA.pseudoLabels[i] === fpB.pseudoLabels[j] && fpA.pseudoLabels[i] !== 'other') {
+                        score += 7.5;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return maxScore > 0 ? score / maxScore : 0;
+    }
+
+    // ========== 差异化建议 ==========
+    function suggestDifferentiation(newFp, similarCards) {
+        const suggestions = [];
+        const sameBg = similarCards.filter(c => c.fp.bgFamily === newFp.bgFamily);
+        if (sameBg.length >= 3) {
+            if (newFp.bgFamily === 'cool_paper') {
+                suggestions.push('[BG] 浅白/冷纸色已有' + sameBg.length + '张，考虑换暖纸色、深色底或渐变');
+            } else if (newFp.bgFamily === 'warm_paper') {
+                suggestions.push('[BG] 暖纸色已有' + sameBg.length + '张，考虑换冷色调、深色底或渐变');
+            } else if (newFp.bgFamily === 'dark') {
+                suggestions.push('[BG] 深色底已有' + sameBg.length + '张，考虑换浅色纸感或中间调');
+            }
+        }
+        const newTech = new Set(Object.keys(newFp.features).filter(k => newFp.features[k]));
+        newTech.delete('shadow'); newTech.delete('animation');
+        if (newTech.size === 0) {
+            suggestions.push('[TECH] 仅用了阴影+动画（最常见组合），缺少独特手法。考虑加：旋转/滤镜/渐变/图案/列布局');
+        }
+        if (newFp.fontFamily === 'monospace') {
+            const monoCount = similarCards.filter(c => c.fp.fontFamily === 'monospace').length;
+            if (monoCount >= 2) {
+                suggestions.push('[FONT] 等宽字体在相似卡片中较多，考虑用衬线体或手写体做区分');
+            }
+        }
+        if (newFp.layerCount <= 2) {
+            suggestions.push('[LAYER] 视觉层较少，考虑加伪元素装饰线/标签/水印增加辨识度');
+        }
+        return suggestions;
     }
 
     // ========== 工程红线检查 ==========
@@ -436,49 +655,58 @@
         return { score, details };
     }
 
-    // ========== 差异度打分（0-100，越高越好） ==========
+    // ========== 差异度打分（视觉指纹，0-100，越高越独特） ==========
     function scoreDifference(css, name, allCards) {
-        function extractFeatures(c) {
-            const selectors = [...(c.matchAll(/([^{]+)\s*\{/g) || [])].map(m => m[1].trim());
-            const props = [...(c.matchAll(/^\s*([a-z-]+)\s*:/gim) || [])].map(m => m[1].toLowerCase());
-            const colors = [...(c.matchAll(/#([0-9a-fA-F]{3,8})/g) || [])].map(m => m[0].toLowerCase());
-            const pseudos = [...(c.matchAll(/::?(before|after)/gi) || [])].map(m => m[0].toLowerCase());
-            const nthCount = (c.match(/:nth-of-type\(/g) || []).length;
-            return { selectors: new Set(selectors), props: new Set(props), colors: new Set(colors), pseudos: new Set(pseudos), nthCount };
-        }
-
-        const featA = extractFeatures(css);
+        const newFp = extractFingerprint(css);
         let maxSim = 0;
         let mostSimilarName = '-';
+        let mostSimilarFp = null;
+        const comparisons = [];
 
         for (const row of allCards) {
             if (!row.card_css || row.name === name) continue;
-            const featB = extractFeatures(row.card_css);
-
-            // Jaccard 相似度（选择器）
-            const selUnion = new Set([...featA.selectors, ...featB.selectors]);
-            const selInter = new Set([...featA.selectors].filter(s => featB.selectors.has(s)));
-            const selSim = selUnion.size === 0 ? 1 : selInter.size / selUnion.size;
-
-            // Jaccard 相似度（属性名）
-            const propUnion = new Set([...featA.props, ...featB.props]);
-            const propInter = new Set([...featA.props].filter(p => featB.props.has(p)));
-            const propSim = propUnion.size === 0 ? 1 : propInter.size / propUnion.size;
-
-            // 伪元素匹配加分
-            const pseudoMatch = [...featA.pseudos].filter(p => featB.pseudos.has(p)).length;
-
-            // 综合相似度
-            const sim = selSim * 0.3 + propSim * 0.5 + (pseudoMatch > 0 ? 0.2 : 0);
+            const fp = extractFingerprint(row.card_css);
+            const sim = computeSimilarity(newFp, fp);
+            comparisons.push({ name: row.name, fp, sim });
             if (sim > maxSim) {
                 maxSim = sim;
                 mostSimilarName = row.name;
+                mostSimilarFp = fp;
             }
         }
 
         const diffScore = Math.round((1 - maxSim) * 100);
-        const details = [{ item: '最相似卡片', pass: diffScore >= 60, msg: `与「${mostSimilarName}」相似度 ${(maxSim * 100).toFixed(1)}%` }];
-        return { score: diffScore, mostSimilar: mostSimilarName, details };
+        const details = [];
+
+        // 指纹摘要
+        details.push({ item: '背景色系', pass: true, msg: newFp.bgFamily + (newFp.bgRaw ? ' (' + newFp.bgRaw.substring(0,30) + ')' : '') });
+        details.push({ item: '字体族', pass: true, msg: newFp.fontFamily });
+        const techs = Object.keys(newFp.features).filter(k => newFp.features[k]);
+        details.push({ item: '视觉手法', pass: true, msg: techs.length > 0 ? techs.join(', ') : '无显著手法' });
+        details.push({ item: '视觉层数', pass: true, msg: String(newFp.layerCount) });
+
+        // 最相似对比
+        details.push({ item: '最相似卡片', pass: diffScore >= 60, msg: '与「' + mostSimilarName + '」相似度 ' + (maxSim * 100).toFixed(1) + '%' });
+
+        // 对比维度拆解
+        if (mostSimilarFp) {
+            details.push({ item: '-- 背景对比', pass: newFp.bgFamily !== mostSimilarFp.bgFamily, msg: newFp.bgFamily + ' vs ' + mostSimilarFp.bgFamily });
+            details.push({ item: '-- 字体对比', pass: newFp.fontFamily !== mostSimilarFp.fontFamily, msg: newFp.fontFamily + ' vs ' + mostSimilarFp.fontFamily });
+            const aTech = new Set(Object.keys(newFp.features).filter(k => newFp.features[k]));
+            const bTech = new Set(Object.keys(mostSimilarFp.features).filter(k => mostSimilarFp.features[k]));
+            const commonIgnore = new Set(['shadow', 'animation']);
+            const aU = new Set([...aTech].filter(k => !commonIgnore.has(k)));
+            const bU = new Set([...bTech].filter(k => !commonIgnore.has(k)));
+            const overlap = new Set([...aU].filter(k => bU.has(k)));
+            const uniqueA = new Set([...aU].filter(k => !bU.has(k)));
+            details.push({ item: '-- 手法对比', pass: uniqueA.size > 0, msg: '重合' + overlap.size + '项 / 独有' + uniqueA.size + '项' });
+        }
+
+        // 差异化建议
+        const similarCards = comparisons.filter(c => c.sim > 0.45);
+        const suggestions = suggestDifferentiation(newFp, similarCards);
+
+        return { score: diffScore, mostSimilar: mostSimilarName, details, suggestions };
     }
 
     // ========== 运行所有检查并更新 UI ==========
@@ -504,23 +732,31 @@
         qualityNum.textContent = qualResult.score;
         qualityBar.style.width = qualResult.score + '%';
         qualityBar.className = 'score-fill ' + (qualResult.score >= 60 ? 'pass' : '');
-        qualityResult.textContent = qualResult.score >= 60 ? '合格' : '待改进';
-        qualityResult.className = 'audit-result ' + (qualResult.score >= 60 ? 'pass' : 'fail');
+        qualityResultEl.textContent = qualResult.score >= 60 ? '合格' : '待改进';
+        qualityResultEl.className = 'audit-result ' + (qualResult.score >= 60 ? 'pass' : 'fail');
         qualityDetails.innerHTML = qualResult.details.map(d => `<div class="audit-detail-item ${d.pass ? 'pass' : 'fail'}">${d.item}: ${d.msg}</div>`).join('');
 
         // 差异度打分
-        const diffResult = scoreDifference(css, name, stylePoolData);
-        diffScoreDisplay.textContent = diffResult.score;
-        diffNum.textContent = diffResult.score;
-        diffBar.style.width = diffResult.score + '%';
-        diffBar.className = 'score-fill ' + (diffResult.score >= 60 ? 'pass' : '');
-        diffAgainst.textContent = `(vs ${diffResult.mostSimilar})`;
-        diffResult.textContent = diffResult.score >= 60 ? '合格' : '同质化风险';
-        diffResult.className = 'audit-result ' + (diffResult.score >= 60 ? 'pass' : 'fail');
-        diffDetails.innerHTML = diffResult.details.map(d => `<div class="audit-detail-item ${d.pass ? 'pass' : 'fail'}">${d.item}: ${d.msg}</div>`).join('');
+        const diffData = scoreDifference(css, name, stylePoolData);
+        diffScoreDisplay.textContent = diffData.score;
+        diffNum.textContent = diffData.score;
+        diffBar.style.width = diffData.score + '%';
+        diffBar.className = 'score-fill ' + (diffData.score >= 60 ? 'pass' : '');
+        diffAgainst.textContent = `(vs ${diffData.mostSimilar})`;
+        diffResultEl.textContent = diffData.score >= 60 ? '合格' : '同质化风险';
+        diffResultEl.className = 'audit-result ' + (diffData.score >= 60 ? 'pass' : 'fail');
+        diffDetails.innerHTML = diffData.details.map(d => `<div class="audit-detail-item ${d.pass ? 'pass' : 'fail'}">${d.item}: ${d.msg}</div>`).join('');
+
+        // 差异化建议
+        if (diffData.suggestions && diffData.suggestions.length > 0) {
+            suggestPanel.style.display = 'block';
+            suggestContent.innerHTML = diffData.suggestions.map(s => '<div class="suggest-item">' + s + '</div>').join('');
+        } else {
+            suggestPanel.style.display = 'none';
+        }
 
         // 保存按钮状态
-        const canSave = (redResult.passed === redResult.total) && diffResult.score >= 60;
+        const canSave = (redResult.passed === redResult.total) && diffData.score >= 60;
         btnSave.disabled = !canSave;
     }
 
