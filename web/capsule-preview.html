@@ -281,7 +281,7 @@
             }
 
             // 处理 }：先减少缩进
-            if (line.startsWith('}') || (line.includes('}') && !line.includes('{') && line.indexOf('}') < line.indexOf('{')) {
+            if (line.startsWith('}') || line.includes('}') && !line.includes('{') && line.indexOf('}') < line.indexOf('{')) {
                 indent = Math.max(0, indent - 1);
             }
 
