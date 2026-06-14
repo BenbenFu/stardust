@@ -34,8 +34,9 @@ function createStars() {
     const stars1 = document.getElementById('stars');
     const stars2 = document.getElementById('stars2');
     const stars3 = document.getElementById('stars3');
+    if (!stars1 && !stars2 && !stars3) return;
     
-    for (let i = 0; i < 200; i++) {
+    if (stars1) for (let i = 0; i < 200; i++) {
         const star = document.createElement('div');
         star.style.position = 'absolute';
         star.style.backgroundColor = 'white';
@@ -52,7 +53,7 @@ function createStars() {
         stars1.appendChild(star);
     }
     
-    for (let i = 0; i < 100; i++) {
+    if (stars2) for (let i = 0; i < 100; i++) {
         const star = document.createElement('div');
         star.style.position = 'absolute';
         star.style.backgroundColor = '#00d4ff';
@@ -69,7 +70,7 @@ function createStars() {
         stars2.appendChild(star);
     }
     
-    for (let i = 0; i < 50; i++) {
+    if (stars3) for (let i = 0; i < 50; i++) {
         const star = document.createElement('div');
         star.style.position = 'absolute';
         star.style.backgroundColor = '#a855f7';
