@@ -24,6 +24,7 @@ export const PALETTES = {
     novel_warm:      { bg: '#f8f5f0',         text: '#2a2520', accent: '#d4ccc4', muted: '#9a928a', accentRgb: '212,204,196', bgRgb: '248,245,240' },
     blueprint:        { bg: '#ffffff',         text: '#1e2622', accent: '#1e2622', muted: '#707a65', accentRgb: '30,38,34',   bgRgb: '255,255,255' },
     mystery_dark:     { bg: '#2a2a2a',         text: '#9a9a9a', accent: '#555555', muted: '#666666', accentRgb: '85,85,85',    bgRgb: '42,42,42' },
+    warm:            { bg: '#f8f5f0',         text: '#2a2520', accent: '#d4ccc4', muted: '#9a928a', accentRgb: '212,204,196', bgRgb: '248,245,240' },  // alias for novel_warm
 };
 
 // ============================================================

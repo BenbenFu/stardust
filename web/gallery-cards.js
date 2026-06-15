@@ -15,14 +15,17 @@ injectCardEngineCss();  // 副作用：自动注入引擎 CSS
 export function renderCard(diary) {
     // 优先使用 style_json（新格式）
     if (diary.style_json) {
-        return renderStyleJson(diary.style_json, diary);
+        const html = renderStyleJson(diary.style_json, diary);
+        console.log('[renderCard] using style_json, palette=' + (diary.style_json.palette || '?') + ', layout.top=' + (diary.style_json.layout?.top || '?') + ', html_preview=' + html.substring(0, 300));
+        return html;
     }
     // 兼容旧格式：cardType → preset
     const presetName = diary.cardType || 'default';
     const preset = STYLE_PRESETS[presetName];
     if (!preset) {
-        console.warn(`Unknown cardType: ${presetName}, falling back to 'default'`);
+        console.warn('[renderCard] FALLBACK: unknown cardType=' + presetName + ', using default');
         return renderStyleJson(STYLE_PRESETS['default'], diary);
     }
+    console.log('[renderCard] FALLBACK: cardType=' + presetName + ', preset palette=' + (preset.palette || '?'));
     return renderStyleJson(preset, diary);
 }

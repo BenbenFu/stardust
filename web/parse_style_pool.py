@@ -72,8 +72,12 @@ def detect_palette(css):
                 brightness = (r + g + b) / 3
                 if brightness < 60:
                     return 'industrial'
+                elif brightness > 240:
+                    return 'github_light'  # 纯白底
+                elif brightness > 200:
+                    return 'novel_warm'  # 暖白底
                 else:
-                    return 'warm'
+                    return 'archive_khaki'  # 灰白底
             except:
                 pass
         if 'rgba(0,' in css or 'rgba(30,' in css:
@@ -86,8 +90,8 @@ def detect_palette(css):
     if 'inset' in css and '0 0 30px' in css:
         return 'industrial'  # 深色 inset shadow 特征
     if '#ffffff' in css or '#fff' in css:
-        return 'warm'
-    return 'warm'  # 默认暖白
+        return 'github_light'
+    return 'novel_warm'  # 默认暖色
 
 
 def detect_layout(css, name):
