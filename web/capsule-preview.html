@@ -256,6 +256,7 @@
     let currentName = null;
     let currentDesc = '';
     let currentCat = '';
+    let currentStyleJson = null;
 
     // ========== 工具函数 ==========
     function escapeHtml(str) {
@@ -773,7 +774,7 @@
     }
 
     // ========== 构建预览卡片 ==========
-    function buildPreview(name, css) {
+    function buildPreview(name, css, styleJson) {
         let styleEl = document.getElementById('preview-dynamic-css');
         if (styleEl) styleEl.remove();
         if (css) {
@@ -785,7 +786,7 @@
 
         const dummyDiary = {
             id: 9999,
-            title: '预览标题 · 示例日记',
+            title: '预览标题 \u00b7 示例日记',
             date: '2026/06/13',
             dateRaw: '2026-06-13',
             highlights: [
@@ -795,16 +796,18 @@
             ],
             cardType: 'custom',
             capsuleName: name,
-            capsuleCSS: css
+            capsuleCSS: css || null,
+            style_json: styleJson || null
         };
 
-        previewArea.innerHTML = '<div style="text-align:center;margin-bottom:12px;font-size:10px;color:var(--pixel-dim);">' + escapeHtml(name) + '</div>';
+        const label = styleJson ? ' [style_json]' : (css ? ' [card_css]' : ' [fallback]');
+        previewArea.innerHTML = '<div style="text-align:center;margin-bottom:12px;font-size:10px;color:var(--pixel-dim);">' + escapeHtml(name) + label + '</div>';
         previewArea.insertAdjacentHTML('beforeend', renderCard(dummyDiary));
     }
 
     // ========== 加载 STYLE_POOL 列表 ==========
     async function loadPool() {
-        const { data, error } = await supabase.from('STYLE_POOL').select('name, category, desc, card_css').order('name');
+        const { data, error } = await supabase.from('STYLE_POOL').select('name, category, desc, card_css, style_json').order('name');
         if (error) {
             setStatus('加载失败: ' + error.message, false);
             return;
@@ -812,8 +815,8 @@
         stylePoolData = data || [];
         select.innerHTML = '<option value="">-- 选择扭蛋 (' + stylePoolData.length + ' 个) --</option>';
         stylePoolData.forEach(row => {
-            const hasCSS = row.card_css ? ' [已设计]' : '';
-            select.innerHTML += `<option value="${escapeHtml(row.name)}">${escapeHtml(row.name)}${hasCSS}</option>`;
+            const hasStyle = row.style_json || row.card_css ? ' [已设计]' : '';
+            select.innerHTML += `<option value="${escapeHtml(row.name)}">${escapeHtml(row.name)}${hasStyle}</option>`;
         });
         setStatus(`已加载 ${stylePoolData.length} 个扭蛋`, true);
     }
@@ -828,15 +831,21 @@
         if (!row) { setStatus('未找到该扭蛋', false); return; }
         currentName = name;
         currentCSS = row.card_css || null;
+        currentStyleJson = row.style_json || null;
         currentDesc = row.desc || '';
         currentCat = row.category || '';
         editor.value = currentCSS || '';
         infoDesc.textContent = currentDesc || '(无)';
         infoCat.textContent = currentCat || '(无)';
         infoPanel.classList.add('show');
-        setStatus(`已加载: ${name}` + (currentCSS ? ' (已有设计)' : ' (空白)'), true);
-        // 自动运行检查
+        const label = currentStyleJson ? ' (style_json)' : (currentCSS ? ' (card_css)' : ' (空白)');
+        setStatus(`已加载: ${name}${label}`, true);
+        // 自动运行检查（仅 card_css）
         if (currentCSS) runAllChecks();
+        // 仅 style_json 时，自动预览
+        if (currentStyleJson && !currentCSS) {
+            buildPreview(name, '', currentStyleJson);
+        }
     });
 
     // 预览（自动规范化 + 审核）
@@ -853,7 +862,7 @@
         // 运行审核
         runAllChecks();
         // 构建预览
-        buildPreview(name, normCSS.trim());
+        buildPreview(name, normCSS.trim(), currentStyleJson);
         setStatus('预览已更新' + (normCSS !== css ? '（已规范化）' : ''), true);
     });
 
@@ -901,7 +910,7 @@
             const name = select.value || currentName;
             if (name && css) {
                 runAllChecks();
-                buildPreview(name, css);
+                buildPreview(name, css, currentStyleJson);
                 setStatus('实时预览中...', true);
             }
         }, 800);
@@ -932,7 +941,7 @@
     btnReset.addEventListener('click', () => {
         editor.value = currentCSS || '';
         runAllChecks();
-        buildPreview(currentName, currentCSS || null);
+        buildPreview(currentName, currentCSS || null, currentStyleJson);
         setStatus('已重置', true);
     });
 
