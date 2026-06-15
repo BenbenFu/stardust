@@ -813,12 +813,19 @@
             return;
         }
         stylePoolData = data || [];
+        // DEBUG: 检查 style_json 是否存在
+        const withJson = stylePoolData.filter(r => r.style_json);
+        console.log('[capsule-preview] loadPool: ' + stylePoolData.length + ' rows, ' + withJson.length + ' with style_json');
+        if (withJson.length > 0) {
+            const sample = withJson[0];
+            console.log('[capsule-preview] sample style_json type:', typeof sample.style_json, 'keys:', Object.keys(sample.style_json).join(','));
+        }
         select.innerHTML = '<option value="">-- 选择扭蛋 (' + stylePoolData.length + ' 个) --</option>';
         stylePoolData.forEach(row => {
             const hasStyle = row.style_json || row.card_css ? ' [已设计]' : '';
             select.innerHTML += `<option value="${escapeHtml(row.name)}">${escapeHtml(row.name)}${hasStyle}</option>`;
         });
-        setStatus(`已加载 ${stylePoolData.length} 个扭蛋`, true);
+        setStatus(`已加载 ${stylePoolData.length} 个扭蛋` + (withJson.length ? ` (${withJson.length} 有 style_json)` : ' (无 style_json)'), true);
     }
 
     // ========== 事件绑定 ==========
@@ -829,6 +836,9 @@
         if (!name) { setStatus('请先选择一个扭蛋', false); return; }
         const row = stylePoolData.find(r => r.name === name);
         if (!row) { setStatus('未找到该扭蛋', false); return; }
+        // DEBUG
+        console.log('[capsule-preview] btnLoad row.style_json type:', typeof row.style_json, 'truthy:', !!row.style_json);
+        if (row.style_json) console.log('[capsule-preview] btnLoad style_json sample:', JSON.stringify(row.style_json).substring(0, 200));
         currentName = name;
         currentCSS = row.card_css || null;
         currentStyleJson = row.style_json || null;
