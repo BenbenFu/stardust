@@ -533,6 +533,77 @@ export const CARD_ENGINE_CSS = `
     line-height: 1; margin-bottom: 8px;
     white-space: pre; text-align: center;
 }
+
+/* === 13. elements 变体（第7层，data-*-variant 驱动）=== */
+
+/* --- date variants --- */
+.gallery-card[data-date-variant="vertical"] .card-date {
+    writing-mode: vertical-rl; text-orientation: mixed;
+    letter-spacing: 2px; font-size: 11px; align-self: flex-start;
+}
+.gallery-card[data-date-variant="stamp"] .card-date {
+    display: inline-block; border: 2px solid var(--card-accent);
+    padding: 2px 6px; font-weight: bold; transform: rotate(-5deg);
+}
+.gallery-card[data-date-variant="big_number"] .card-date {
+    font-size: 22px; font-weight: bold; line-height: 1;
+    opacity: 0.15; letter-spacing: -2px;
+}
+.gallery-card[data-date-variant="right_align"] .card-date { text-align: right; }
+.gallery-card[data-date-variant="hidden"] .card-date { display: none; }
+
+/* --- capsule variants (.card-style) --- */
+.gallery-card[data-capsule-variant="rounded"] .card-style {
+    display: inline-block; border: 1px solid var(--card-accent);
+    border-radius: 999px; padding: 1px 8px;
+    background: rgba(var(--card-accent-rgb), 0.1);
+}
+.gallery-card[data-capsule-variant="outline"] .card-style {
+    display: inline-block; border: 1px solid var(--card-accent);
+    background: transparent; padding: 1px 6px;
+}
+.gallery-card[data-capsule-variant="underline"] .card-style {
+    border-bottom: 1px solid var(--card-accent); padding-bottom: 1px;
+}
+.gallery-card[data-capsule-variant="bubble"] .card-style {
+    display: inline-block; background: var(--card-accent);
+    color: var(--card-bg, #fff); padding: 2px 8px; font-size: 10px;
+}
+.gallery-card[data-capsule-variant="hidden"] .card-style { display: none; }
+
+/* --- title variants (.card-title) --- */
+.gallery-card[data-title-variant="gradient"] .card-title {
+    background: linear-gradient(90deg, var(--card-text), var(--card-accent));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.gallery-card[data-title-variant="strikethrough"] .card-title { text-decoration: line-through; }
+.gallery-card[data-title-variant="outline_text"] .card-title {
+    -webkit-text-stroke: 1px var(--card-text); color: transparent;
+}
+.gallery-card[data-title-variant="uppercase"] .card-title {
+    text-transform: uppercase; letter-spacing: 2px;
+}
+
+/* --- highlights variants (.card-highlight-item::before) --- */
+/* default: ">" 前缀由 .gallery-card .card-highlight-item::before 基础样式提供 */
+.gallery-card[data-hl-variant="bullet_dot"] .card-highlight-item::before {
+    content: "\u2022  "; color: var(--card-accent);
+}
+.gallery-card[data-hl-variant="numbered"] { counter-reset: hl-counter; }
+.gallery-card[data-hl-variant="numbered"] .card-highlight-item { counter-increment: hl-counter; }
+.gallery-card[data-hl-variant="numbered"] .card-highlight-item::before {
+    content: counter(hl-counter) ". "; color: var(--card-accent);
+}
+.gallery-card[data-hl-variant="dash_prefix"] .card-highlight-item::before {
+    content: "\u2014  "; color: var(--card-muted);
+}
+.gallery-card[data-hl-variant="no_prefix"] .card-highlight-item::before { content: ""; }
+.gallery-card[data-hl-variant="tag_style"] .card-highlight-item {
+    display: inline-block; border: 1px solid var(--card-accent);
+    padding: 0 5px; margin: 1px 2px;
+}
+.gallery-card[data-hl-variant="tag_style"] .card-highlight-item::before { content: ""; }
 `;
 
 // ============================================================
@@ -768,6 +839,13 @@ export function renderStyleJson(styleJson, diary) {
     attrs += ` data-anim="${ef.animation || 'none'}"`;
     attrs += ` data-filter="${ef.filter || 'none'}"`;
     attrs += ` data-transform="${ef.transform || 'none'}"`;
+
+    // elements 变体（第7层，可选）
+    const el = sj.elements || {};
+    attrs += ` data-date-variant="${(el.date    || {}).variant || 'default'}"`;
+    attrs += ` data-capsule-variant="${(el.capsule || {}).variant || 'default'}"`;
+    attrs += ` data-title-variant="${(el.title   || {}).variant || 'default'}"`;
+    attrs += ` data-hl-variant="${(el.highlights || {}).variant || 'default'}"`;
 
     let html = `<a class="gallery-card"${attrs} href="diary.html?date=${dateRaw}" target="_blank" title="${escapeHtml(d.title || '')}" data-id="${d.id || ''}" data-title="${escapeHtml(d.title || '')}" data-date="${d.date || ''}" data-date-raw="${dateRaw}" data-highlights="${escapeHtml(JSON.stringify(highlights))}">`;
 

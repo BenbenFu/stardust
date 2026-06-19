@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capsule Card Preview</title>
+<title>Capsule Style Editor</title>
 <link rel="stylesheet" href="style.css?v=20260614">
 <script type="module" src="script.js?v=20260602"></script>
 <style>
@@ -13,989 +13,1004 @@
         --pixel-dim: #707a65;
         --pixel-alert: #8f341d;
         --repair-tape: #d2c89f;
+        --green-ok: #3a7d44;
     }
     * { image-rendering: pixelated; box-sizing: border-box; }
     body {
         background: var(--gba-bg);
         color: var(--pixel-dark);
         font-family: "Courier New", monospace;
-        margin: 0; padding: 12px;
-        display: flex; gap: 16px;
-        height: 100vh;
+        margin: 0; padding: 10px;
+        display: flex; gap: 10px;
+        height: 100vh; overflow: hidden;
     }
 
+    /* ===== 面板通用 ===== */
     .panel {
         background: rgba(0,0,0,0.04);
         border: 2px solid var(--pixel-dark);
-        padding: 12px;
-        overflow-y: auto;
+        padding: 10px;
+        display: flex; flex-direction: column; gap: 8px;
+        overflow: hidden;
     }
+    .panel-left  { width: 310px; flex-shrink: 0; overflow-y: auto; }
+    .panel-center { flex: 1; min-width: 0; }
+    .panel-right { width: 290px; flex-shrink: 0; overflow-y: auto; }
 
-    .panel-left { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
-    .panel-center { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-    .panel-right { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-
-    label { font-size: 10px; font-weight: bold; color: var(--pixel-dim); display: block; margin-bottom: 2px; }
-
-    select, textarea, button {
+    /* ===== 通用控件 ===== */
+    label {
+        font-size: 9px; font-weight: bold;
+        color: var(--pixel-dim); display: block; margin-bottom: 2px;
+        text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    select, textarea, input[type="text"] {
         font-family: "Courier New", monospace;
         font-size: 11px;
         background: var(--gba-bg);
         border: 1px solid var(--pixel-dark);
         color: var(--pixel-dark);
-        padding: 6px 8px;
+        padding: 5px 7px;
         width: 100%;
     }
-    textarea {
-        flex: 1;
-        min-height: 250px;
-        resize: vertical;
-        tab-size: 2;
-        line-height: 1.5;
+    select:focus, textarea:focus { outline: 2px solid var(--pixel-dark); outline-offset: -1px; }
+    textarea { resize: vertical; tab-size: 2; line-height: 1.5; }
+
+    button {
+        font-family: "Courier New", monospace;
+        font-size: 11px;
+        background: var(--gba-bg);
+        border: 1px solid var(--pixel-dark);
+        color: var(--pixel-dark);
+        padding: 5px 8px;
+        cursor: pointer; font-weight: bold;
     }
-    button { cursor: pointer; font-weight: bold; }
     button:hover { background: var(--pixel-dark); color: var(--gba-bg); }
-    button.save-btn { border-color: var(--pixel-alert); color: var(--pixel-alert); }
+    button.btn-save { border-color: var(--green-ok); color: var(--green-ok); }
+    button.btn-save:hover { background: var(--green-ok); color: var(--gba-bg); }
+    button.btn-danger { border-color: var(--pixel-alert); color: var(--pixel-alert); }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
     button:disabled:hover { background: var(--gba-bg); color: var(--pixel-dark); }
 
-    .preview-area {
-        flex: 1;
-        border: 2px dashed var(--pixel-dim);
-        padding: 16px;
-        overflow-y: auto;
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
-        min-height: 200px;
-    }
-    .preview-area .gallery-card {
-        width: 300px;
+    /* ===== Section 标题 ===== */
+    .section-title {
+        font-size: 10px; font-weight: bold;
+        border-bottom: 1px solid var(--pixel-dim);
+        padding-bottom: 3px; margin-bottom: 4px;
+        letter-spacing: 1px; color: var(--pixel-dark);
         flex-shrink: 0;
     }
 
-    .info-panel {
-        background: rgba(0,0,0,0.03);
-        border: 1px solid var(--pixel-dim);
-        padding: 8px 10px;
-        font-size: 10px;
-        display: none;
+    /* ===== 状态行 ===== */
+    .status {
+        font-size: 10px; color: var(--pixel-dim);
+        flex-shrink: 0; min-height: 14px;
     }
-    .info-panel.show { display: block; }
-    .info-panel .info-row { margin-bottom: 4px; display: flex; gap: 6px; }
-    .info-panel .info-label { color: var(--pixel-dim); flex-shrink: 0; min-width: 50px; }
-    .info-panel .info-value { color: var(--pixel-dark); word-break: break-all; flex: 1; }
-    .info-panel button {
-        width: auto; font-size: 9px; padding: 2px 8px;
-        margin-top: 4px; background: var(--pixel-dark); color: var(--gba-bg);
-    }
-
-    .status { font-size: 10px; color: var(--pixel-dim); margin-top: 4px; }
-    .status.ok { color: #3a7d44; }
+    .status.ok  { color: var(--green-ok); }
     .status.err { color: var(--pixel-alert); }
 
-    .section-title {
-        font-size: 11px; font-weight: bold;
-        border-bottom: 1px solid var(--pixel-dim);
-        padding-bottom: 4px; margin-bottom: 6px;
+    /* ===== capsule 选择区 ===== */
+    .capsule-selector { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+    .capsule-row { display: flex; gap: 5px; }
+    .capsule-row select { flex: 1; }
+
+    /* ===== 维度面板 ===== */
+    .dim-panel { display: flex; flex-direction: column; gap: 0; }
+    .dim-group {
+        border: 1px solid rgba(0,0,0,0.15);
+        margin-bottom: 6px;
+    }
+    .dim-group-header {
+        background: rgba(0,0,0,0.07);
+        padding: 4px 8px;
+        font-size: 10px; font-weight: bold; letter-spacing: 1px;
+        cursor: pointer; user-select: none;
+        display: flex; justify-content: space-between;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .dim-group-header:hover { background: rgba(0,0,0,0.12); }
+    .dim-group-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .dim-group.collapsed .dim-group-body { display: none; }
+    .dim-group-header .toggle-icon { color: var(--pixel-dim); }
+
+    .dim-row { display: flex; flex-direction: column; gap: 2px; }
+    .dim-row-inline { display: flex; gap: 5px; align-items: flex-end; }
+    .dim-row-inline .dim-row { flex: 1; }
+
+    /* ===== 色板选择器 ===== */
+    .palette-grid {
+        display: flex; flex-wrap: wrap; gap: 3px;
+        margin-top: 2px;
+    }
+    .palette-swatch {
+        width: 28px; height: 28px;
+        border: 2px solid transparent;
+        cursor: pointer; position: relative;
+        flex-shrink: 0;
+    }
+    .palette-swatch:hover { border-color: var(--pixel-dark); }
+    .palette-swatch.active { border-color: var(--pixel-dark); outline: 2px solid var(--pixel-alert); outline-offset: 1px; }
+    .palette-swatch[title]:hover::after {
+        content: attr(title);
+        position: absolute; bottom: 32px; left: 50%;
+        transform: translateX(-50%);
+        background: var(--pixel-dark); color: var(--gba-bg);
+        font-size: 8px; padding: 2px 5px;
+        white-space: nowrap; pointer-events: none;
+        z-index: 100;
     }
 
-    /* === 审核面板样式 === */
-    .audit-panel { border: 1px solid var(--pixel-dim); padding: 8px; font-size: 9px; display: none; }
-    .audit-section { margin-bottom: 6px; }
-    .audit-label { font-weight: bold; color: var(--pixel-dark); margin-bottom: 2px; font-size: 10px; }
-    .audit-result { color: var(--pixel-dim); font-size: 9px; }
-    .audit-result.pass { color: #3a7d44; }
-    .audit-result.fail { color: var(--pixel-alert); }
-    .audit-details { margin-top: 2px; padding-left: 8px; border-left: 2px solid var(--pixel-dim); font-size: 8px; max-height: 120px; overflow-y: auto; }
-    .audit-detail-item { margin-bottom: 1px; line-height: 1.3; }
-    .audit-detail-item.pass { color: #3a7d44; }
-    .audit-detail-item.fail { color: var(--pixel-alert); }
-    .score-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-    .score-bar { flex: 1; height: 4px; background: var(--pixel-dim); }
-    .score-fill { height: 100%; background: var(--pixel-alert); transition: width 0.2s; }
-    .score-fill.pass { background: #3a7d44; }
-    .score-num { font-size: 9px; min-width: 28px; text-align: right; }
-    .btn-normalize {
-        margin-top: 4px; font-size: 9px; padding: 3px 8px;
-        width: 100%; border: 1px solid var(--pixel-dark);
-        background: var(--gba-bg); cursor: pointer;
-        font-family: "Courier New", monospace;
+    /* ===== 预览区 ===== */
+    .preview-area {
+        flex: 1; border: 2px dashed var(--pixel-dim);
+        padding: 20px; overflow-y: auto;
+        display: flex; justify-content: center;
+        align-items: flex-start;
     }
-    .btn-normalize:hover { background: var(--pixel-dark); color: var(--gba-bg); }
-    .suggest-panel { border: 1px solid var(--pixel-dim); padding: 8px; font-size: 9px; display: none; }
-    .suggest-item { margin-bottom: 3px; color: var(--pixel-dark); line-height: 1.4; }
+    .preview-area .gallery-card { width: 280px; flex-shrink: 0; }
+    .preview-placeholder {
+        color: var(--pixel-dim); font-size: 11px;
+        text-align: center; padding-top: 40px; width: 100%;
+    }
+
+    /* ===== 右侧 JSON 面板 ===== */
+    .json-display {
+        flex: 1; font-size: 10px; line-height: 1.6;
+        background: rgba(0,0,0,0.04);
+        border: 1px solid var(--pixel-dim);
+        padding: 8px; overflow-y: auto;
+        white-space: pre-wrap; word-break: break-all;
+        font-family: "Courier New", monospace;
+        min-height: 0;
+    }
+    .btn-row { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-row button { flex: 1; }
+
+    /* ===== Preset 快速加载 ===== */
+    .preset-row { display: flex; gap: 5px; flex-shrink: 0; }
+    .preset-row select { flex: 1; }
 </style>
 </head>
 <body>
+
+<!-- ========== 左：维度面板 ========== -->
 <div class="panel panel-left">
-    <div class="section-title">CAPSULE_CSS_PREVIEW :: v0.2</div>
+    <div class="section-title">CAPSULE_STYLE_EDITOR :: v1.0</div>
 
+    <!-- capsule 选择 -->
+    <div class="capsule-selector">
+        <div class="capsule-row">
+            <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
+                <label>Category 筛选</label>
+                <select id="catFilter">
+                    <option value="">-- 全部 --</option>
+                </select>
+            </div>
+        </div>
+        <div class="capsule-row">
+            <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
+                <label>Capsule (STYLE_POOL.name)</label>
+                <select id="capsuleSelect">
+                    <option value="">-- 加载中... --</option>
+                </select>
+            </div>
+        </div>
+        <div id="statusMsg" class="status">正在连接数据库...</div>
+    </div>
+
+    <!-- Preset 快速加载 -->
     <div>
-        <label>扭蛋选择（STYLE_POOL.name）</label>
-        <select id="capsuleSelect">
-            <option value="">-- 加载中... --</option>
-        </select>
+        <div class="section-title">PRESET 快速加载</div>
+        <div class="preset-row">
+            <select id="presetSelect"><option value="">-- 选择预设 --</option></select>
+            <button id="btnLoadPreset" style="flex-shrink:0;width:80px;">[ 加载 ]</button>
+        </div>
     </div>
 
-    <div style="display:flex;gap:6px;">
-        <button id="btnLoad" style="flex:1;">[ LOAD_加载 ]</button>
-        <button id="btnSave" class="save-btn" style="flex:1;">[ SAVE_保存到DB ]</button>
-    </div>
+    <!-- ===== 维度面板 ===== -->
+    <div class="dim-panel" id="dimPanel">
 
-    <label>card_css 编辑区</label>
+        <!-- 粗粒度：布局骨架 -->
+        <div class="dim-group" id="grp-layout">
+            <div class="dim-group-header" data-grp="layout">
+                [粗] 布局骨架 LAYOUT <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Top 顶部组件</label>
+                        <select id="d-top">
+                            <option value="none">none — 无</option>
+                            <option value="label">label — 悬浮标签</option>
+                            <option value="status_bar">status_bar — 警告状态栏</option>
+                            <option value="warning_bar">warning_bar — 警告横条</option>
+                            <option value="doc_header">doc_header — 文档头</option>
+                            <option value="email_header">email_header — 邮件头</option>
+                            <option value="user_bar">user_bar — 用户栏</option>
+                            <option value="dark_bar">dark_bar — 反色标题条</option>
+                            <option value="role_panel">role_panel — 角色面板</option>
+                        </select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Body 主体</label>
+                        <select id="d-body">
+                            <option value="standard">standard — 标准</option>
+                            <option value="code_area">code_area — 代码区</option>
+                            <option value="ascii_zone">ascii_zone — ASCII 宠物</option>
+                            <option value="sticky_note">sticky_note — 便签</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Bottom 底部</label>
+                        <select id="d-bottom">
+                            <option value="style_tag">style_tag — 样式标签</option>
+                            <option value="tag_bar">tag_bar — 标签横条</option>
+                            <option value="none">none — 无</option>
+                        </select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Side 侧边</label>
+                        <select id="d-side">
+                            <option value="none">none — 无</option>
+                            <option value="line_numbers">line_numbers — 行号</option>
+                            <option value="holes">holes — 活页孔</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dim-row">
+                    <label>Overlay 覆盖层</label>
+                    <select id="d-overlay">
+                        <option value="none">none — 无</option>
+                        <option value="seal">seal — 批准印章</option>
+                        <option value="stamp">stamp — API_DEBT 戳</option>
+                        <option value="tape">tape — 胶带条纹</option>
+                        <option value="scanline">scanline — 扫描线</option>
+                        <option value="dump">dump — kernel dump</option>
+                        <option value="censored">censored — 打码遮挡</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-    <div class="info-panel" id="infoPanel">
-        <div class="info-row"><span class="info-label">DESC:</span><span class="info-value" id="infoDesc"></span></div>
-        <div class="info-row"><span class="info-label">CATEGORY:</span><span class="info-value" id="infoCat"></span></div>
-        <button id="btnCopyInfo">[ COPY_复制到剪贴板 ]</button>
-    </div>
+        <!-- 中粒度：配色方案 -->
+        <div class="dim-group" id="grp-palette">
+            <div class="dim-group-header" data-grp="palette">
+                [中] 配色方案 PALETTE <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <label>点击色块选择配色（当前: <span id="paletteLabel">industrial</span>）</label>
+                <div class="palette-grid" id="paletteGrid"></div>
+            </div>
+        </div>
 
-    <textarea id="cssEditor" placeholder="在此粘贴或编辑 CSS..."></textarea>
+        <!-- 中粒度：排版规则 -->
+        <div class="dim-group" id="grp-typo">
+            <div class="dim-group-header" data-grp="typo">
+                [中] 排版规则 TYPOGRAPHY <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>字体族 Family</label>
+                        <select id="d-font">
+                            <option value="mono">mono — 等宽</option>
+                            <option value="consolas">consolas — Consolas</option>
+                            <option value="serif">serif — 衬线</option>
+                            <option value="cursive">cursive — 手写</option>
+                        </select>
+                    </div>
+                    <div class="dim-row">
+                        <label>标题字号 Size</label>
+                        <select id="d-title-size">
+                            <option value="11">11px</option>
+                            <option value="12">12px</option>
+                            <option value="13" selected>13px</option>
+                            <option value="14">14px</option>
+                            <option value="15">15px</option>
+                            <option value="16">16px</option>
+                            <option value="18">18px</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dim-row">
+                    <label>标题装饰 Title Deco</label>
+                    <select id="d-title-deco">
+                        <option value="none">none — 无</option>
+                        <option value="border_bottom">border_bottom — 底边线</option>
+                        <option value="underline">underline — 下划线</option>
+                        <option value="wavy_underline">wavy_underline — 波浪下划线</option>
+                        <option value="uppercase_center">uppercase_center — 大写居中</option>
+                        <option value="center_border_bottom">center_border_bottom — 居中+底线</option>
+                        <option value="center_bg_highlight">center_bg_highlight — 居中高亮背景</option>
+                        <option value="function_prefix">function_prefix — 函数前缀</option>
+                        <option value="inverted_bar">inverted_bar — 反色条</option>
+                        <option value="left_border">left_border — 左侧色条</option>
+                        <option value="mirror">mirror — 镜像</option>
+                        <option value="sticky_note">sticky_note — 便签</option>
+                    </select>
+                </div>
+                <div class="dim-row">
+                    <label>高亮句变体 Highlights Variant</label>
+                    <select id="d-hl-variant">
+                        <option value="default">default — 默认（&gt;前缀）</option>
+                        <option value="bullet_dot">bullet_dot — 圆点 •</option>
+                        <option value="numbered">numbered — 有序编号</option>
+                        <option value="dash_prefix">dash_prefix — 短横 —</option>
+                        <option value="no_prefix">no_prefix — 无前缀</option>
+                        <option value="tag_style">tag_style — 标签风格</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-    <button id="btnPreview">[ PREVIEW_预览 ]</button>
+        <!-- 中粒度：边框与阴影 -->
+        <div class="dim-group" id="grp-border">
+            <div class="dim-group-header" data-grp="border">
+                [中] 边框材质 BORDER <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>边框样式 Style</label>
+                    <select id="d-border">
+                        <option value="solid">solid — 标准实线 2px</option>
+                        <option value="none">none — 无边框</option>
+                        <option value="thin_solid">thin_solid — 细实线 1px</option>
+                        <option value="thick_solid">thick_solid — 粗实线 3px</option>
+                        <option value="heavy_solid">heavy_solid — 超粗实线 4px</option>
+                        <option value="double">double — 双线</option>
+                        <option value="dotted">dotted — 点线</option>
+                        <option value="dashed">dashed — 虚线</option>
+                        <option value="left_accent">left_accent — 左侧重点条</option>
+                        <option value="solid_outline">solid_outline — 实线+外轮廓</option>
+                    </select>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>圆角 Radius</label>
+                        <select id="d-radius">
+                            <option value="0">0 — 直角</option>
+                            <option value="8">8 — 圆角8px</option>
+                        </select>
+                    </div>
+                    <div class="dim-row">
+                        <label>阴影 Shadow</label>
+                        <select id="d-shadow">
+                            <option value="none">none — 无</option>
+                            <option value="soft">soft — 柔和</option>
+                            <option value="inset">inset — 内嵌</option>
+                            <option value="soft_small">soft_small — 轻微</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div id="statusMsg" class="status"></div>
+        <!-- 细粒度：元素变体 -->
+        <div class="dim-group" id="grp-elements">
+            <div class="dim-group-header" data-grp="elements">
+                [细] 元素变体 ELEMENTS <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Date 日期呈现</label>
+                        <select id="d-date-variant">
+                            <option value="default">default — 横排</option>
+                            <option value="vertical">vertical — 竖排</option>
+                            <option value="stamp">stamp — 印章方块</option>
+                            <option value="big_number">big_number — 大号日期</option>
+                            <option value="right_align">right_align — 右对齐</option>
+                            <option value="hidden">hidden — 隐藏</option>
+                        </select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Capsule 标签呈现</label>
+                        <select id="d-capsule-variant">
+                            <option value="default">default — 基础</option>
+                            <option value="rounded">rounded — 圆角胶囊</option>
+                            <option value="outline">outline — 镂空描边</option>
+                            <option value="underline">underline — 下划线</option>
+                            <option value="bubble">bubble — 气泡框</option>
+                            <option value="hidden">hidden — 隐藏</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dim-row">
+                    <label>Title 标题额外处理</label>
+                    <select id="d-title-variant">
+                        <option value="default">default — 默认</option>
+                        <option value="gradient">gradient — 渐变文字色</option>
+                        <option value="strikethrough">strikethrough — 删除线</option>
+                        <option value="outline_text">outline_text — 描边字</option>
+                        <option value="uppercase">uppercase — 全大写</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-    <div class="section-title" style="margin-top:6px;">快速操作</div>
-    <div style="display:flex;gap:4px;flex-wrap:wrap;">
-        <button id="btnClear" style="flex:1;font-size:10px;">[ CLEAR ]</button>
-        <button id="btnResetFilter" style="flex:1;font-size:10px;">[ RESET ]</button>
-    </div>
-    <div style="font-size:9px;color:var(--pixel-dim);">
-        RESET: 清空编辑区并重新从DB加载。CLEAR: 仅清空编辑区。
-    </div>
+        <!-- 细粒度：装饰层 -->
+        <div class="dim-group" id="grp-deco">
+            <div class="dim-group-header" data-grp="deco">
+                [细] 装饰层 DECORATION <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>背景图案 BG Pattern</label>
+                    <select id="d-bg-pattern">
+                        <option value="none">none — 无</option>
+                        <option value="tape_stripe">tape_stripe — 胶带斜纹</option>
+                        <option value="perf_line">perf_line — 打孔线</option>
+                        <option value="scanline">scanline — 扫描线</option>
+                        <option value="lines">lines — 横线本</option>
+                        <option value="grid">grid — 方格纸</option>
+                    </select>
+                </div>
+                <div class="dim-row">
+                    <label>句间分隔符 Separator</label>
+                    <select id="d-separator">
+                        <option value="none">none — 无</option>
+                        <option value="asterisk">asterisk — *  *  *</option>
+                        <option value="dash">dash — - - - -</option>
+                        <option value="dots">dots — · · · · ·</option>
+                        <option value="dots_sparse">dots_sparse — ·  ·  ·</option>
+                        <option value="plus">plus — + + + + +</option>
+                        <option value="bang">bang — ! ! ! ! !</option>
+                        <option value="hex">hex — 0x0  0x0</option>
+                        <option value="code_comment">code_comment — /* ---- */</option>
+                        <option value="tilde">tilde — ~ ~ ~ ~ ~</option>
+                        <option value="triple_star">triple_star — * * *</option>
+                        <option value="question">question — ? ? ? ? ?</option>
+                    </select>
+                </div>
+                <div class="dim-row">
+                    <label>伪标签 Pseudo Label</label>
+                    <select id="d-pseudo-label">
+                        <option value="none">none — 无</option>
+                        <option value="tamagotchi">tamagotchi — TAMAGOTCHI</option>
+                        <option value="question_mark">question_mark — ?</option>
+                    </select>
+                </div>
+            </div>
+        </div>
 
-    <div class="section-title" style="margin-top:12px;">引擎预设预览</div>
-    <div style="display:flex;gap:6px;align-items:center;">
-        <select id="presetSelect" style="flex:1;">
-            <option value="">-- 选择预设 --</option>
-        </select>
-        <button id="btnPreviewPreset" style="flex:1;">[ PREVIEW_预设 ]</button>
-    </div>
+        <!-- 细粒度：动效层 -->
+        <div class="dim-group" id="grp-effect">
+            <div class="dim-group-header" data-grp="effect">
+                [细] 动效层 EFFECTS <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>动画 Animation</label>
+                        <select id="d-anim">
+                            <option value="none">none — 无</option>
+                            <option value="blink">blink — 闪烁</option>
+                            <option value="scanline_jitter">scanline_jitter — 故障抖动</option>
+                        </select>
+                    </div>
+                    <div class="dim-row">
+                        <label>滤镜 Filter</label>
+                        <select id="d-filter">
+                            <option value="none">none — 无</option>
+                            <option value="blur">blur — 轻微模糊</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="dim-row">
+                    <label>变换 Transform</label>
+                    <select id="d-transform">
+                        <option value="none">none — 无</option>
+                        <option value="slight_tilt">slight_tilt — 轻微倾斜1°</option>
+                        <option value="mirror">mirror — 镜像</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 自定义兜底 -->
+        <div class="dim-group" id="grp-custom">
+            <div class="dim-group-header" data-grp="custom">
+                [兜底] 自定义 CSS <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>customCss（作用域: .gallery-card 内）</label>
+                    <textarea id="d-custom-css" rows="5" placeholder=".card-title { color: red; }&#10;.card-date { font-size: 12px; }"></textarea>
+                </div>
+                <div style="font-size:9px;color:var(--pixel-dim);line-height:1.4;">
+                    注意：只写相对选择器，无需 .gallery-card 前缀（会自动加）。<br>
+                    禁止: position:fixed/absolute, break-inside, emoji。
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /dim-panel -->
 </div>
 
+<!-- ========== 中：实时预览 ========== -->
 <div class="panel panel-center">
-    <div class="section-title">实时预览</div>
+    <div class="section-title">LIVE PREVIEW</div>
     <div class="preview-area" id="previewArea">
-        <div style="color:var(--pixel-dim);font-size:11px;padding:20px;">
-            >>> 选择一个扭蛋并点击 [PREVIEW_预览] 查看效果 <<<
+        <div class="preview-placeholder">
+            &gt;&gt;&gt; 选择扭蛋或调整维度以查看实时效果 &lt;&lt;&lt;
         </div>
     </div>
 </div>
 
+<!-- ========== 右：JSON 展示 + 操作 ========== -->
 <div class="panel panel-right">
-    <div class="section-title">审核与差异</div>
+    <div class="section-title">STYLE_JSON OUTPUT</div>
 
-    <!-- 审核面板 -->
-    <div class="audit-panel" id="auditPanel">
-        <div class="audit-section">
-            <div class="audit-label">工程红线 <span id="redLineScore">-</span>/7</div>
-            <div class="audit-result" id="redLineResult">未检测</div>
-            <div class="audit-details" id="redLineDetails"></div>
-        </div>
-        <div class="audit-section">
-            <div class="audit-label">质量评分 <span id="qualityScoreDisplay">-</span>/100</div>
-            <div class="score-row"><div class="score-bar"><div class="score-fill" id="qualityBar"></div></div><span class="score-num" id="qualityNum">-</span></div>
-            <div class="audit-result" id="qualityResult">未检测</div>
-            <div class="audit-details" id="qualityDetails"></div>
-        </div>
-        <div class="audit-section">
-            <div class="audit-label">差异度 <span id="diffScoreDisplay">-</span>% <span id="diffAgainst" style="color:var(--pixel-dim);font-size:8px;">(vs -)</span></div>
-            <div class="score-row"><div class="score-bar"><div class="score-fill" id="diffBar"></div></div><span class="score-num" id="diffNum">-</span></div>
-            <div class="audit-result" id="diffResult">未检测</div>
-            <div class="audit-details" id="diffDetails"></div>
-        </div>
-        <button id="btnNormalize" class="btn-normalize">[ NORMALIZE_规范化 ]</button>
-    </div>
+    <div id="jsonDisplay" class="json-display">// 尚未生成</div>
 
-    <div class="suggest-panel" id="suggestPanel">
-        <div class="section-title">差异化建议</div>
-        <div id="suggestContent"></div>
+    <div class="btn-row">
+        <button id="btnCopyJson">[ COPY JSON ]</button>
+        <button id="btnSave" class="btn-save">[ SAVE TO DB ]</button>
     </div>
+    <div id="saveStatus" class="status">尚未保存</div>
+
+    <div class="section-title" style="margin-top:8px;">DB 当前值</div>
+    <div style="font-size:9px;color:var(--pixel-dim);flex-shrink:0;" id="dbInfoLine">未加载</div>
+    <div id="dbJsonDisplay" class="json-display" style="max-height:180px;font-size:9px;">// 加载后显示</div>
+    <button id="btnRevertDb" style="flex-shrink:0;font-size:10px;">[ REVERT 从DB重置面板 ]</button>
 </div>
 
 <script type="module">
-    import { supabase, checkAuth } from './script.js';
-    import { renderCard } from './gallery-cards.js';
-    import { STYLE_PRESETS, renderStyleJson } from './style-engine.js';
+import { supabase, checkAuth } from './script.js';
+import { renderCard } from './gallery-cards.js';
+import { STYLE_PRESETS, PALETTES, renderStyleJson } from './style-engine.js';
 
-    const select = document.getElementById('capsuleSelect');
-    const editor = document.getElementById('cssEditor');
-    const previewArea = document.getElementById('previewArea');
-    const statusMsg = document.getElementById('statusMsg');
-    const infoPanel = document.getElementById('infoPanel');
-    const infoDesc = document.getElementById('infoDesc');
-    const infoCat = document.getElementById('infoCat');
-    const btnPreview = document.getElementById('btnPreview');
-    const btnSave = document.getElementById('btnSave');
-    const btnLoad = document.getElementById('btnLoad');
-    const btnClear = document.getElementById('btnClear');
-    const btnReset = document.getElementById('btnResetFilter');
-    const btnCopyInfo = document.getElementById('btnCopyInfo');
-    const auditPanel = document.getElementById('auditPanel');
-    const redLineScore = document.getElementById('redLineScore');
-    const redLineResult = document.getElementById('redLineResult');
-    const redLineDetails = document.getElementById('redLineDetails');
-    const qualityScoreDisplay = document.getElementById('qualityScoreDisplay');
-    const qualityBar = document.getElementById('qualityBar');
-    const qualityNum = document.getElementById('qualityNum');
-    const qualityResultEl = document.getElementById('qualityResult');
-    const qualityDetails = document.getElementById('qualityDetails');
-    const diffScoreDisplay = document.getElementById('diffScoreDisplay');
-    const diffBar = document.getElementById('diffBar');
-    const diffNum = document.getElementById('diffNum');
-    const diffResultEl = document.getElementById('diffResult');
-    const diffAgainst = document.getElementById('diffAgainst');
-    const diffDetails = document.getElementById('diffDetails');
-    const suggestPanel = document.getElementById('suggestPanel');
-    const suggestContent = document.getElementById('suggestContent');
+// ============================================================
+// 全局状态
+// ============================================================
+let stylePoolData = [];   // 所有 STYLE_POOL 行
+let currentName = null;   // 当前选中的 capsule name
+let currentDbJson = null; // DB 中存储的 style_json（原始值，用于 revert）
 
-    let stylePoolData = [];
-    let currentCSS = null;
-    let currentName = null;
-    let currentDesc = '';
-    let currentCat = '';
-    let currentStyleJson = null;
+// ============================================================
+// DOM 引用
+// ============================================================
+const catFilter      = document.getElementById('catFilter');
+const capsuleSelect  = document.getElementById('capsuleSelect');
+const statusMsg      = document.getElementById('statusMsg');
+const previewArea    = document.getElementById('previewArea');
+const jsonDisplay    = document.getElementById('jsonDisplay');
+const dbJsonDisplay  = document.getElementById('dbJsonDisplay');
+const dbInfoLine     = document.getElementById('dbInfoLine');
+const saveStatus     = document.getElementById('saveStatus');
+const btnSave        = document.getElementById('btnSave');
+const btnCopyJson    = document.getElementById('btnCopyJson');
+const btnRevertDb    = document.getElementById('btnRevertDb');
+const btnLoadPreset  = document.getElementById('btnLoadPreset');
+const presetSelect   = document.getElementById('presetSelect');
+const paletteGrid    = document.getElementById('paletteGrid');
+const paletteLabel   = document.getElementById('paletteLabel');
 
-    // ========== 工具函数 ==========
-    function escapeHtml(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
+// 维度控件映射
+const DIMS = {
+    top:           document.getElementById('d-top'),
+    body:          document.getElementById('d-body'),
+    bottom:        document.getElementById('d-bottom'),
+    side:          document.getElementById('d-side'),
+    overlay:       document.getElementById('d-overlay'),
+    font:          document.getElementById('d-font'),
+    titleSize:     document.getElementById('d-title-size'),
+    titleDeco:     document.getElementById('d-title-deco'),
+    hlVariant:     document.getElementById('d-hl-variant'),
+    border:        document.getElementById('d-border'),
+    radius:        document.getElementById('d-radius'),
+    shadow:        document.getElementById('d-shadow'),
+    dateVariant:   document.getElementById('d-date-variant'),
+    capsuleVariant:document.getElementById('d-capsule-variant'),
+    titleVariant:  document.getElementById('d-title-variant'),
+    bgPattern:     document.getElementById('d-bg-pattern'),
+    separator:     document.getElementById('d-separator'),
+    pseudoLabel:   document.getElementById('d-pseudo-label'),
+    anim:          document.getElementById('d-anim'),
+    filter:        document.getElementById('d-filter'),
+    transform:     document.getElementById('d-transform'),
+    customCss:     document.getElementById('d-custom-css'),
+};
 
-    function setStatus(msg, ok) {
-        statusMsg.textContent = msg;
-        statusMsg.className = 'status ' + (ok ? 'ok' : 'err');
-    }
+// ============================================================
+// Mock 数据（预览固定用）
+// ============================================================
+const MOCK_DIARY = {
+    id: 20260619,
+    title: '预览示例 · 调试日记',
+    date: '2026/06/19',
+    dateRaw: '2026-06-19',
+    highlights: [
+        '这是第一条精华句，用于预览卡片样式效果。',
+        '第二条精华句，测试多句之间的分隔符样式。',
+        '第三条内容，展示更多文字时的排版表现。'
+    ],
+    capsuleName: '样式预览',
+};
 
-    // ========== scopeCSS：自动注入 [data-cs="xxx"] 前缀 ==========
-    function scopeCSS(css, name) {
-        const attr = CSS.escape(name);
-        return css.replace(/([^\n{]*)\s*\{/g, (match, selector) => {
-            const trimmed = selector.trim();
-            if (!trimmed || trimmed.startsWith('@')) return match;
-            const parts = trimmed.split(',').map(s => {
-                const sel = s.trim();
-                if (sel.startsWith('.gallery-card')) return `[data-cs="${attr}"]${sel}`;
-                return `[data-cs="${attr}"] ${sel}`;
-            });
-            return parts.join(', ') + ' {';
-        });
-    }
+// ============================================================
+// 读取当前维度面板 → 组装 style_json
+// ============================================================
+function buildStyleJson() {
+    const currentPalette = document.querySelector('.palette-swatch.active')?.dataset.palette || 'industrial';
 
-    // ========== normalizeCSS：统一 CSS 格式 ==========
-    function normalizeCSS(css) {
-        let s = css.replace(/\r\n?/g, '\n').trimEnd();
-        let lines = s.split('\n').map(l => l.trimEnd());
-        let result = [];
-        let indent = 0;
-        let inComment = false;
-        let inMultilineComment = false;
-
-        for (let i = 0; i < lines.length; i++) {
-            let raw = lines[i];
-            let line = raw.trim();
-
-            // 注释处理
-            if (inMultilineComment) {
-                result.push('  '.repeat(Math.max(0, indent - 1)) + raw.trim());
-                if (line.includes('*/')) inMultilineComment = false;
-                continue;
-            }
-            if (line.startsWith('/*')) {
-                inMultilineComment = !line.includes('*/');
-                result.push('  '.repeat(indent) + line);
-                continue;
-            }
-            if (line === '') {
-                if (result.length > 0 && result[result.length - 1] !== '') {
-                    result.push('');
-                }
-                continue;
-            }
-
-            // 处理 }：先减少缩进
-            if (line.startsWith('}') || line.includes('}') && !line.includes('{') && line.indexOf('}') < line.indexOf('{')) {
-                indent = Math.max(0, indent - 1);
-            }
-
-            result.push('  '.repeat(Math.max(0, indent)) + line);
-
-            // 处理 {：增加缩进（给下一行用）
-            const openCount = (line.match(/{/g) || []).length;
-            const closeCount = (line.match(/}/g) || []).length;
-            indent += openCount - closeCount;
-            indent = Math.max(0, indent);
-        }
-
-        while (result.length > 0 && result[result.length - 1] === '') result.pop();
-        return result.join('\n') + '\n';
-    }
-
-    // ========== CSS 变量解析 ==========
-    const CSS_VARS = {
-        '--pixel-dark': '#1e2622',
-        '--pixel-dim': '#707a65',
-        '--pixel-alert': '#8f341d',
-        '--gba-bg': '#cadbb7',
-        '--repair-tape': '#d2c89f',
+    const sj = {
+        layout: {
+            top:     DIMS.top.value,
+            body:    DIMS.body.value,
+            bottom:  DIMS.bottom.value,
+            side:    DIMS.side.value,
+            overlay: DIMS.overlay.value,
+        },
+        palette: currentPalette,
+        typo: {
+            family:     DIMS.font.value,
+            title_size: parseInt(DIMS.titleSize.value),
+            title_deco: DIMS.titleDeco.value,
+        },
+        border: {
+            style:  DIMS.border.value,
+            radius: DIMS.radius.value,
+            shadow: DIMS.shadow.value,
+        },
+        deco: {
+            bg_pattern:   DIMS.bgPattern.value,
+            separator:    DIMS.separator.value,
+            pseudo_label: DIMS.pseudoLabel.value,
+        },
+        effect: {
+            animation: DIMS.anim.value,
+            filter:    DIMS.filter.value,
+            transform: DIMS.transform.value,
+        },
+        elements: {
+            date:       { variant: DIMS.dateVariant.value },
+            capsule:    { variant: DIMS.capsuleVariant.value },
+            title:      { variant: DIMS.titleVariant.value },
+            highlights: { variant: DIMS.hlVariant.value },
+        },
     };
 
-    function resolveVars(css) {
-        return css.replace(/var\((--[\w-]+)\)/g, (m, v) => CSS_VARS[v] || m);
+    const customCss = DIMS.customCss.value.trim();
+    if (customCss) sj.customCss = customCss;
+
+    return sj;
+}
+
+// ============================================================
+// 将 style_json 回填到维度面板
+// ============================================================
+function applyStyleJsonToPanel(sj) {
+    if (!sj) return;
+    const l  = sj.layout  || {};
+    const ty = sj.typo    || {};
+    const bo = sj.border  || {};
+    const dc = sj.deco    || {};
+    const ef = sj.effect  || {};
+    const el = sj.elements || {};
+
+    setSelect(DIMS.top,     l.top);
+    setSelect(DIMS.body,    l.body);
+    setSelect(DIMS.bottom,  l.bottom);
+    setSelect(DIMS.side,    l.side);
+    setSelect(DIMS.overlay, l.overlay);
+
+    // palette
+    const palName = sj.palette || 'industrial';
+    document.querySelectorAll('.palette-swatch').forEach(s => {
+        s.classList.toggle('active', s.dataset.palette === palName);
+    });
+    paletteLabel.textContent = palName;
+
+    setSelect(DIMS.font,      ty.family);
+    setSelect(DIMS.titleSize, ty.title_size ? String(ty.title_size) : '13');
+    setSelect(DIMS.titleDeco, ty.title_deco);
+
+    setSelect(DIMS.border, bo.style);
+    setSelect(DIMS.radius, bo.radius);
+    setSelect(DIMS.shadow, bo.shadow);
+
+    setSelect(DIMS.bgPattern,   dc.bg_pattern);
+    setSelect(DIMS.separator,   dc.separator);
+    setSelect(DIMS.pseudoLabel, dc.pseudo_label);
+
+    setSelect(DIMS.anim,      ef.animation);
+    setSelect(DIMS.filter,    ef.filter);
+    setSelect(DIMS.transform, ef.transform);
+
+    setSelect(DIMS.dateVariant,    (el.date    || {}).variant);
+    setSelect(DIMS.capsuleVariant, (el.capsule || {}).variant);
+    setSelect(DIMS.titleVariant,   (el.title   || {}).variant);
+    setSelect(DIMS.hlVariant,      (el.highlights || {}).variant);
+
+    DIMS.customCss.value = sj.customCss || '';
+}
+
+function setSelect(el, val) {
+    if (!el || val === undefined || val === null) return;
+    const strVal = String(val);
+    const opt = [...el.options].find(o => o.value === strVal);
+    if (opt) el.value = strVal;
+}
+
+// ============================================================
+// 更新预览 + JSON 展示
+// ============================================================
+function updatePreview() {
+    const sj = buildStyleJson();
+
+    // 注入 customCss 作用域
+    let styleEl = document.getElementById('preview-custom-css');
+    if (styleEl) styleEl.remove();
+    if (sj.customCss) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'preview-custom-css';
+        styleEl.textContent = scopeCustomCss(sj.customCss);
+        document.head.appendChild(styleEl);
     }
 
-    // ========== 背景色分类 ==========
-    const WARM_PAPERS = new Set(['#f5f0e6','#f8f5ee','#f0eee8','#f5f0e8','#f5ecd9','#efe0c4','#f8f6f0','#f8f7f2','#faf6ee','#e5dcc8','#fdf8ec']);
-    const COOL_PAPERS = new Set(['#f5f7fa','#fafafa','#f8f8f8','#f5f5f5','#f7f7f7','#ffffff','#fffdf7','#fff9e6']);
-    const DARK_BGS = new Set(['#1e1e1e','#1e293b','#0b0e11','#121212']);
-    const SEPIA_PAPERS = new Set(['#f5f0e1','#f5f0e8']);
+    // 渲染卡片（elements data-* 已由 renderStyleJson 注入到 HTML 属性，CSS 规则由 style-engine.js 全局提供）
+    const diary = { ...MOCK_DIARY, style_json: sj, capsuleName: currentName || MOCK_DIARY.capsuleName };
+    previewArea.innerHTML = '';
+    const labelEl = document.createElement('div');
+    labelEl.style.cssText = 'text-align:center;margin-bottom:12px;font-size:9px;color:var(--pixel-dim);';
+    labelEl.textContent = (currentName || '[mock]') + ' · ' + sj.palette;
+    previewArea.appendChild(labelEl);
 
-    function classifyBg(rawBg) {
-        const bg = rawBg.trim().toLowerCase().replace(/[\s"']/g, '');
-        if (!bg) return 'none';
-        if (bg.includes('gradient')) return 'gradient';
-        if (WARM_PAPERS.has(bg) || SEPIA_PAPERS.has(bg)) return 'warm_paper';
-        if (COOL_PAPERS.has(bg)) return 'cool_paper';
-        if (DARK_BGS.has(bg)) return 'dark';
-        const hexMatch = bg.match(/#([0-9a-f]{3,8})/);
-        if (hexMatch) {
-            let hex = hexMatch[1];
-            if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-            if (hex.length >= 6) {
-                const r = parseInt(hex.substring(0,2), 16);
-                const g = parseInt(hex.substring(2,4), 16);
-                const b = parseInt(hex.substring(4,6), 16);
-                const lum = 0.299*r + 0.587*g + 0.114*b;
-                if (lum < 80) return 'dark';
-                if (lum < 180) return 'mid';
-                if (r > g && r > b) return 'warm_paper';
-                if (b > r) return 'cool_paper';
-                return 'cool_paper';
-            }
-        }
-        return 'other';
-    }
+    const cardHtml = renderStyleJson(sj, diary);
+    previewArea.insertAdjacentHTML('beforeend', cardHtml);
 
-    // ========== 伪元素标签分类 ==========
-    function classifyPseudoLabel(text) {
-        if (!text) return 'none';
-        if (/^[【「『《〈]/.test(text)) return 'cjk_bracket';
-        if (/^\d{3}\s*[\|｜]/.test(text)) return 'http_code';
-        if (/^[A-Z]{2,}[:：]/.test(text)) return 'ascii_label';
-        if (/^\d+[.、)）]/.test(text)) return 'numbered';
-        return 'other';
-    }
+    // JSON 展示
+    jsonDisplay.textContent = JSON.stringify(sj, null, 2);
+}
 
-    // ========== 视觉指纹提取 ==========
-    function extractFingerprint(css) {
-        const resolved = resolveVars(css);
-        const lower = resolved.toLowerCase();
-        const fp = {};
+// ============================================================
+// elements 变体 CSS 动态注入
+// ============================================================
+// ============================================================
+// customCss 作用域注入
+// ============================================================
+function scopeCustomCss(css) {
+    // 给每行选择器加 .gallery-card 前缀（仅含 { 的行）
+    return css.replace(/([^{}\n]+)\s*\{/g, (match, sel) => {
+        const trimmed = sel.trim();
+        if (!trimmed || trimmed.startsWith('@') || trimmed.startsWith('.gallery-card')) return match;
+        return `.gallery-card ${trimmed} {`;
+    });
+}
 
-        // 1. 背景色
-        const bgMatches = lower.match(/background(?:-color)?:\s*([^;}{]+)/);
-        fp.bgRaw = bgMatches ? bgMatches[1].trim() : '';
-        fp.bgFamily = classifyBg(fp.bgRaw);
-
-        // 2. 字体族
-        const fontMatches = lower.match(/font-family:\s*([^;}{]+)/g) || [];
-        fp.fontFamily = 'default';
-        for (const f of fontMatches) {
-            if (/mono|consola|courier/.test(f)) { fp.fontFamily = 'monospace'; break; }
-            if (/sans/.test(f)) { fp.fontFamily = 'sans'; break; }
-            if (/serif/.test(f)) { fp.fontFamily = 'serif'; break; }
-        }
-
-        // 3. 视觉手法
-        const allFilterCount = (lower.match(/\bfilter\s*:/g) || []).length;
-        const prefixedFilterCount = (lower.match(/-\w+-filter\s*:/g) || []).length;
-        fp.features = {
-            gradient: lower.includes('gradient'),
-            shadow: lower.includes('shadow'),
-            borderRadius: lower.includes('border-radius'),
-            animation: lower.includes('animation') || lower.includes('transition'),
-            rotation: lower.includes('rotate'),
-            opacity: lower.includes('opacity'),
-            filter: allFilterCount > prefixedFilterCount,
-            monospaceFont: fp.fontFamily === 'monospace',
-            borderStrong: /[2-9]\d*px\s+solid/.test(lower),
-            pseudoLabel: /::(?:before|after)\s*\{[^}]*content:/.test(resolved),
-            textDecoration: lower.includes('text-decoration') || lower.includes('underline') || lower.includes('line-through'),
-            transform: lower.includes('transform') && lower.includes('scale'),
-            columns: lower.includes('column'),
-            pattern: lower.includes('repeating') || lower.includes('pattern'),
-            centerAligned: lower.includes('text-align: center'),
-        };
-
-        // 4. 伪元素文本
-        const befores = [...resolved.matchAll(/::before\s*\{[^}]*content:\s*["']([^"']{1,40})["']/g)].map(m => m[1]);
-        const afters = [...resolved.matchAll(/::after\s*\{[^}]*content:\s*["']([^"']{1,40})["']/g)].map(m => m[1]);
-        fp.pseudoTexts = befores.slice(0, 3).concat(afters.slice(0, 3));
-        fp.pseudoLabels = fp.pseudoTexts.map(t => classifyPseudoLabel(t));
-
-        // 5. 视觉层数
-        const pseudoCount = (css.match(/::(?:before|after)/g) || []).length;
-        const nestedRules = (css.match(/\.gallery-card\s+\./g) || []).length;
-        fp.layerCount = pseudoCount + nestedRules;
-
-        return fp;
-    }
-
-    // ========== 视觉相似度计算 ==========
-    function computeSimilarity(fpA, fpB) {
-        let score = 0;
-        let maxScore = 0;
-
-        // 维度1: 背景色系 (25%)
-        maxScore += 25;
-        if (fpA.bgFamily === fpB.bgFamily) {
-            score += 25;
-            if (fpA.bgRaw && fpB.bgRaw && fpA.bgRaw.trim() === fpB.bgRaw.trim()) {
-                score += 5;
-                maxScore += 5;
-            }
-        }
-
-        // 维度2: 字体族 (10%)
-        maxScore += 10;
-        if (fpA.fontFamily === fpB.fontFamily) score += 10;
-
-        // 维度3: 视觉手法 (40%)
-        maxScore += 40;
-        const fa = fpA.features, fb = fpB.features;
-        const aSet = new Set(Object.keys(fa).filter(k => fa[k]));
-        const bSet = new Set(Object.keys(fb).filter(k => fb[k]));
-        const commonIgnore = new Set(['shadow', 'animation']);
-        const aUnique = new Set([...aSet].filter(k => !commonIgnore.has(k)));
-        const bUnique = new Set([...bSet].filter(k => !commonIgnore.has(k)));
-        if (aUnique.size > 0 || bUnique.size > 0) {
-            const overlap = new Set([...aUnique].filter(k => bUnique.has(k)));
-            const union = new Set([...aUnique, ...bUnique]);
-            score += 40 * (overlap.size / union.size);
-        } else {
-            score += 40 * 0.8;
-        }
-
-        // 维度4: 层级复杂度 (10%)
-        maxScore += 10;
-        const layerDiff = Math.abs(fpA.layerCount - fpB.layerCount);
-        score += Math.max(0, 10 - layerDiff * 3);
-
-        // 维度5: 伪元素标签风格 (15%)
-        maxScore += 15;
-        if (fpA.pseudoLabels.length > 0 && fpB.pseudoLabels.length > 0) {
-            for (let i = 0; i < Math.min(2, fpA.pseudoLabels.length); i++) {
-                for (let j = 0; j < Math.min(2, fpB.pseudoLabels.length); j++) {
-                    if (fpA.pseudoLabels[i] === fpB.pseudoLabels[j] && fpA.pseudoLabels[i] !== 'other') {
-                        score += 7.5;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return maxScore > 0 ? score / maxScore : 0;
-    }
-
-    // ========== 差异化建议 ==========
-    function suggestDifferentiation(newFp, similarCards) {
-        const suggestions = [];
-        const sameBg = similarCards.filter(c => c.fp.bgFamily === newFp.bgFamily);
-        if (sameBg.length >= 3) {
-            if (newFp.bgFamily === 'cool_paper') {
-                suggestions.push('[BG] 浅白/冷纸色已有' + sameBg.length + '张，考虑换暖纸色、深色底或渐变');
-            } else if (newFp.bgFamily === 'warm_paper') {
-                suggestions.push('[BG] 暖纸色已有' + sameBg.length + '张，考虑换冷色调、深色底或渐变');
-            } else if (newFp.bgFamily === 'dark') {
-                suggestions.push('[BG] 深色底已有' + sameBg.length + '张，考虑换浅色纸感或中间调');
-            }
-        }
-        const newTech = new Set(Object.keys(newFp.features).filter(k => newFp.features[k]));
-        newTech.delete('shadow'); newTech.delete('animation');
-        if (newTech.size === 0) {
-            suggestions.push('[TECH] 仅用了阴影+动画（最常见组合），缺少独特手法。考虑加：旋转/滤镜/渐变/图案/列布局');
-        }
-        if (newFp.fontFamily === 'monospace') {
-            const monoCount = similarCards.filter(c => c.fp.fontFamily === 'monospace').length;
-            if (monoCount >= 2) {
-                suggestions.push('[FONT] 等宽字体在相似卡片中较多，考虑用衬线体或手写体做区分');
-            }
-        }
-        if (newFp.layerCount <= 2) {
-            suggestions.push('[LAYER] 视觉层较少，考虑加伪元素装饰线/标签/水印增加辨识度');
-        }
-        return suggestions;
-    }
-
-    // ========== 工程红线检查 ==========
-    function checkRedLines(css, name) {
-        const details = [];
-        let passed = 0;
-        const total = 7;
-
-        // 红线1: .gallery-card 容器使用 position: fixed/absolute
-        if (/\.gallery-card[^}]*position\s*:\s*(fixed|absolute)/i.test(css)) {
-            details.push({ rule: '红线1', pass: false, msg: '.gallery-card 容器禁止使用 position:fixed/absolute' });
-        } else {
-            passed++;
-            details.push({ rule: '红线1', pass: true, msg: '容器未使用 fixed/absolute' });
-        }
-
-        // 红线2: 修改 break-inside
-        if (/break-inside\s*:/i.test(css)) {
-            details.push({ rule: '红线2', pass: false, msg: '禁止修改 break-inside 属性' });
-        } else {
-            passed++;
-            details.push({ rule: '红线2', pass: true, msg: '未修改 break-inside' });
-        }
-
-        // 红线3: CSS 原文包含 [data-cs="
-        if (css.includes('[data-cs="')) {
-            details.push({ rule: '红线3', pass: false, msg: '禁止在 CSS 原文中写 [data-cs="..." 前缀' });
-        } else {
-            passed++;
-            details.push({ rule: '红线3', pass: true, msg: '未包含 [data-cs= 前缀' });
-        }
-
-        // 红线4: 子元素有非透明背景但容器无实色背景（简易检查）
-        const containerHasBg = /\.gallery-card[^}]*(background|background-color)\s*:\s*[^;]+(?![a-zA-Z])/i.test(css);
-        // 简化：暂不直接判失败
-        passed++;
-        details.push({ rule: '红线4', pass: true, msg: '容器背景检查（需人工复核）' });
-
-        // 红线5: emoji 字符
-        const emojiRe = /[\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}]/u;
-        if (emojiRe.test(css)) {
-            details.push({ rule: '红线5', pass: false, msg: '全属性禁止 emoji 字符' });
-        } else {
-            passed++;
-            details.push({ rule: '红线5', pass: true, msg: '未检测到 emoji' });
-        }
-
-        // 红线6: hover 改变 margin/padding/width/height
-        const hoverBadRe = /\.gallery-card[^}]*:hover[^}]*(margin|padding|width|height)\s*:/i;
-        if (hoverBadRe.test(css)) {
-            details.push({ rule: '红线6', pass: false, msg: 'hover 禁止改变 margin/padding/width/height' });
-        } else {
-            passed++;
-            details.push({ rule: '红线6', pass: true, msg: 'hover 未改变文档流尺寸' });
-        }
-
-        // 红线7: 固定宽度 > 250px 可能导致 250px 下溢出
-        const widthRe = /width\s*:\s*(\d+)px/gi;
-        let m;
-        let overflowRisk = false;
-        while ((m = widthRe.exec(css)) !== null) {
-            if (parseInt(m[1]) > 250) overflowRisk = true;
-        }
-        if (overflowRisk) {
-            details.push({ rule: '红线7', pass: false, msg: '存在 width > 250px 的属性，250px 下可能溢出' });
-        } else {
-            passed++;
-            details.push({ rule: '红线7', pass: true, msg: '未检测到固定宽度 > 250px' });
-        }
-
-        return { passed, total, details };
-    }
-
-    // ========== 质量打分（0-100） ==========
-    function scoreQuality(css) {
-        let score = 0;
-        const details = [];
-
-        // 1. 正文字号 >= 10px（20分）
-        const fontSizeRe = /\.card-highlight-item[^}]*font-size\s*:\s*(\d+)px/i;
-        const m = css.match(fontSizeRe);
-        if (m && parseInt(m[1]) >= 10) {
-            score += 20;
-            details.push({ item: '正文字号', pass: true, msg: `font-size: ${m[1]}px ≥ 10px` });
-        } else if (m) {
-            details.push({ item: '正文字号', pass: false, msg: `font-size: ${m[1]}px < 10px` });
-        } else {
-            score += 20;
-            details.push({ item: '正文字号', pass: true, msg: '未覆盖 .card-highlight-item 字号，使用基类' });
-        }
-
-        // 2. 装饰元素（伪元素）数量 ≤ 3（20分）
-        const pseudoMatches = css.match(/::?(before|after)/gi) || [];
-        const pseudoCount = new Set(pseudoMatches.map(s => s.toLowerCase())).size;
-        if (pseudoCount <= 3) {
-            score += 20;
-            details.push({ item: '装饰数量', pass: true, msg: `伪元素种类 ${pseudoCount} 种 ≤ 3` });
-        } else {
-            details.push({ item: '装饰数量', pass: false, msg: `伪元素种类 ${pseudoCount} 种 > 3` });
-        }
-
-        // 3. 无 emoji（15分）
-        const emojiRe = /[\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}\u{1F900}-\u{1F9FF}]/u;
-        if (!emojiRe.test(css)) {
-            score += 15;
-            details.push({ item: 'Emoji', pass: true, msg: '未检测到 emoji' });
-        } else {
-            details.push({ item: 'Emoji', pass: false, msg: '检测到 emoji 字符' });
-        }
-
-        // 4. hover 不改变文档流（15分）
-        const hoverBadRe = /\.gallery-card[^}]*:hover[^}]*(margin|padding|width|height)\s*:/i;
-        if (!hoverBadRe.test(css)) {
-            score += 15;
-            details.push({ item: 'Hover', pass: true, msg: 'hover 未改变文档流尺寸' });
-        } else {
-            details.push({ item: 'Hover', pass: false, msg: 'hover 改变了 margin/padding/width/height' });
-        }
-
-        // 5. 对比度（15分，简易）
-        score += 15;
-        details.push({ item: '对比度', pass: true, msg: '简易检查通过（需人工复核）' });
-
-        // 6. 250px 不溢出（15分）
-        const widthRe2 = /width\s*:\s*(\d+)px/gi;
-        let overflowRisk = false;
-        let m2;
-        while ((m2 = widthRe2.exec(css)) !== null) {
-            if (parseInt(m2[1]) > 250) overflowRisk = true;
-        }
-        if (!overflowRisk) {
-            score += 15;
-            details.push({ item: '250px溢出', pass: true, msg: '未检测到固定宽度 > 250px' });
-        } else {
-            details.push({ item: '250px溢出', pass: false, msg: '存在固定宽度 > 250px 的属性' });
-        }
-
-        return { score, details };
-    }
-
-    // ========== 差异度打分（视觉指纹，0-100，越高越独特） ==========
-    function scoreDifference(css, name, allCards) {
-        const newFp = extractFingerprint(css);
-        let maxSim = 0;
-        let mostSimilarName = '-';
-        let mostSimilarFp = null;
-        const comparisons = [];
-
-        for (const row of allCards) {
-            if (!row.card_css || row.name === name) continue;
-            const fp = extractFingerprint(row.card_css);
-            const sim = computeSimilarity(newFp, fp);
-            comparisons.push({ name: row.name, fp, sim });
-            if (sim > maxSim) {
-                maxSim = sim;
-                mostSimilarName = row.name;
-                mostSimilarFp = fp;
-            }
-        }
-
-        const diffScore = Math.round((1 - maxSim) * 100);
-        const details = [];
-
-        // 指纹摘要
-        details.push({ item: '背景色系', pass: true, msg: newFp.bgFamily + (newFp.bgRaw ? ' (' + newFp.bgRaw.substring(0,30) + ')' : '') });
-        details.push({ item: '字体族', pass: true, msg: newFp.fontFamily });
-        const techs = Object.keys(newFp.features).filter(k => newFp.features[k]);
-        details.push({ item: '视觉手法', pass: true, msg: techs.length > 0 ? techs.join(', ') : '无显著手法' });
-        details.push({ item: '视觉层数', pass: true, msg: String(newFp.layerCount) });
-
-        // 最相似对比
-        details.push({ item: '最相似卡片', pass: diffScore >= 60, msg: '与「' + mostSimilarName + '」相似度 ' + (maxSim * 100).toFixed(1) + '%' });
-
-        // 对比维度拆解
-        if (mostSimilarFp) {
-            details.push({ item: '-- 背景对比', pass: newFp.bgFamily !== mostSimilarFp.bgFamily, msg: newFp.bgFamily + ' vs ' + mostSimilarFp.bgFamily });
-            details.push({ item: '-- 字体对比', pass: newFp.fontFamily !== mostSimilarFp.fontFamily, msg: newFp.fontFamily + ' vs ' + mostSimilarFp.fontFamily });
-            const aTech = new Set(Object.keys(newFp.features).filter(k => newFp.features[k]));
-            const bTech = new Set(Object.keys(mostSimilarFp.features).filter(k => mostSimilarFp.features[k]));
-            const commonIgnore = new Set(['shadow', 'animation']);
-            const aU = new Set([...aTech].filter(k => !commonIgnore.has(k)));
-            const bU = new Set([...bTech].filter(k => !commonIgnore.has(k)));
-            const overlap = new Set([...aU].filter(k => bU.has(k)));
-            const uniqueA = new Set([...aU].filter(k => !bU.has(k)));
-            details.push({ item: '-- 手法对比', pass: uniqueA.size > 0, msg: '重合' + overlap.size + '项 / 独有' + uniqueA.size + '项' });
-        }
-
-        // 差异化建议
-        const similarCards = comparisons.filter(c => c.sim > 0.45);
-        const suggestions = suggestDifferentiation(newFp, similarCards);
-
-        return { score: diffScore, mostSimilar: mostSimilarName, details, suggestions };
-    }
-
-    // ========== 运行所有检查并更新 UI ==========
-    async function runAllChecks() {
-        const css = editor.value.trim();
-        const name = select.value || currentName;
-        if (!name || !css) {
-            auditPanel.style.display = 'none';
-            return;
-        }
-        auditPanel.style.display = 'block';
-
-        // 红线检查
-        const redResult = checkRedLines(css, name);
-        redLineScore.textContent = redResult.passed + '/' + redResult.total;
-        redLineResult.textContent = redResult.passed === redResult.total ? '通过' : '未通过';
-        redLineResult.className = 'audit-result ' + (redResult.passed === redResult.total ? 'pass' : 'fail');
-        redLineDetails.innerHTML = redResult.details.map(d => `<div class="audit-detail-item ${d.pass ? 'pass' : 'fail'}">${d.rule}: ${d.msg}</div>`).join('');
-
-        // 质量打分
-        const qualResult = scoreQuality(css);
-        qualityScoreDisplay.textContent = qualResult.score;
-        qualityNum.textContent = qualResult.score;
-        qualityBar.style.width = qualResult.score + '%';
-        qualityBar.className = 'score-fill ' + (qualResult.score >= 60 ? 'pass' : '');
-        qualityResultEl.textContent = qualResult.score >= 60 ? '合格' : '待改进';
-        qualityResultEl.className = 'audit-result ' + (qualResult.score >= 60 ? 'pass' : 'fail');
-        qualityDetails.innerHTML = qualResult.details.map(d => `<div class="audit-detail-item ${d.pass ? 'pass' : 'fail'}">${d.item}: ${d.msg}</div>`).join('');
-
-        // 差异度打分
-        const diffData = scoreDifference(css, name, stylePoolData);
-        diffScoreDisplay.textContent = diffData.score;
-        diffNum.textContent = diffData.score;
-        diffBar.style.width = diffData.score + '%';
-        diffBar.className = 'score-fill ' + (diffData.score >= 60 ? 'pass' : '');
-        diffAgainst.textContent = `(vs ${diffData.mostSimilar})`;
-        diffResultEl.textContent = diffData.score >= 60 ? '合格' : '同质化风险';
-        diffResultEl.className = 'audit-result ' + (diffData.score >= 60 ? 'pass' : 'fail');
-        diffDetails.innerHTML = diffData.details.map(d => `<div class="audit-detail-item ${d.pass ? 'pass' : 'fail'}">${d.item}: ${d.msg}</div>`).join('');
-
-        // 差异化建议
-        if (diffData.suggestions && diffData.suggestions.length > 0) {
-            suggestPanel.style.display = 'block';
-            suggestContent.innerHTML = diffData.suggestions.map(s => '<div class="suggest-item">' + s + '</div>').join('');
-        } else {
-            suggestPanel.style.display = 'none';
-        }
-
-        // 保存按钮状态
-        const canSave = (redResult.passed === redResult.total) && diffData.score >= 60;
-        btnSave.disabled = !canSave;
-    }
-
-    // ========== 构建预览卡片 ==========
-    function buildPreview(name, css, styleJson) {
-        let styleEl = document.getElementById('preview-dynamic-css');
-        if (styleEl) styleEl.remove();
-        if (css) {
-            styleEl = document.createElement('style');
-            styleEl.id = 'preview-dynamic-css';
-            styleEl.textContent = scopeCSS(css, name);
-            document.head.appendChild(styleEl);
-        }
-
-        const dummyDiary = {
-            id: 9999,
-            title: '预览标题 \u00b7 示例日记',
-            date: '2026/06/13',
-            dateRaw: '2026-06-13',
-            highlights: [
-                '这是第一条精华句，用于预览卡片样式效果。',
-                '这是第二条精华句，测试多句之间的分隔符样式。',
-                '第三条，展示更多内容时的排版表现。'
-            ],
-            cardType: 'custom',
-            capsuleName: name,
-            capsuleCSS: css || null,
-            style_json: styleJson || null
-        };
-
-        const label = styleJson ? ' [style_json]' : (css ? ' [card_css]' : ' [fallback]');
-        previewArea.innerHTML = '<div style="text-align:center;margin-bottom:12px;font-size:10px;color:var(--pixel-dim);">' + escapeHtml(name) + label + '</div>';
-        previewArea.insertAdjacentHTML('beforeend', renderCard(dummyDiary));
-    }
-
-    // ========== 加载 STYLE_POOL 列表 ==========
-    async function loadPool() {
-        const { data, error } = await supabase.from('STYLE_POOL').select('name, category, desc, card_css, style_json').order('name');
-        if (error) {
-            setStatus('加载失败: ' + error.message, false);
-            return;
-        }
-        stylePoolData = data || [];
-        // DEBUG: 检查 style_json 是否存在
-        const withJson = stylePoolData.filter(r => r.style_json);
-        console.log('[capsule-preview] loadPool: ' + stylePoolData.length + ' rows, ' + withJson.length + ' with style_json');
-        if (withJson.length > 0) {
-            const sample = withJson[0];
-            console.log('[capsule-preview] sample style_json type:', typeof sample.style_json, 'keys:', Object.keys(sample.style_json).join(','));
-        }
-        select.innerHTML = '<option value="">-- 选择扭蛋 (' + stylePoolData.length + ' 个) --</option>';
-        stylePoolData.forEach(row => {
-            const hasStyle = row.style_json || row.card_css ? ' [已设计]' : '';
-            select.innerHTML += `<option value="${escapeHtml(row.name)}">${escapeHtml(row.name)}${hasStyle}</option>`;
+// ============================================================
+// 色板网格初始化
+// ============================================================
+function initPaletteGrid() {
+    paletteGrid.innerHTML = '';
+    Object.entries(PALETTES).forEach(([name, p]) => {
+        const swatch = document.createElement('div');
+        swatch.className = 'palette-swatch';
+        swatch.dataset.palette = name;
+        swatch.title = name;
+        swatch.style.background = p.bg && p.bg !== 'transparent'
+            ? p.bg
+            : `rgba(${p.bgRgb || '200,200,200'}, 0.5)`;
+        // 内圈显示 accent 色
+        swatch.style.boxShadow = `inset 0 -5px 0 rgba(${p.accentRgb},0.6)`;
+        swatch.addEventListener('click', () => {
+            document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('active'));
+            swatch.classList.add('active');
+            paletteLabel.textContent = name;
+            debouncedUpdate();
         });
-        setStatus(`已加载 ${stylePoolData.length} 个扭蛋` + (withJson.length ? ` (${withJson.length} 有 style_json)` : ' (无 style_json)'), true);
+        if (name === 'industrial') swatch.classList.add('active');
+        paletteGrid.appendChild(swatch);
+    });
+}
+
+// ============================================================
+// 加载 STYLE_POOL 列表
+// ============================================================
+async function loadPool() {
+    const { data, error } = await supabase
+        .from('STYLE_POOL')
+        .select('name, category, desc, style_json')
+        .order('name');
+    if (error) {
+        setStatus('加载失败: ' + error.message, false);
+        return;
     }
+    stylePoolData = data || [];
 
-    // ========== 事件绑定 ==========
-
-    // 加载选中扭蛋的 card_css
-    btnLoad.addEventListener('click', () => {
-        const name = select.value;
-        if (!name) { setStatus('请先选择一个扭蛋', false); return; }
-        const row = stylePoolData.find(r => r.name === name);
-        if (!row) { setStatus('未找到该扭蛋', false); return; }
-        // DEBUG
-        console.log('[capsule-preview] btnLoad row.style_json type:', typeof row.style_json, 'truthy:', !!row.style_json);
-        if (row.style_json) console.log('[capsule-preview] btnLoad style_json sample:', JSON.stringify(row.style_json).substring(0, 200));
-        currentName = name;
-        currentCSS = row.card_css || null;
-        currentStyleJson = row.style_json || null;
-        currentDesc = row.desc || '';
-        currentCat = row.category || '';
-        editor.value = currentCSS || '';
-        infoDesc.textContent = currentDesc || '(无)';
-        infoCat.textContent = currentCat || '(无)';
-        infoPanel.classList.add('show');
-        const label = currentStyleJson ? ' (style_json)' : (currentCSS ? ' (card_css)' : ' (空白)');
-        setStatus(`已加载: ${name}${label}`, true);
-        // 自动运行检查（仅 card_css）
-        if (currentCSS) runAllChecks();
-        // 仅 style_json 时，自动预览
-        if (currentStyleJson && !currentCSS) {
-            buildPreview(name, '', currentStyleJson);
-        }
+    // 提取所有 category（去重 + 排序）
+    const cats = [...new Set(stylePoolData.map(r => r.category).filter(Boolean))].sort();
+    catFilter.innerHTML = '<option value="">-- 全部 --</option>';
+    cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        catFilter.appendChild(opt);
     });
 
-    // 预览（自动规范化 + 审核）
-    btnPreview.addEventListener('click', () => {
-        const css = editor.value.trim();
-        const name = select.value || currentName;
-        if (!name) { setStatus('请先选择扭蛋', false); return; }
-        // 自动规范化
-        const normCSS = normalizeCSS(css);
-        if (normCSS !== css) {
-            editor.value = normCSS;
-            setStatus('已自动规范化 CSS', true);
-        }
-        // 运行审核
-        runAllChecks();
-        // 构建预览
-        buildPreview(name, normCSS.trim(), currentStyleJson);
-        setStatus('预览已更新' + (normCSS !== css ? '（已规范化）' : ''), true);
+    rebuildCapsuleList('');
+    const withJson = stylePoolData.filter(r => r.style_json).length;
+    setStatus(`已加载 ${stylePoolData.length} 个扭蛋（${withJson} 有 style_json）`, true);
+}
+
+function rebuildCapsuleList(catVal) {
+    const rows = catVal
+        ? stylePoolData.filter(r => r.category === catVal)
+        : stylePoolData;
+    // 按首字母 / name 字典序（已从 DB order by name）
+    capsuleSelect.innerHTML = `<option value="">-- 选择扭蛋 (${rows.length}) --</option>`;
+    rows.forEach(row => {
+        const opt = document.createElement('option');
+        opt.value = row.name;
+        const hasJson = row.style_json ? ' [√]' : '';
+        opt.textContent = row.name + hasJson;
+        capsuleSelect.appendChild(opt);
     });
+}
 
-    // 保存到 Supabase（需通过审核）
-    btnSave.addEventListener('click', async () => {
-        const name = select.value || currentName;
-        if (!name) { setStatus('请先选择扭蛋', false); return; }
-        if (btnSave.disabled) {
-            setStatus('未通过审核，无法保存（需红线全过 + 差异度≥60%）', false);
-            return;
-        }
-        const css = normalizeCSS(editor.value.trim());
-        const { error } = await supabase
-            .from('STYLE_POOL')
-            .update({ card_css: css || null })
-            .eq('name', name);
-        if (error) {
-            setStatus('保存失败: ' + error.message, false);
-        } else {
-            currentCSS = css || null;
-            const row = stylePoolData.find(r => r.name === name);
-            if (row) row.card_css = css || null;
-            const opt = select.querySelector(`option[value="${name.replace(/"/g, '&quot;')}"]`);
-            if (opt) opt.textContent = name + (css ? ' [已设计]' : '');
-            setStatus('已保存: ' + name, true);
-        }
-    });
+// ============================================================
+// 加载选中 capsule 的 style_json 到面板
+// ============================================================
+function loadCapsule(name) {
+    if (!name) return;
+    const row = stylePoolData.find(r => r.name === name);
+    if (!row) { setStatus('未找到: ' + name, false); return; }
 
-    // 规范化按钮
-    btnNormalize.addEventListener('click', () => {
-        const css = editor.value.trim();
-        if (!css) { setStatus('编辑区为空', false); return; }
-        const normCSS = normalizeCSS(css);
-        editor.value = normCSS;
-        runAllChecks();
-        setStatus('已规范化 CSS', true);
-    });
+    currentName = name;
+    currentDbJson = row.style_json || null;
 
-    // 修改时实时预览 + 审核
-    let previewTimer;
-    editor.addEventListener('input', () => {
-        clearTimeout(previewTimer);
-        previewTimer = setTimeout(() => {
-            const css = editor.value.trim();
-            const name = select.value || currentName;
-            if (name && css) {
-                runAllChecks();
-                buildPreview(name, css, currentStyleJson);
-                setStatus('实时预览中...', true);
-            }
-        }, 800);
-    });
+    // 更新右侧 DB 信息
+    dbInfoLine.textContent = `DB: ${name} · category: ${row.category || '-'} · desc: ${row.desc || '-'}`;
+    dbJsonDisplay.textContent = currentDbJson
+        ? JSON.stringify(currentDbJson, null, 2)
+        : '// 该 capsule 尚无 style_json';
 
-    // 切换扭蛋时自动加载
-    select.addEventListener('change', () => {
-        btnLoad.click();
-    });
+    // 回填面板（有则用，无则用 default 预设）
+    const sjToApply = currentDbJson || STYLE_PRESETS['default'];
+    applyStyleJsonToPanel(sjToApply);
+    updatePreview();
 
-    // 清空编辑区
-    btnClear.addEventListener('click', () => {
-        editor.value = '';
-        setStatus('编辑区已清空', true);
-    });
+    setStatus(`已加载: ${name}${currentDbJson ? ' (style_json)' : ' (fallback to default)'}`, true);
+    saveStatus.textContent = '未修改';
+    saveStatus.className = 'status';
+}
 
-    // 复制信息
-    btnCopyInfo.addEventListener('click', () => {
-        const text = `扭蛋名: ${currentName || '-'}\n描述: ${currentDesc || '-'}\n分类: ${currentCat || '-'}`;
-        navigator.clipboard.writeText(text).then(() => {
-            setStatus('已复制到剪贴板', true);
-        }).catch(() => {
-            setStatus('复制失败', false);
-        });
-    });
+// ============================================================
+// 保存 style_json 到 DB
+// ============================================================
+async function saveToDb() {
+    if (!currentName) { saveStatus.textContent = '请先选择 capsule'; saveStatus.className = 'status err'; return; }
+    const sj = buildStyleJson();
+    btnSave.disabled = true;
+    saveStatus.textContent = '保存中...'; saveStatus.className = 'status';
 
-    // 重置
-    btnReset.addEventListener('click', () => {
-        editor.value = currentCSS || '';
-        runAllChecks();
-        buildPreview(currentName, currentCSS || null, currentStyleJson);
-        setStatus('已重置', true);
-    });
+    const { error } = await supabase
+        .from('STYLE_POOL')
+        .update({ style_json: sj })
+        .eq('name', currentName);
 
-    // 预设预览
-    const btnPreviewPreset = document.getElementById('btnPreviewPreset');
-    const presetSelect = document.getElementById('presetSelect');
-    btnPreviewPreset.addEventListener('click', () => {
-        const presetName = presetSelect.value;
-        if (!presetName) { setStatus('请先选择一个预设', false); return; }
-        const preset = STYLE_PRESETS[presetName];
-        if (!preset) { setStatus('未找到该预设', false); return; }
-
-        const sampleDiary = {
-            id: 20260614,
-            title: '预设预览 · ' + presetName,
-            date: '2026/06/14',
-            dateRaw: '2026-06-14',
-            highlights: [
-                '这是第一条精华句，用于预览预设样式效果。',
-                '这是第二条精华句，测试多句之间的排版表现。'
-            ],
-            capsuleName: presetName
-        };
-
-        previewArea.innerHTML = '<div style="color:var(--pixel-dim);font-size:10px;margin-bottom:8px;">预设: ' + presetName + '  [' + preset.palette + ']</div>';
-        previewArea.insertAdjacentHTML('beforeend', renderStyleJson(preset, sampleDiary));
-        setStatus('已预览预设: ' + presetName, true);
-    });
-
-    // ========== 初始化 ==========
-    async function init() {
-        const authed = await checkAuth();
-        if (!authed) return;
-        await loadPool();
-        // 填充预设选择器
-        const presetNames = Object.keys(STYLE_PRESETS).sort();
-        presetNames.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.textContent = name + ' [' + STYLE_PRESETS[name].palette + ']';
-            presetSelect.appendChild(opt);
-        });
+    btnSave.disabled = false;
+    if (error) {
+        saveStatus.textContent = '保存失败: ' + error.message; saveStatus.className = 'status err';
+    } else {
+        currentDbJson = sj;
+        // 更新内存数据
+        const row = stylePoolData.find(r => r.name === currentName);
+        if (row) row.style_json = sj;
+        // 更新 DB 展示
+        dbJsonDisplay.textContent = JSON.stringify(sj, null, 2);
+        // 更新列表标记
+        const opt = capsuleSelect.querySelector(`option[value="${currentName.replace(/"/g, '&quot;')}"]`);
+        if (opt && !opt.textContent.includes('[√]')) opt.textContent = currentName + ' [√]';
+        saveStatus.textContent = '已保存: ' + currentName; saveStatus.className = 'status ok';
     }
-    init();
+}
+
+// ============================================================
+// 防抖更新
+// ============================================================
+let _updateTimer = null;
+function debouncedUpdate() {
+    clearTimeout(_updateTimer);
+    _updateTimer = setTimeout(updatePreview, 80);
+}
+
+// ============================================================
+// 工具
+// ============================================================
+function setStatus(msg, ok) {
+    statusMsg.textContent = msg;
+    statusMsg.className = 'status ' + (ok ? 'ok' : 'err');
+}
+
+// ============================================================
+// 折叠/展开 dim-group
+// ============================================================
+document.querySelectorAll('.dim-group-header').forEach(header => {
+    header.addEventListener('click', () => {
+        const grp = header.closest('.dim-group');
+        grp.classList.toggle('collapsed');
+        const icon = header.querySelector('.toggle-icon');
+        icon.textContent = grp.classList.contains('collapsed') ? '▶' : '▼';
+    });
+});
+
+// ============================================================
+// 事件绑定
+// ============================================================
+
+// category 筛选
+catFilter.addEventListener('change', () => rebuildCapsuleList(catFilter.value));
+
+// capsule 切换
+capsuleSelect.addEventListener('change', () => {
+    const name = capsuleSelect.value;
+    if (name) loadCapsule(name);
+});
+
+// 所有维度控件 → 防抖更新预览
+Object.values(DIMS).forEach(el => {
+    if (!el) return;
+    const evt = el.tagName === 'TEXTAREA' ? 'input' : 'change';
+    el.addEventListener(evt, debouncedUpdate);
+});
+
+// 保存
+btnSave.addEventListener('click', saveToDb);
+
+// 复制 JSON
+btnCopyJson.addEventListener('click', () => {
+    const txt = jsonDisplay.textContent;
+    navigator.clipboard.writeText(txt).then(() => {
+        btnCopyJson.textContent = '[ COPIED! ]';
+        setTimeout(() => { btnCopyJson.textContent = '[ COPY JSON ]'; }, 1500);
+    }).catch(() => {
+        saveStatus.textContent = '复制失败'; saveStatus.className = 'status err';
+    });
+});
+
+// 从 DB 重置面板
+btnRevertDb.addEventListener('click', () => {
+    if (!currentName) return;
+    applyStyleJsonToPanel(currentDbJson || STYLE_PRESETS['default']);
+    updatePreview();
+    saveStatus.textContent = '已从 DB 重置'; saveStatus.className = 'status ok';
+});
+
+// 预设快速加载
+btnLoadPreset.addEventListener('click', () => {
+    const name = presetSelect.value;
+    if (!name) return;
+    const preset = STYLE_PRESETS[name];
+    if (!preset) return;
+    applyStyleJsonToPanel(preset);
+    updatePreview();
+    setStatus('已加载预设: ' + name, true);
+});
+
+// ============================================================
+// 初始化
+// ============================================================
+async function init() {
+    const authed = await checkAuth();
+    if (!authed) { setStatus('认证失败，无法连接数据库', false); return; }
+
+    initPaletteGrid();
+
+    // 填充预设下拉
+    Object.keys(STYLE_PRESETS).sort().forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name + ' [' + STYLE_PRESETS[name].palette + ']';
+        presetSelect.appendChild(opt);
+    });
+
+    await loadPool();
+    updatePreview(); // 初始渲染默认预设
+}
+
+init();
 </script>
 </body>
 </html>
