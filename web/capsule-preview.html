@@ -21,8 +21,11 @@
         color: var(--pixel-dark);
         font-family: "Courier New", monospace;
         margin: 0; padding: 10px;
-        display: flex; gap: 10px;
-        height: 100vh; overflow: hidden;
+        display: grid;
+        grid-template-columns: 310px 1fr 290px;
+        gap: 10px;
+        height: 100vh;
+        overflow: hidden;
     }
 
     /* ===== 面板通用 ===== */
@@ -32,16 +35,19 @@
         padding: 10px;
         display: flex; flex-direction: column; gap: 8px;
         min-height: 0;
+        overflow: hidden;
     }
-    .panel-left  { width: 310px; flex-shrink: 0; overflow: hidden; display: flex; flex-direction: column; }
-    .panel-center { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
-    .panel-right { width: 290px; flex-shrink: 0; overflow: hidden; display: flex; flex-direction: column; }
+    /* 三栏各自占满 grid cell，内容溢出时由子元素滚动 */
+    .panel-left, .panel-center, .panel-right {
+        height: 100%;
+    }
     /* 面板内固定区不压缩 */
     .panel-left  > *:not(.dim-panel),
     .panel-right > *:not(.json-display) { flex-shrink: 0; }
     /* 面板内滚动区占满剩余空间 */
-    .panel-left  .dim-panel  { flex: 1; }
-    .panel-right .json-display { flex: 1; }
+    .panel-left  .dim-panel   { flex: 1; overflow-y: auto; min-height: 0; }
+    .panel-center .preview-area { flex: 1; overflow-y: auto; min-height: 0; }
+    .panel-right .json-display { flex: 1; overflow-y: auto; min-height: 0; }
 
     /* ===== 通用控件 ===== */
     label {
