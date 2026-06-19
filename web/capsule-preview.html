@@ -479,6 +479,16 @@
         <label>description（可选）</label>
         <input type="text" id="modalDesc" placeholder="e.g. 说明文字" />
     </div>
+    <!-- elements 专用字段：所属元素（新增元素变体时必选） -->
+    <div class="modal-field" id="modalElementField" style="display:none;">
+        <label>element（所属元素）</label>
+        <select id="modalElement">
+            <option value="date">date 日期</option>
+            <option value="capsule">capsule 胶囊标签</option>
+            <option value="title">title 标题</option>
+            <option value="highlights">highlights 高亮句</option>
+        </select>
+    </div>
     <!-- palette 专用字段 -->
     <div id="modalPaletteFields" style="display:none;">
         <div class="modal-field">
@@ -581,6 +591,8 @@ const dom = {
     modalValue:    document.getElementById('modalValue'),
     modalLabel:    document.getElementById('modalLabel'),
     modalDesc:     document.getElementById('modalDesc'),
+    modalElementField: document.getElementById('modalElementField'),
+    modalElement:      document.getElementById('modalElement'),
     modalErr:      document.getElementById('modalErr'),
     modalPaletteFields: document.getElementById('modalPaletteFields'),
     modalBg:       document.getElementById('modalBg'),
@@ -1042,6 +1054,15 @@ function showAddOptionModal(dimKey) {
     dom.modalPaletteFields.style.display = isPalette ? '' : 'none';
     dom.modalFieldDesc.style.display = isPalette ? 'none' : '';
 
+    // 显示/隐藏 elements 专用字段（所属元素）
+    const isElements = cfg.table === 'style_elements_options';
+    dom.modalElementField.style.display = isElements ? '' : 'none';
+    if (isElements && cfg.element) {
+        dom.modalElement.value = cfg.element;
+    } else if (isElements) {
+        dom.modalElement.value = 'date';
+    }
+
     // 更新 label 提示
     if (isPalette) {
         document.getElementById('labelValue').textContent = 'value（色板名，英文小写）';
@@ -1094,7 +1115,10 @@ async function saveNewOption() {
             if (cfg.col && cfg.colVal !== undefined) {
                 row[cfg.col] = cfg.colVal;
             }
-            if (cfg.element) {
+            // elements 表需要从弹窗下拉框读取所属元素
+            if (cfg.table === 'style_elements_options') {
+                row.element = dom.modalElement.value;
+            } else if (cfg.element) {
                 row.element = cfg.element;
             }
             // 计算 sort_order
@@ -1207,16 +1231,22 @@ document.querySelectorAll('.btn-add-opt').forEach(btn => {
 });
 
 function findFirstDimKeyByGroup(grp) {
-    const groupMap = {
-        layout:   'top',
-        palette:  'palette',
-        typo:     'font',
-        border:   'border',
-        elements: 'dateVariant',
-        deco:     'bgPattern',
-        effect:   'anim',
+    // 扫描 DIM_CONFIG，找到属于该 grp 的第一个 key
+    if (grp === 'palette')  return 'palette';
+    if (grp === 'layout')   return 'top';
+    if (grp === 'border')   return 'border';
+    // typo/border/deco/effect 取该表对应的第一个 key
+    const tableMap = {
+        typo:   'style_typo_options',
+        border: 'style_border_options',
+        deco:   'style_deco_options',
+        effect: 'style_effect_options',
+        elements: 'style_elements_options',
     };
-    return groupMap[grp] || null;
+    const tbl = tableMap[grp];
+    if (!tbl) return null;
+    const first = Object.keys(DIM_CONFIG).find(k => DIM_CONFIG[k].table === tbl);
+    return first || null;
 }
 
 // ============================================================
