@@ -31,11 +31,17 @@
         border: 2px solid var(--pixel-dark);
         padding: 10px;
         display: flex; flex-direction: column; gap: 8px;
-        overflow: hidden;
+        min-height: 0;
     }
-    .panel-left  { width: 310px; flex-shrink: 0; overflow-y: auto; }
-    .panel-center { flex: 1; min-width: 0; }
-    .panel-right { width: 290px; flex-shrink: 0; overflow-y: auto; }
+    .panel-left  { width: 310px; flex-shrink: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .panel-center { flex: 1; min-width: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .panel-right { width: 290px; flex-shrink: 0; overflow: hidden; display: flex; flex-direction: column; }
+    /* 面板内固定区不压缩 */
+    .panel-left  > *:not(.dim-panel),
+    .panel-right > *:not(.json-display) { flex-shrink: 0; }
+    /* 面板内滚动区占满剩余空间 */
+    .panel-left  .dim-panel  { flex: 1; }
+    .panel-right .json-display { flex: 1; }
 
     /* ===== 通用控件 ===== */
     label {
@@ -94,7 +100,12 @@
     .capsule-row select { flex: 1; }
 
     /* ===== 维度面板 ===== */
-    .dim-panel { display: flex; flex-direction: column; gap: 0; }
+    .dim-panel {
+        display: flex; flex-direction: column; gap: 0;
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+    }
     .dim-group {
         border: 1px solid rgba(0,0,0,0.15);
         margin-bottom: 6px;
