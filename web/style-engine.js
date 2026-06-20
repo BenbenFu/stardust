@@ -1176,3 +1176,76 @@ export function injectCardEngineCss() {
     styleEl.textContent = CARD_ENGINE_CSS;
     document.head.appendChild(styleEl);
 }
+
+// ============================================================
+// 十一、injectDynamicStyles() — 从 DB 选项注入动态 CSS
+// 将各维度选项表中的 css_template 字段合并注入
+// 后注入，优先级高于 CARD_ENGINE_CSS 中的硬编码规则
+// 参数: allOptions = { palette, layout, typo, border, deco, effect, elements }
+//        每个值是对应表的所有行（含 css_template 字段）
+// ============================================================
+
+export function injectDynamicStyles(allOptions) {
+    if (typeof document === 'undefined') return;
+    if (!allOptions) return;
+
+    let css = '';
+
+    // 辅助: 收集所有非空 css_template
+    const collect = (rows) => {
+        if (!Array.isArray(rows)) return;
+        rows.forEach(r => {
+            if (r && r.css_template && r.css_template.trim()) {
+                css += r.css_template.trim() + '\n';
+            }
+        });
+    };
+
+    collect(allOptions.palette);
+    collect(allOptions.layout);
+    collect(allOptions.typo);
+    collect(allOptions.border);
+    collect(allOptions.deco);
+    collect(allOptions.effect);
+    collect(allOptions.elements);
+
+    if (!css) return;
+
+    // 去重: 按行去重，避免重复注入
+    const lines = css.split('\n');
+    const seen = new Set();
+    const deduped = [];
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed && !seen.has(trimmed)) {
+            seen.add(trimmed);
+            deduped.push(line);
+        }
+    }
+    css = deduped.join('\n');
+
+    let styleEl = document.getElementById('card-engine-dynamic-css');
+    if (styleEl) {
+        styleEl.textContent = css; // 更新，不重复创建
+    } else {
+        styleEl = document.createElement('style');
+        styleEl.id = 'card-engine-dynamic-css';
+        document.head.appendChild(styleEl);
+        styleEl.textContent = css;
+    }
+}
+
+// ============================================================
+// 十二、buildCssFromTemplate() — 根据当前 styleJson 激活对应 css_template
+// 在 render 前调用，确保当前所用选项的 CSS 已注入
+// 参数: styleJson — 当前卡片的 style_json
+//        allOptions — 同上，DB 选项
+// 这里简单实现: 直接注入 allOptions 中所有 css_template（已去重）
+// 实际渲染时由 data-attr 选择器决定哪条生效
+// ============================================================
+
+export function ensureActiveStyles(styleJson, allOptions) {
+    // 目前 injectDynamicStyles 已注入所有选项
+    // 这里预留: 以后可以按 styleJson 只注入用到的选项，减小 CSS 体积
+    injectDynamicStyles(allOptions);
+}
