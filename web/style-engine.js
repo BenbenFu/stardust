@@ -24,6 +24,7 @@ export const PALETTES = {
     novel_warm:      { bg: '#f8f5f0',         text: '#2a2520', accent: '#d4ccc4', muted: '#9a928a', accentRgb: '212,204,196', bgRgb: '248,245,240' },
     blueprint:        { bg: '#ffffff',         text: '#1e2622', accent: '#1e2622', muted: '#707a65', accentRgb: '30,38,34',   bgRgb: '255,255,255' },
     mystery_dark:     { bg: '#2a2a2a',         text: '#9a9a9a', accent: '#555555', muted: '#666666', accentRgb: '85,85,85',    bgRgb: '42,42,42' },
+    fitzgerald:     { bg: '#faf6ee',         text: '#1a1a1a', accent: '#c4a962', muted: '#8a8a7a', accentRgb: '196,169,98',  bgRgb: '250,246,238' },
     warm:            { bg: '#f8f5f0',         text: '#2a2520', accent: '#d4ccc4', muted: '#9a928a', accentRgb: '212,204,196', bgRgb: '248,245,240' },  // alias for novel_warm
 };
 
@@ -95,6 +96,7 @@ export const CARD_ENGINE_CSS = `
 .gallery-card[data-palette="novel_warm"]      { --card-bg: #f8f5f0; --card-text: #2a2520; --card-accent: #d4ccc4; --card-muted: #9a928a; --card-accent-rgb: 212,204,196; --card-bg-rgb: 248,245,240; }
 .gallery-card[data-palette="blueprint"]        { --card-bg: #ffffff; --card-text: #1e2622; --card-accent: #1e2622; --card-muted: #707a65; --card-accent-rgb: 30,38,34; --card-bg-rgb: 255,255,255; }
 .gallery-card[data-palette="mystery_dark"]     { --card-bg: #2a2a2a; --card-text: #9a9a9a; --card-accent: #555555; --card-muted: #666666; --card-accent-rgb: 85,85,85; --card-bg-rgb: 42,42,42; }
+.gallery-card[data-palette="fitzgerald"]     { --card-bg: #faf6ee; --card-text: #1a1a1a; --card-accent: #c4a962; --card-muted: #8a8a7a; --card-accent-rgb: 196,169,98; --card-bg-rgb: 250,246,238; }
 
 /* === 3. layout.top（9 种）=== */
 
@@ -378,6 +380,12 @@ export const CARD_ENGINE_CSS = `
     transform: scaleX(-1); display: inline-block;
 }
 
+/* title_deco: italic_center */
+.gallery-card[data-title-deco="italic_center"] .card-title {
+    font-style: italic; text-align: center; letter-spacing: 3px;
+    font-size: 14px;
+}
+
 /* title_deco: sticky_note — 见 sticky_note body */
 
 /* === 9. border（10 style + 2 radius + 4 shadow）=== */
@@ -406,6 +414,12 @@ export const CARD_ENGINE_CSS = `
 .gallery-card[data-shadow="soft"]        { box-shadow: 2px 2px 8px rgba(0,0,0,0.2) !important; }
 .gallery-card[data-shadow="inset"]       { box-shadow: inset 0 0 10px rgba(0,0,0,0.5) !important; }
 .gallery-card[data-shadow="soft_small"]  { box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important; }
+.gallery-card[data-shadow="double_ring"] {
+    box-shadow:
+        0 0 0 2px var(--card-accent),
+        0 0 0 4px var(--card-bg, #fff),
+        0 0 0 6px var(--card-accent) !important;
+}
 
 /* === 10. deco（6 pattern + 12 separator + 3 label）=== */
 
@@ -464,6 +478,25 @@ export const CARD_ENGINE_CSS = `
 .gallery-card[data-pseudo-label="question_mark"]::after {
     content: "?"; position: absolute; bottom: 5px; right: 10px;
     font-size: 24px; color: #444; opacity: 0.5; pointer-events: none;
+}
+.gallery-card[data-pseudo-label="art_deco_diamond"]::before {
+    content: "◆ ◇ ◆ ◇ ◆"; display: block; text-align: center;
+    font-size: 8px; letter-spacing: 4px; color: var(--card-accent);
+    padding: 4px 0; border-top: 1px solid var(--card-accent);
+    border-bottom: 1px solid var(--card-accent);
+    pointer-events: none;
+}
+.gallery-card[data-pseudo-label="art_deco_diamond"]::after {
+    content: "◆ ◇ ◆ ◇ ◆"; display: block; text-align: center;
+    font-size: 8px; letter-spacing: 4px; color: var(--card-accent);
+    padding: 4px 0; border-top: 1px solid var(--card-accent);
+    pointer-events: none;
+}
+
+/* gold_thin_line separator */
+.gallery-card .hl-sep.sep-gold_thin_line {
+    border-top: 1px solid var(--card-accent); margin: 8px 20px; opacity: 0.6;
+    height: 0; overflow: hidden; text-indent: -9999px; white-space: nowrap;
 }
 
 /* === 11. effect（3 animation + 2 filter + 3 transform）=== */
@@ -755,6 +788,14 @@ export const STYLE_PRESETS = {
         deco:    { bg_pattern: 'none', separator: 'question', pseudo_label: 'question_mark' },
         effect:  { animation: 'none',  filter: 'blur',       transform: 'none' },
     },
+    'fitzgerald': {
+        layout:  { top: 'none',        body: 'standard',     bottom: 'tag_bar',   side: 'none',    overlay: 'none' },
+        palette: 'fitzgerald',
+        typo:    { family: 'serif',     title_size: 14,      title_deco: 'italic_center' },
+        border:  { style: 'thin_solid', width: 1,             radius: '0',        shadow: 'double_ring' },
+        deco:    { bg_pattern: 'none', separator: 'gold_thin_line', pseudo_label: 'art_deco_diamond' },
+        effect:  { animation: 'none',  filter: 'none',       transform: 'none' },
+    },
 };
 
 // ============================================================
@@ -963,7 +1004,9 @@ export function renderStyleJson(styleJson, diary) {
     if (highlights.length > 0) {
         highlights.forEach((h, i) => {
             if (i > 0 && sep) {
-                html += `<div class="hl-sep">${escapeHtml(sep)}</div>`;
+                const sepClass = sep === 'gold_thin_line' ? ' hl-sep sep-gold_thin_line' : ' hl-sep';
+                const sepContent = sep === 'gold_thin_line' ? '' : escapeHtml(sep);
+                html += `<div class="${sepClass.trim()}">${sepContent}</div>`;
             }
             html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`;
         });
@@ -1009,13 +1052,13 @@ const ENUM_LAYOUT_SIDE   = ['none', 'line_numbers', 'holes'];
 const ENUM_LAYOUT_OVERLAY= ['none', 'seal', 'stamp', 'tape', 'scanline', 'dump', 'censored'];
 const ENUM_PALETTE       = Object.keys(PALETTES);
 const ENUM_TYPO_FAMILY   = ['mono', 'consolas', 'serif', 'cursive'];
-const ENUM_TYPO_DECO     = ['none', 'border_bottom', 'underline', 'wavy_underline', 'uppercase_center', 'center_border_bottom', 'center_bg_highlight', 'function_prefix', 'inverted_bar', 'left_border', 'mirror', 'sticky_note'];
+const ENUM_TYPO_DECO     = ['none', 'border_bottom', 'underline', 'wavy_underline', 'uppercase_center', 'center_border_bottom', 'center_bg_highlight', 'function_prefix', 'inverted_bar', 'left_border', 'mirror', 'sticky_note', 'italic_center'];
 const ENUM_BORDER_STYLE  = ['none', 'thin_solid', 'solid', 'thick_solid', 'heavy_solid', 'double', 'dotted', 'dashed', 'left_accent', 'solid_outline'];
 const ENUM_BORDER_RADIUS = ['0', '8'];
-const ENUM_BORDER_SHADOW = ['none', 'soft', 'inset', 'soft_small'];
+const ENUM_BORDER_SHADOW = ['none', 'soft', 'inset', 'soft_small', 'double_ring'];
 const ENUM_DECO_PATTERN  = ['none', 'tape_stripe', 'perf_line', 'scanline', 'lines', 'grid'];
-const ENUM_DECO_SEP      = ['asterisk', 'dash', 'dots', 'dots_sparse', 'plus', 'bang', 'hex', 'code_comment', 'tilde', 'triple_star', 'question', 'none'];
-const ENUM_DECO_LABEL    = ['none', 'tamagotchi', 'question_mark'];
+const ENUM_DECO_SEP      = ['asterisk', 'dash', 'dots', 'dots_sparse', 'plus', 'bang', 'hex', 'code_comment', 'tilde', 'triple_star', 'question', 'none', 'gold_thin_line'];
+const ENUM_DECO_LABEL    = ['none', 'tamagotchi', 'question_mark', 'art_deco_diamond'];
 const ENUM_EFFECT_ANIM   = ['none', 'blink', 'scanline_jitter'];
 const ENUM_EFFECT_FILTER  = ['none', 'blur'];
 const ENUM_EFFECT_TRANS   = ['none', 'slight_tilt', 'mirror'];
