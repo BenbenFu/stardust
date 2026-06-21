@@ -245,7 +245,7 @@ export const CARD_ENGINE_CSS = `
     position: absolute; left: 5px; top: 10px;
     font-size: 10px; color: rgba(var(--card-accent-rgb), 0.4);
     line-height: 1.5; text-align: right; width: 25px;
-    pointer-events: none;
+    pointer-events: none; white-space: pre-line;
     border-right: 1px solid rgba(var(--card-accent-rgb), 0.3);
     padding-right: 5px;
 }
