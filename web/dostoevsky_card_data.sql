@@ -3,6 +3,7 @@
 -- 主题：地下室手记的笔记本散页
 -- 新增 palette / border shadow / deco pseudo_label / deco separator
 --       elements date / elements capsule / elements highlights
+--       + STYLE_POOL 条目（Gallery 路由入口）
 -- ============================================================
 
 -- 1. 色板: dostoevsky_notebook（草纸底色, 俄式暗沉墨色）
@@ -123,3 +124,25 @@ ON CONFLICT (element, value) DO UPDATE SET
     label        = EXCLUDED.label,
     description  = EXCLUDED.description,
     css_template = EXCLUDED.css_template;
+
+-- ============================================================
+-- 8. STYLE_POOL 条目（Gallery 页路由入口）★ 关键
+-- Gallery 通过 styleMap[diary.capsule] 查找对应的 style_json
+-- 没有这条记录 → gallery 找不到样式 → fallback 到 overheat
+-- diary.capsule 字段必须与此 name 一致才能匹配
+-- 注意：name 必须与 diary agent 写入 DIARIES.capsule 的值一致
+--       这里是中文名 "陀思妥耶夫斯基"，而非英文 slug
+-- ============================================================
+INSERT INTO "STYLE_POOL" (name, category, "desc", style_json, active)
+VALUES (
+    '陀思妥耶夫斯基',
+    'fiction',
+    '陀思妥耶夫斯基 — 地下室手记的笔记本散页风格',
+    '{"palette":"dostoevsky_notebook","layout":{"top":"none","body":"standard","bottom":"style_tag","side":"none","overlay":"none"},"typo":{"family":"serif","title_size":13,"title_deco":"none"},"border":{"style":"thin_solid","width":1,"radius":"0","shadow":"notebook_inset"},"deco":{"bg_pattern":"none","separator":"period_ellipsis","pseudo_label":"dostoevsky_header"},"effect":{"animation":"none","filter":"none","transform":"none"},"elements":{"date":{"variant":"dostoevsky_date"},"capsule":{"variant":"dostoevsky_capsule"},"title":{"variant":"default"},"highlights":{"variant":"dostoevsky_highlights"}}}',
+    true
+)
+ON CONFLICT (name) DO UPDATE SET
+    category    = EXCLUDED.category,
+    "desc"      = EXCLUDED."desc",
+    style_json  = EXCLUDED.style_json,
+    active      = EXCLUDED.active;

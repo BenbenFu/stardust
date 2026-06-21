@@ -294,7 +294,8 @@ content: "\9ad8 \5bc6 \4e1c \5317 \4e61";  /* "高 密 东 北 乡" */
 1. 文件头注释（设计说明）
 2. 按表分组的 INSERT 语句（只生成新选项）
 3. 每段 INSERT 带 `ON CONFLICT ... DO UPDATE`（幂等安全）
-4. 末尾验证查询（可选）
+4. **STYLE_POOL INSERT**（★ 必须 — 否则 Gallery 页无法找到样式）
+5. 末尾验证查询（可选）
 
 SQL 模板：
 
@@ -344,6 +345,27 @@ ON CONFLICT (sub_dim, value) DO UPDATE SET
 
 -- 验证查询（可选）
 -- SELECT value, label FROM style_palette_options WHERE value = 'palette_value';
+
+-- ============================================================
+-- STYLE_POOL 条目（★ 必须 — Gallery 路由入口）
+-- name 必须由用户指定，禁止 agent 自行编造！
+-- 原因：name 必须与 diary agent 写入 DIARIES.capsule 的值一致。
+--       如果这里写英文 slug 而 capsule 列是中文名，Gallery 匹配会断开。
+-- 生成前必须先向用户确认：STYLE_POOL.name 应该叫什么？
+-- ============================================================
+INSERT INTO "STYLE_POOL" (name, category, "desc", style_json, active)
+VALUES (
+    '← 此处由用户指定，严禁 agent 自行编造',
+    'category',
+    '简短描述',
+    '{"palette":"...","layout":{...},...}',
+    true
+)
+ON CONFLICT (name) DO UPDATE SET
+    category    = EXCLUDED.category,
+    "desc"      = EXCLUDED."desc",
+    style_json  = EXCLUDED.style_json,
+    active      = EXCLUDED.active;
 ```
 
 ---
@@ -383,7 +405,7 @@ ON CONFLICT (sub_dim, value) DO UPDATE SET
 
 ### 输出
 
-style_json + 只含 2 条 INSERT 的 SQL 文件。
+style_json + 只含 3 条 INSERT 的 SQL 文件（2 维度 + 1 STYLE_POOL）。
 
 ---
 

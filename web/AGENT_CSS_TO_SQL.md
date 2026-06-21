@@ -397,6 +397,35 @@ ON CONFLICT (element, value) DO UPDATE SET
 - `--card-accent-rgb` / `--card-bg-rgb`（用于 `rgba()` ）
 - `--pixel-dark` / `--pixel-dim` / `--pixel-alert` / `--gba-bg`（全局令牌）
 
+#### STYLE_POOL INSERT 模板（★ 必须包含）
+
+**没有这一条，Gallery 页无法找到样式！** 胶囊预览页不依赖 STYLE_POOL，但 gallery 通过 `styleMap[diary.capsule]` 查找 style_json。
+
+**name 必须由用户指定，禁止 agent 自行编造！**
+原因：STYLE_POOL.name 必须与 diary agent 写入 `DIARIES.capsule` 的值完全一致。
+如果 agent 写了个英文 slug（如 `dostoevsky_notebook`）而 diary agent 写的是中文名（如 `陀思妥耶夫斯基`），Gallery 匹配就会断开 → fallback 到默认样式。
+
+**生成 SQL 前，必须先向用户确认**：`STYLE_POOL.name 应该叫什么？（必须与 diary agent 写入 capsule 列的值一致）`
+
+```sql
+INSERT INTO "STYLE_POOL" (name, category, "desc", style_json, active)
+VALUES (
+    '← 此处由用户指定，严禁 agent 自行编造',
+    'fiction',           -- 分类：fiction/tech/life/work 等
+    '简短描述',
+    '{"palette":"...","layout":{...},"typo":{...},"border":{...},"deco":{...},"effect":{...},"elements":{...}}',
+    true
+)
+ON CONFLICT (name) DO UPDATE SET
+    category    = EXCLUDED.category,
+    "desc"      = EXCLUDED."desc",
+    style_json  = EXCLUDED.style_json,
+    active      = EXCLUDED.active;
+```
+
+> **匹配链路**: diary agent 写入 `DIARIES.capsule` → Gallery 用 `styleMap[capsule]` 查 STYLE_POOL.name → 找到 style_json → 渲染。
+> 这条链上任何一个环节的值不一致，都会导致 Gallery 显示错误样式。
+
 ### DOM 约束
 
 只操作以下 6 个选择器，不能增删元素：
@@ -459,3 +488,5 @@ ON CONFLICT (element, value) DO UPDATE SET
 - `style_elements_options`: left_border_red（新精华变体）、red_double_line（新胶囊变体）、gaomi_empty（新无精华变体）
 
 layout 层的 `none` / `standard` / `style_tag` 都是已有选项 → 不生成 INSERT。
+
+**额外产出**: 1 条 `STYLE_POOL` INSERT，将完整 style_json 写入 STYLE_POOL 表（name=moyan_earth），否则 gallery 无法找到此样式。
