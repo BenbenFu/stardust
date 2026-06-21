@@ -416,6 +416,7 @@ export const CARD_ENGINE_CSS = `
 .gallery-card[data-shadow="soft"]        { box-shadow: 2px 2px 8px rgba(0,0,0,0.2) !important; }
 .gallery-card[data-shadow="inset"]       { box-shadow: inset 0 0 10px rgba(0,0,0,0.5) !important; }
 .gallery-card[data-shadow="soft_small"]  { box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important; }
+.gallery-card[data-shadow="notebook_inset"] { box-shadow: inset 0 0 12px rgba(0,0,0,0.15) !important; }
 .gallery-card[data-shadow="double_ring"] {
     box-shadow:
         0 0 0 2px var(--card-accent),
