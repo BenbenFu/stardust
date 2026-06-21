@@ -206,6 +206,7 @@
 <script type="module">
     import { supabase, checkAuth } from './script.js';
     import { renderCard } from './gallery-cards.js';
+    import { injectDynamicStyles } from './style-engine.js';
 
     const galleryGrid = document.getElementById('galleryGrid');
     const galleryCount = document.getElementById('galleryCount');
@@ -219,12 +220,13 @@
     // 将原始 DIARIES 行映射为日记数据
     function mapDiary(row, i) {
         const capsule = (row.capsule || '').trim();
-        let cardType, capsuleName, capsuleCSS;
+        let cardType, capsuleName, capsuleCSS, styleJson;
         const baseTypes = ['default','repair','print','overheat','tamagotchi','api-debt','panic'];
         if (!capsule || capsule === '/') {
             cardType = baseTypes[i % baseTypes.length];
             capsuleName = null;
             capsuleCSS = null;
+            styleJson = null;
         } else {
             const style = styleMap[capsule];
             const category = style ? style.category : null;
@@ -232,6 +234,7 @@
             cardType = slug || baseTypes[i % baseTypes.length];
             capsuleName = capsule;
             capsuleCSS = (style && style.card_css) ? style.card_css : null;
+            styleJson = (style && style.style_json) ? style.style_json : null;
             if (capsuleCSS) cardType = 'custom';
         }
         return {
@@ -242,7 +245,8 @@
             highlights: Array.isArray(row.highlights) ? row.highlights : [],
             cardType: cardType,
             capsuleName: capsuleName,
-            capsuleCSS: capsuleCSS
+            capsuleCSS: capsuleCSS,
+            style_json: styleJson
         };
     }
 
@@ -324,16 +328,45 @@
         updateSystemStatus(totalCount || currentDiaries.length);
     }
 
-    // 首次加载：获取 STYLE_POOL + 首页日记
+    // 加载所有维度选项（供 injectDynamicStyles 注入 css_template）
+    async function loadDimensionOptions() {
+        const tables = ['style_palette_options','style_layout_options','style_typo_options',
+            'style_border_options','style_deco_options','style_effect_options','style_elements_options'];
+        const cache = {};
+        for (const t of tables) {
+            try {
+                const { data, error } = await supabase.from(t).select('*').order('sort_order');
+                if (!error) cache[t] = data || [];
+            } catch (e) { /* 表不存在时跳过 */ }
+        }
+        return cache;
+    }
+
+    // 首次加载：获取 STYLE_POOL + 维度选项 + 首页日记
     async function initGallery() {
         galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... \u52a0\u8f7d\u4e2d... <<<</div>';
 
-        const styleRes = await supabase.from('STYLE_POOL').select('name, category, card_css');
+        // 并行加载：STYLE_POOL + 维度选项
+        const [styleRes, dimCache] = await Promise.all([
+            supabase.from('STYLE_POOL').select('name, category, card_css, style_json'),
+            loadDimensionOptions()
+        ]);
         if (styleRes.data && !styleRes.error) {
             styleRes.data.forEach(row => {
-                if (row.name) styleMap[row.name] = { category: row.category, card_css: row.card_css || null };
+                if (row.name) styleMap[row.name] = { category: row.category, card_css: row.card_css || null, style_json: row.style_json || null };
             });
         }
+
+        // 注入维度表 css_template 动态 CSS（与 capsule-preview 一致）
+        injectDynamicStyles({
+            palette:  dimCache['style_palette_options'] || [],
+            layout:   dimCache['style_layout_options'] || [],
+            typo:     dimCache['style_typo_options'] || [],
+            border:   dimCache['style_border_options'] || [],
+            deco:     dimCache['style_deco_options'] || [],
+            effect:   dimCache['style_effect_options'] || [],
+            elements: dimCache['style_elements_options'] || [],
+        });
 
         await loadMoreDiaries();
 
