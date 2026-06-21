@@ -25,6 +25,7 @@ export const PALETTES = {
     blueprint:        { bg: '#ffffff',         text: '#1e2622', accent: '#1e2622', muted: '#707a65', accentRgb: '30,38,34',   bgRgb: '255,255,255' },
     mystery_dark:     { bg: '#2a2a2a',         text: '#9a9a9a', accent: '#555555', muted: '#666666', accentRgb: '85,85,85',    bgRgb: '42,42,42' },
     fitzgerald:     { bg: '#faf6ee',         text: '#1a1a1a', accent: '#c4a962', muted: '#8a8a7a', accentRgb: '196,169,98',  bgRgb: '250,246,238' },
+    dostoevsky_notebook: { bg: '#e5dcc8', text: '#1a1410', accent: '#8b7b6b', muted: '#6b5b4a', accentRgb: '139,123,107', bgRgb: '229,220,200' },
     warm:            { bg: '#f8f5f0',         text: '#2a2520', accent: '#d4ccc4', muted: '#9a928a', accentRgb: '212,204,196', bgRgb: '248,245,240' },  // alias for novel_warm
 };
 
@@ -97,6 +98,7 @@ export const CARD_ENGINE_CSS = `
 .gallery-card[data-palette="blueprint"]        { --card-bg: #ffffff; --card-text: #1e2622; --card-accent: #1e2622; --card-muted: #707a65; --card-accent-rgb: 30,38,34; --card-bg-rgb: 255,255,255; }
 .gallery-card[data-palette="mystery_dark"]     { --card-bg: #2a2a2a; --card-text: #9a9a9a; --card-accent: #555555; --card-muted: #666666; --card-accent-rgb: 85,85,85; --card-bg-rgb: 42,42,42; }
 .gallery-card[data-palette="fitzgerald"]     { --card-bg: #faf6ee; --card-text: #1a1a1a; --card-accent: #c4a962; --card-muted: #8a8a7a; --card-accent-rgb: 196,169,98; --card-bg-rgb: 250,246,238; }
+    .gallery-card[data-palette="dostoevsky_notebook"] { --card-bg: #e5dcc8; --card-text: #1a1410; --card-accent: #8b7b6b; --card-muted: #6b5b4a; --card-accent-rgb: 139,123,107; --card-bg-rgb: 229,220,200; }
 
 /* === 3. layout.top（9 种）=== */
 

@@ -401,9 +401,16 @@ ON CONFLICT (element, value) DO UPDATE SET
 
 **没有这一条，Gallery 页无法找到样式！** 胶囊预览页不依赖 STYLE_POOL，但 gallery 通过 `styleMap[diary.capsule]` 查找 style_json。
 
+**前置要求**：`STYLE_POOL.name` 必须有唯一约束，否则 `ON CONFLICT (name)` 会报 `42P10` 错误。
+如果尚未创建，先在 Supabase SQL Editor 执行：
+```sql
+ALTER TABLE "STYLE_POOL" ADD CONSTRAINT style_pool_name_unique UNIQUE (name);
+```
+
 **name 必须由用户指定，禁止 agent 自行编造！**
-原因：STYLE_POOL.name 必须与 diary agent 写入 `DIARIES.capsule` 的值完全一致。
-如果 agent 写了个英文 slug（如 `dostoevsky_notebook`）而 diary agent 写的是中文名（如 `陀思妥耶夫斯基`），Gallery 匹配就会断开 → fallback 到默认样式。
+原因：STYLE_POOL.name 必须与 diary agent 写入 `DIARIES.capsule` 的值**完全一致**（含空格、大小写）。
+典型案例：`API 响应`（带空格）≠ `API响应`（无空格）→ `ON CONFLICT(name)` 匹配失败 → 插入新行而非更新。
+**agent 严禁自行去除空格或改写 name，必须原样使用用户提供的字符串。**
 
 **生成 SQL 前，必须先向用户确认**：`STYLE_POOL.name 应该叫什么？（必须与 diary agent 写入 capsule 列的值一致）`
 

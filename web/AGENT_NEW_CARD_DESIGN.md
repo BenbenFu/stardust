@@ -349,9 +349,14 @@ ON CONFLICT (sub_dim, value) DO UPDATE SET
 -- ============================================================
 -- STYLE_POOL 条目（★ 必须 — Gallery 路由入口）
 -- name 必须由用户指定，禁止 agent 自行编造！
--- 原因：name 必须与 diary agent 写入 DIARIES.capsule 的值一致。
---       如果这里写英文 slug 而 capsule 列是中文名，Gallery 匹配会断开。
+-- 原因：name 必须与 DIARIES.capsule 的值**完全一致**（含空格、大小写）。
+-- 典型案例：`API 响应`（带空格）≠ `API响应`（无空格）
+--   → ON CONFLICT(name) 匹配失败 → 插入新行而非更新。
+-- 前置要求：STYLE_POOL.name 必须有唯一约束，否则 ON CONFLICT (name) 报 42P10 错误。
 -- 生成前必须先向用户确认：STYLE_POOL.name 应该叫什么？
+-- 前置要求：STYLE_POOL.name 必须有唯一约束，否则 ON CONFLICT (name) 报 42P10 错误。
+--   若尚未创建，先在 Supabase SQL Editor 执行：
+--   ALTER TABLE "STYLE_POOL" ADD CONSTRAINT style_pool_name_unique UNIQUE (name);
 -- ============================================================
 INSERT INTO "STYLE_POOL" (name, category, "desc", style_json, active)
 VALUES (
