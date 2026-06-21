@@ -110,28 +110,28 @@ export const CARD_ENGINE_CSS = `
 
 /* top: status_bar */
 .gallery-card[data-top="status_bar"] .top-status-bar {
-    position: absolute; top: 0; left: 0; right: 0;
     background-color: var(--card-accent); color: var(--card-bg, #fff);
     padding: 2px 5px; font-size: 9px;
     display: flex; justify-content: space-between;
+    margin: -10px -10px 10px -10px;
     animation: hardware-blink 2s infinite steps(2);
 }
 
 /* top: warning_bar */
 .gallery-card[data-top="warning_bar"] .top-warning-bar {
-    position: absolute; top: 0; left: 0; right: 0;
     background-color: var(--card-accent); color: #fff;
     padding: 3px 5px; font-size: 9px;
     display: flex; justify-content: space-between;
+    margin: -10px -10px 10px -10px;
 }
 
 /* top: doc_header */
 .gallery-card[data-top="doc_header"] .top-doc-header {
-    position: absolute; top: 0; left: 0; right: 0;
     background-color: rgba(var(--card-accent-rgb), 0.12);
     padding: 3px 5px; font-size: 9px;
     display: flex; justify-content: space-between;
     border-bottom: 1px solid var(--card-accent);
+    margin: -10px -10px 10px -10px;
 }
 
 /* top: email_header */
