@@ -157,7 +157,9 @@ moyan_earth            → 高密乡土
 `none, tape_stripe, perf_line, scanline, lines, grid`
 
 ### deco.separator (value)
-`none, asterisk, dash, dots, dots_sparse, plus, bang, hex, code_comment, tilde, triple_star, question, dot_triple`
+`none, asterisk, dash, dots, dots_sparse, plus, bang, hex, code_comment, tilde, triple_star, question, dot_triple, period_ellipsis`
+
+**新增 separator 规则：** 分隔符内容不再需要在 style-engine.js SEPARATORS 中硬编码。css_template 中通过 `::after { content: "..." }` 提供内容，渲染器会自动输出带 `data-sep="value"` 的空壳 `<div class="hl-sep" data-sep="xxx"></div>`。
 
 ### deco.pseudo_label (value)
 `none, tamagotchi, question_mark, gaomi_header`
@@ -235,7 +237,7 @@ moyan_earth            → 高密乡土
 ### Step 5: 拆解 deco
 
 - **bg_pattern**: 背景有纹理吗？→ `tape_stripe` / `perf_line` / `scanline` / `lines` / `grid` / `none`
-- **separator**: `.hl-sep` 的内容字符是什么？
+- **separator**: `.hl-sep` 的内容字符是什么？如果不在已有 12 种中 → 新建，css_template 中用 `[data-sep="xxx"] .hl-sep::after { content: "..." }` 提供内容（无需改 style-engine.js）
 - **pseudo_label**: 有 `::before` / `::after` 伪元素生成特殊标签吗？
 
 ### Step 6: 拆解 effect

@@ -44,7 +44,6 @@ export const SEPARATORS = {
     tilde:         '~ ~ ~ ~ ~',
     triple_star:   '* * *',
     question:      '? ? ? ? ?',
-    period_ellipsis: '.  .  .',
     none:          '',
 };
 
@@ -854,7 +853,8 @@ export function renderStyleJson(styleJson, diary) {
     const dateRaw = d.dateRaw || d.date || '';
     const dateDisplay = d.date || '----/--/--';
     const styleName = d.capsuleName || '';
-    const sep = (sj.deco && SEPARATORS[sj.deco.separator]) || '';
+    const sepValue = (sj.deco && sj.deco.separator) || '';
+    const sepContent = (sepValue && SEPARATORS[sepValue]) || '';
 
     // 构建 data-* 属性字符串
     const p = sj.palette || 'industrial';
@@ -1004,10 +1004,9 @@ export function renderStyleJson(styleJson, diary) {
     // --- 精华句 + 分隔符 ---
     if (highlights.length > 0) {
         highlights.forEach((h, i) => {
-            if (i > 0 && sep) {
-                const sepClass = sep === 'gold_thin_line' ? ' hl-sep sep-gold_thin_line' : ' hl-sep';
-                const sepContent = sep === 'gold_thin_line' ? '' : escapeHtml(sep);
-                html += `<div class="${sepClass.trim()}">${sepContent}</div>`;
+            if (i > 0 && sepValue && sepValue !== 'none') {
+                const content = sepContent ? escapeHtml(sepContent) : '';
+                html += `<div class="hl-sep" data-sep="${sepValue}">${content}</div>`;
             }
             html += `<p class="card-highlight-item">${escapeHtml(h)}</p>`;
         });
@@ -1058,7 +1057,7 @@ const ENUM_BORDER_STYLE  = ['none', 'thin_solid', 'solid', 'thick_solid', 'heavy
 const ENUM_BORDER_RADIUS = ['0', '8'];
 const ENUM_BORDER_SHADOW = ['none', 'soft', 'inset', 'soft_small', 'double_ring'];
 const ENUM_DECO_PATTERN  = ['none', 'tape_stripe', 'perf_line', 'scanline', 'lines', 'grid'];
-const ENUM_DECO_SEP      = ['asterisk', 'dash', 'dots', 'dots_sparse', 'plus', 'bang', 'hex', 'code_comment', 'tilde', 'triple_star', 'question', 'none', 'gold_thin_line'];
+const ENUM_DECO_SEP      = ['asterisk', 'dash', 'dots', 'dots_sparse', 'plus', 'bang', 'hex', 'code_comment', 'tilde', 'triple_star', 'question', 'period_ellipsis', 'none', 'gold_thin_line'];
 const ENUM_DECO_LABEL    = ['none', 'tamagotchi', 'question_mark', 'art_deco_diamond'];
 const ENUM_EFFECT_ANIM   = ['none', 'blink', 'scanline_jitter'];
 const ENUM_EFFECT_FILTER  = ['none', 'blur'];

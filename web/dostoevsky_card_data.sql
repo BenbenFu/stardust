@@ -60,8 +60,7 @@ ON CONFLICT (sub_dim, value) DO UPDATE SET
     css_template = EXCLUDED.css_template;
 
 -- 4. 装饰分隔符: period_ellipsis（.  .  . 断裂省略号）
--- 需要同步在 style-engine.js SEPARATORS 对象中添加:
---   period_ellipsis: '.  .  .'
+-- 内容由 CSS ::after 提供，无需修改 style-engine.js SEPARATORS
 INSERT INTO style_deco_options
     (sub_dim, value, label, description, sort_order, css_template)
 VALUES (
@@ -70,7 +69,7 @@ VALUES (
     '断裂省略',
     '陀思妥耶夫斯基 — 句号间隔断裂省略号',
     200,
-    '.gallery-card[data-palette="dostoevsky_notebook"] .hl-sep { font-size: 11px; color: #8b7b6b; margin: 3px 0; line-height: 1; letter-spacing: 4px; }'
+    '.gallery-card[data-sep="period_ellipsis"] .hl-sep::after { content: ".  .  ."; } .gallery-card[data-palette="dostoevsky_notebook"] .hl-sep { font-size: 11px; color: #8b7b6b; margin: 3px 0; line-height: 1; letter-spacing: 4px; }'
 )
 ON CONFLICT (sub_dim, value) DO UPDATE SET
     label        = EXCLUDED.label,
