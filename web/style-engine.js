@@ -44,6 +44,7 @@ export const SEPARATORS = {
     tilde:         '~ ~ ~ ~ ~',
     triple_star:   '* * *',
     question:      '? ? ? ? ?',
+    period_ellipsis: '.  .  .',
     none:          '',
 };
 

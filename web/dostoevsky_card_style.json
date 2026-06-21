@@ -1,0 +1,37 @@
+{
+  "palette": "dostoevsky_notebook",
+  "layout": {
+    "top": "none",
+    "body": "standard",
+    "bottom": "style_tag",
+    "side": "none",
+    "overlay": "none"
+  },
+  "typo": {
+    "family": "serif",
+    "title_size": 13,
+    "title_deco": "none"
+  },
+  "border": {
+    "style": "thin_solid",
+    "width": 1,
+    "radius": "0",
+    "shadow": "notebook_inset"
+  },
+  "deco": {
+    "bg_pattern": "none",
+    "separator": "period_ellipsis",
+    "pseudo_label": "dostoevsky_header"
+  },
+  "effect": {
+    "animation": "none",
+    "filter": "none",
+    "transform": "none"
+  },
+  "elements": {
+    "date": { "variant": "dostoevsky_date" },
+    "capsule": { "variant": "dostoevsky_capsule" },
+    "title": { "variant": "default" },
+    "highlights": { "variant": "dostoevsky_highlights" }
+  }
+}
