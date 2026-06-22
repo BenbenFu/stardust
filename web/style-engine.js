@@ -79,26 +79,8 @@ export const CARD_ENGINE_CSS = `
     box-shadow: 4px 4px 0 var(--card-accent, #1e2622);
 }
 
-/* === 2. 配色板（17 组）=== */
-.gallery-card[data-palette="industrial"]       { --card-bg: transparent; --card-text: #1e2622; --card-accent: #1e2622; --card-muted: #707a65; --card-accent-rgb: 30,38,34; --card-bg-rgb: 0,0,0; }
-.gallery-card[data-palette="repair_yellow"]    { --card-bg: #d2c89f; --card-text: #403d30; --card-accent: #615a42; --card-muted: #837b5a; --card-accent-rgb: 97,90,66; --card-bg-rgb: 210,200,159; }
-.gallery-card[data-palette="printer_green"]    { --card-bg: #e5ebda; --card-text: #1e2622; --card-accent: #8a8f7c; --card-muted: #8a8f7c; --card-accent-rgb: 138,143,124; --card-bg-rgb: 229,235,218; }
-.gallery-card[data-palette="bsod_blue"]       { --card-bg: #1e2669; --card-text: #cadbb7; --card-accent: #4a5d8f; --card-muted: #7f86ba; --card-accent-rgb: 74,93,143; --card-bg-rgb: 30,38,105; }
-.gallery-card[data-palette="alert_red"]        { --card-bg: transparent; --card-text: #8f341d; --card-accent: #8f341d; --card-muted: #8f341d; --card-accent-rgb: 143,52,29; --card-bg-rgb: 0,0,0; }
-.gallery-card[data-palette="terminal_black"]   { --card-bg: #0b0c0a; --card-text: #707a65; --card-accent: #1e2622; --card-muted: #43473b; --card-accent-rgb: 30,38,34; --card-bg-rgb: 11,12,10; }
-.gallery-card[data-palette="vscode_dark"]     { --card-bg: #0f1419; --card-text: #cadbb7; --card-accent: #3a7d44; --card-muted: #858585; --card-accent-rgb: 58,125,68; --card-bg-rgb: 15,20,25; }
-.gallery-card[data-palette="archive_khaki"]   { --card-bg: #f0f2eb; --card-text: #1e2622; --card-accent: #8a8f7c; --card-muted: #5a6352; --card-accent-rgb: 138,143,124; --card-bg-rgb: 240,242,235; }
-.gallery-card[data-palette="github_light"]     { --card-bg: #ffffff; --card-text: #2d333b; --card-accent: #d1d9e0; --card-muted: #656d76; --card-accent-rgb: 209,217,224; --card-bg-rgb: 255,255,255; }
-.gallery-card[data-palette="diary_cream"]     { --card-bg: #faf7e8; --card-text: #4a453d; --card-accent: #c9c2b0; --card-muted: #9a9385; --card-accent-rgb: 201,194,176; --card-bg-rgb: 250,247,232; }
-.gallery-card[data-palette="twitter_light"]    { --card-bg: #ffffff; --card-text: #14171a; --card-accent: #e6ecf0; --card-muted: #657786; --card-accent-rgb: 230,236,240; --card-bg-rgb: 255,255,255; }
-.gallery-card[data-palette="notebook_white"]   { --card-bg: #fffef5; --card-text: #2c2c2c; --card-accent: #e0d9c8; --card-muted: #8a8273; --card-accent-rgb: 224,217,200; --card-bg-rgb: 255,254,245; }
-.gallery-card[data-palette="newspaper"]        { --card-bg: #ffffff; --card-text: #000000; --card-accent: #cccccc; --card-muted: #999999; --card-accent-rgb: 204,204,204; --card-bg-rgb: 255,255,255; }
-.gallery-card[data-palette="role_parchment"]   { --card-bg: #f5f0e6; --card-text: #3d3529; --card-accent: #8b7355; --card-muted: #6b5a45; --card-accent-rgb: 139,115,85; --card-bg-rgb: 245,240,230; }
-.gallery-card[data-palette="novel_warm"]      { --card-bg: #f8f5f0; --card-text: #2a2520; --card-accent: #d4ccc4; --card-muted: #9a928a; --card-accent-rgb: 212,204,196; --card-bg-rgb: 248,245,240; }
-.gallery-card[data-palette="blueprint"]        { --card-bg: #ffffff; --card-text: #1e2622; --card-accent: #1e2622; --card-muted: #707a65; --card-accent-rgb: 30,38,34; --card-bg-rgb: 255,255,255; }
-.gallery-card[data-palette="mystery_dark"]     { --card-bg: #2a2a2a; --card-text: #9a9a9a; --card-accent: #555555; --card-muted: #666666; --card-accent-rgb: 85,85,85; --card-bg-rgb: 42,42,42; }
-.gallery-card[data-palette="fitzgerald"]     { --card-bg: #faf6ee; --card-text: #1a1a1a; --card-accent: #c4a962; --card-muted: #8a8a7a; --card-accent-rgb: 196,169,98; --card-bg-rgb: 250,246,238; }
-    .gallery-card[data-palette="dostoevsky_notebook"] { --card-bg: #e5dcc8; --card-text: #1a1410; --card-accent: #8b7b6b; --card-muted: #6b5b4a; --card-accent-rgb: 139,123,107; --card-bg-rgb: 229,220,200; }
+/* === 2. 配色板（DB 驱动，无硬编码）=== */
+
 
 /* === 3. layout.top（9 种）=== */
 
