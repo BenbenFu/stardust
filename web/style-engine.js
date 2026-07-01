@@ -140,6 +140,63 @@ function hexToRgb(hex) {
   return r + ',' + g + ',' + b;
 }
 
+// ============================================================
+// Ant Design 色阶算法（用于 tone/slot 变换）
+// ============================================================
+
+function hexToHSL(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) {
+    hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  }
+  const r = parseInt(hex.substring(0, 2), 16) / 255;
+  const g = parseInt(hex.substring(2, 4), 16) / 255;
+  const b = parseInt(hex.substring(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return {
+    h: Math.round(h * 360),
+    s: Math.round(s * 100),
+    l: Math.round(l * 100)
+  };
+}
+
+function hslToHex(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  s = Math.max(0, Math.min(100, s)) / 100;
+  l = Math.max(0, Math.min(100, l)) / 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return '#' + f(0) + f(8) + f(4);
+}
+
+function generateAntScale(seedHex) {
+  const hsl = hexToHSL(seedHex);
+  const { h, s, l } = hsl;
+  const lightnessSteps = [95, 85, 75, 65, 55, 45, 35, 25, 18, 12];
+  const saturationAdj = s > 50
+    ? [20, 30, 45, 60, 80, 100, 110, 120, 130, 140]
+    : [30, 40, 55, 70, 85, 100, 110, 120, 130, 135];
+  return lightnessSteps.map((lightness, i) => {
+    const sat = Math.min(100, Math.max(6, Math.round(s * saturationAdj[i] / 100)));
+    return hslToHex(h, sat, lightness);
+  });
+}
+
 function defaultColors() {
   return {
     bg: '#ffffff', text: '#1a1a1a', accent: '#3b82f6', muted: '#e5e5e5',
@@ -157,40 +214,76 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
   const { harmony, tone, slot } = paletteConfig;
   if (!harmony) return defaultColors();
 
-  // 精确匹配 value（harmony_palette 行）—— v3 主路径
-  let row = paletteOptions.find(r => r.value === harmony && r.sub_dim === 'harmony_palette');
-  // 回退1: 仅匹配 value（兼容缺失 sub_dim 的旧数据）
-  if (!row) {
-    row = paletteOptions.find(r => r.value === harmony);
-    console.warn('[resolvePaletteColors] fallback: matched by value only, no sub_dim check:', harmony);
-  }
-  // 回退2: value 包含 harmony（模糊匹配）
-  if (!row) {
-    row = paletteOptions.find(r => {
-      const v = r.value || '';
-      return v.includes(harmony);
-    });
-    console.warn('[resolvePaletteColors] fuzzy match for:', harmony);
-  }
-  if (!row) {
-    console.warn('[resolvePaletteColors] NO ROW FOUND for harmony:', harmony,
-      'available:', paletteOptions.slice(0,5).map(r => ({v:r.value, sd:r.sub_dim})));
+  // 1. 找 harmony_palette 行 → 取种子色
+  const harmonyRow = paletteOptions.find(r => r.value === harmony && r.sub_dim === 'harmony_palette');
+  if (!harmonyRow) {
+    console.warn('[resolvePaletteColors] harmony_palette not found:', harmony);
     return defaultColors();
   }
 
-  console.log('[resolvePaletteColors] FOUND:', {value: row.value, sub_dim: row.sub_dim, bg: row.bg, text: row.text_color});
+  // 2. 用 harmonyRow.bg 作为种子色，生成10阶色阶
+  const seed = harmonyRow.bg || '#3b82f6';
+  const scale = generateAntScale(seed);
 
-  // 颜色直接从列读取（v3架构：bg/text_color/accent/muted 独立列）
-  const bg     = row.bg         || '#ffffff';
-  const text   = row.text_color || '#1a1a1a';
-  const accent = row.accent     || '#3b82f6';
-  const muted  = row.muted      || '#e5e5e5';
-  let extra;
-  try {
-    extra = typeof row.extra_colors === 'string'
-      ? JSON.parse(row.extra_colors)
-      : (row.extra_colors || {});
-  } catch { extra = {} }
+  // 3. 找 tone_mapping 行，根据索引值从色阶取色
+  const toneValue = tone || 'light_standard';
+  const toneRow = paletteOptions.find(r => r.value === toneValue && r.sub_dim === 'tone_mapping');
+  if (!toneRow) {
+    console.warn('[resolvePaletteColors] tone_mapping not found:', toneValue, '- using default scale indices');
+  }
+
+  const getIdx = (row, col, fallback) => {
+    const v = row ? parseInt(row[col]) : fallback;
+    return Math.max(0, Math.min(9, isNaN(v) ? fallback : v));
+  };
+
+  const bgIdx     = getIdx(toneRow, 'bg',         3);
+  const textIdx   = getIdx(toneRow, 'text_color', 8);
+  const accentIdx = getIdx(toneRow, 'accent',    5);
+  const mutedIdx  = getIdx(toneRow, 'muted',     4);
+
+  let colors = [
+    scale[bgIdx],
+    scale[textIdx],
+    scale[accentIdx],
+    scale[mutedIdx]
+  ];
+
+  // 4. 找 slot_assignment 行，重新排列4个颜色
+  const slotValue = slot || 'original';
+  const slotRow = paletteOptions.find(r => r.value === slotValue && r.sub_dim === 'slot_assignment');
+  if (slotRow) {
+    const slotBgIdx     = getIdx(slotRow, 'bg',         1) - 1;
+    const slotTextIdx   = getIdx(slotRow, 'text_color', 2) - 1;
+    const slotAccentIdx = getIdx(slotRow, 'accent',    3) - 1;
+    const slotMutedIdx  = getIdx(slotRow, 'muted',     4) - 1;
+    colors = [
+      colors[Math.max(0, Math.min(3, slotBgIdx))],
+      colors[Math.max(0, Math.min(3, slotTextIdx))],
+      colors[Math.max(0, Math.min(3, slotAccentIdx))],
+      colors[Math.max(0, Math.min(3, slotMutedIdx))]
+    ];
+  }
+
+  const [bg, text, accent, muted] = colors;
+
+  // 5. 处理 extra_colors（toneRow.extra_colors 里的值是索引）
+  let extra = {};
+  if (toneRow && toneRow.extra_colors) {
+    try {
+      const ec = typeof toneRow.extra_colors === 'string'
+        ? JSON.parse(toneRow.extra_colors)
+        : toneRow.extra_colors;
+      for (const [k, v] of Object.entries(ec)) {
+        const i = Math.max(0, Math.min(9, typeof v === 'number' ? v : parseInt(v)));
+        extra[k] = scale[i];
+      }
+    } catch (e) {
+      console.warn('[resolvePaletteColors] extra_colors parse error:', e);
+    }
+  }
+
+  console.log('[resolvePaletteColors] DONE:', { harmony, tone: toneValue, slot: slotValue, bg, text });
 
   return {
     bg, text, accent, muted,
