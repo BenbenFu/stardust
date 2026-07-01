@@ -281,6 +281,14 @@
             <div class="dim-group-body">
                 <label>点击色块选择配色（当前: <span id="paletteLabel">neutral_grey</span>）</label>
                 <div class="palette-grid" id="paletteGrid"></div>
+                <div class="dim-row">
+                    <label>Tone Mapping 色调映射</label>
+                    <select id="d-palette-tone"></select>
+                </div>
+                <div class="dim-row">
+                    <label>Slot Assignment 槽位分配</label>
+                    <select id="d-palette-slot"></select>
+                </div>
             </div>
         </div>
 
@@ -619,8 +627,10 @@ const DIM_CONFIG = {
     animation:       { table: 'style_effect_options', col: 'sub_dim', colVal: 'animation',       label: 'Effect / Animation' },
     // container_group (style_container_group_options) — 全表，不过滤
     containerGroup: { table: 'style_container_group_options', isContainerGroup: true, label: 'Container Group' },
-    // palette (style_palette_options) — 特殊，色板网格
-    palette:        { table: 'style_palette_options', isPalette: true, label: 'Palette' },
+    // palette — harmony 走色板网格（特殊），tone/slot 走普通下拉
+    palette:       { table: 'style_palette_options', isPalette: true, label: 'Palette (Harmony)' },
+    palette_tone:  { table: 'style_palette_options', col: 'sub_dim', colVal: 'tone_mapping',   label: 'Palette / Tone' },
+    palette_slot:  { table: 'style_palette_options', col: 'sub_dim', colVal: 'slot_assignment', label: 'Palette / Slot' },
 };
 
 // ============================================================
@@ -712,7 +722,7 @@ function buildStyleJson() {
     }
 
     const sj = {
-        palette: { harmony, tone: 'light_standard', slot: 'original' },
+        palette: { harmony, tone: v('palette_tone', 'light_standard'), slot: v('palette_slot', 'original') },
         layout: {
             _base: 'grid_area_mapping',
             grid: v('grid', 'single'),
@@ -794,6 +804,8 @@ function applyStyleJsonToPanel(sj) {
         s.classList.toggle('active', s.dataset.palette === palName);
     });
     dom.paletteLabel.textContent = palName;
+    setSelect(DIMS.palette_tone, (sj.palette || {}).tone);
+    setSelect(DIMS.palette_slot, (sj.palette || {}).slot);
 
     // typo
     setSelect(DIMS.font_family,       (ty.font_family || {}).title);
@@ -954,7 +966,8 @@ function refreshPaletteGrid() {
     const grid = dom.paletteGrid;
     grid.innerHTML = '';
 
-    const dbRows = dimensionCache['style_palette_options'] || [];
+    const dbRows = (dimensionCache['style_palette_options'] || [])
+        .filter(r => r.sub_dim === 'harmony_palette');
     if (!dbRows.length) {
         grid.innerHTML = '<div style="font-size:9px;color:var(--pixel-dim);">暂无色板数据</div>';
         return;
@@ -965,17 +978,17 @@ function refreshPaletteGrid() {
         const accent = r.accent || '#888888';
         const swatch = document.createElement('div');
         swatch.className = 'palette-swatch';
-        swatch.dataset.palette = r.option_key;
-        swatch.title = r.option_key;
+        swatch.dataset.palette = r.value;
+        swatch.title = r.value;
         swatch.style.background = bg;
         swatch.style.boxShadow = `inset 0 -5px 0 ${accent}`;
         swatch.addEventListener('click', () => {
             document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('active'));
             swatch.classList.add('active');
-            dom.paletteLabel.textContent = r.option_key;
+            dom.paletteLabel.textContent = r.value;
             debouncedUpdate();
         });
-        if (r.option_key === 'neutral_grey') swatch.classList.add('active');
+        if (r.value === 'neutral_grey') swatch.classList.add('active');
         grid.appendChild(swatch);
     });
 }
@@ -1149,10 +1162,15 @@ async function saveNewOption() {
             const text   = dom.modalTextColor.value.trim() || '#000000';
             const accent = dom.modalAccent.value.trim() || '#888888';
             const muted  = dom.modalMuted.value.trim() || '#888888';
-            const cssTpl = `.gallery-card[data-style-palette="${value}"] { background: var(--card-bg); color: var(--card-text); border: 1px solid var(--card-accent); }`;
+            const existing = (dimensionCache['style_palette_options'] || [])
+                .filter(r => r.sub_dim === 'harmony_palette');
+            const sortOrder = existing.length > 0
+                ? Math.max(...existing.map(r => r.sort_order || 0)) + 10
+                : 10;
             const { error } = await supabase.from('style_palette_options').insert({
-                option_key: value, label, bg, text_color: text, accent, muted,
-                description: desc || null, css_template: cssTpl
+                value: value, label, sub_dim: 'harmony_palette',
+                bg, text_color: text, accent, muted,
+                description: desc || null, sort_order: sortOrder
             });
             if (error) throw error;
         } else {

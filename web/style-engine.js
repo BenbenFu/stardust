@@ -157,30 +157,28 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
   const { harmony, tone, slot } = paletteConfig;
   if (!harmony) return defaultColors();
 
-  // 精确匹配 option_key === harmony
-  let row = paletteOptions.find(r => r.option_key === harmony);
-  // 回退：option_key 包含 harmony
+  // 精确匹配 value（harmony_palette 行）
+  let row = paletteOptions.find(r => r.value === harmony && r.sub_dim === 'harmony_palette');
+  // 回退：value 包含 harmony（老数据兼容）
   if (!row) {
     row = paletteOptions.find(r => {
-      const k = r.option_key || '';
-      return k.includes(harmony) && (!tone || k.includes(tone)) && (!slot || k.includes(slot));
+      const v = r.value || '';
+      return v.includes(harmony);
     });
   }
   if (!row) return defaultColors();
 
-  // 解析 option_value
-  let colors;
+  // 颜色直接从列读取（v3架构：bg/text_color/accent/muted 独立列）
+  const bg     = row.bg         || '#ffffff';
+  const text   = row.text_color || '#1a1a1a';
+  const accent = row.accent     || '#3b82f6';
+  const muted  = row.muted      || '#e5e5e5';
+  let extra;
   try {
-    colors = typeof row.option_value === 'string'
-      ? JSON.parse(row.option_value)
-      : (row.option_value || {});
-  } catch { return defaultColors(); }
-
-  const bg     = colors.bg     || '#ffffff';
-  const text   = colors.text   || '#1a1a1a';
-  const accent = colors.accent || '#3b82f6';
-  const muted  = colors.muted  || '#e5e5e5';
-  const extra  = colors.extra_colors || {};
+    extra = typeof row.extra_colors === 'string'
+      ? JSON.parse(row.extra_colors)
+      : (row.extra_colors || {});
+  } catch { extra = {}; }
 
   return {
     bg, text, accent, muted,
@@ -375,8 +373,11 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   const paletteOptions = (allOptions && allOptions.palette) || [];
   const colors = resolvePaletteColors(sj.palette, paletteOptions);
 
-  // 2. 构建 inline 样式（CSS 变量）
+  // 2. 构建 inline 样式（CSS变量 + 直接属性，确保无css_template时也能显示）
   const paletteCssVars = [
+    'background:' + colors.bg,
+    'color:' + colors.text,
+    'border-color:' + colors.accent,
     '--card-bg:'     + colors.bg,
     '--card-text:'   + colors.text,
     '--card-accent:' + colors.accent,
