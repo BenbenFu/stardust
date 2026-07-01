@@ -166,7 +166,12 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
       return v.includes(harmony);
     });
   }
-  if (!row) return defaultColors();
+  if (!row) {
+    console.debug('[resolvePaletteColors] NO ROW FOUND for harmony:', harmony, 'available values:', paletteOptions.slice(0,5).map(r => ({v:r.value, sd:r.sub_dim})));
+    return defaultColors();
+  }
+
+  console.debug('[resolvePaletteColors] found row:', {value: row.value, sub_dim: row.sub_dim, bg: row.bg, text_color: row.text_color});
 
   // 颜色直接从列读取（v3架构：bg/text_color/accent/muted 独立列）
   const bg     = row.bg         || '#ffffff';
@@ -372,6 +377,7 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   // 1. 解析色板颜色
   const paletteOptions = (allOptions && allOptions.palette) || [];
   const colors = resolvePaletteColors(sj.palette, paletteOptions);
+  console.debug('[renderStyleJson] palette harmony:', sj.palette?.harmony, 'colors.bg:', colors.bg, 'paletteOptions count:', paletteOptions.length);
 
   // 2. 构建 inline 样式（CSS变量 + 直接属性，确保无css_template时也能显示）
   const paletteCssVars = [

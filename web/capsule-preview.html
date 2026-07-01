@@ -714,6 +714,7 @@ const MOCK_DIARY = {
 function buildStyleJson() {
     const activeSwatch = document.querySelector('.palette-swatch.active');
     const harmony = activeSwatch ? activeSwatch.dataset.palette : 'neutral_grey';
+    console.debug('[buildStyleJson] activeSwatch:', activeSwatch, 'harmony:', harmony);
 
     function v(key, fallback) { return DIMS[key]?.value || fallback; }
     function typoMap(key, fallback) {
@@ -860,6 +861,7 @@ function setSelect(el, val) {
 // 更新预览 + JSON 展示
 // ============================================================
 function updatePreview() {
+    console.debug('[updatePreview] called');
     const sj = buildStyleJson();
 
     const allOptions = {
@@ -891,6 +893,7 @@ function updatePreview() {
     dom.previewArea.appendChild(labelEl);
 
     const cardHtml = renderStyleJson(sj, diary, allOptions);
+    console.debug('[updatePreview] cardHtml first 200 chars:', cardHtml.substring(0, 200));
     dom.previewArea.insertAdjacentHTML('beforeend', cardHtml);
 
     dom.jsonDisplay.textContent = JSON.stringify(sj, null, 2);
@@ -968,6 +971,7 @@ function refreshPaletteGrid() {
 
     const dbRows = (dimensionCache['style_palette_options'] || [])
         .filter(r => r.sub_dim === 'harmony_palette');
+    console.debug('[refreshPaletteGrid] harmony_palette rows:', dbRows.length, 'sample:', dbRows.slice(0,2).map(r => ({v:r.value,bg:r.bg,text:r.text_color,accent:r.accent,extra:typeof r.extra_colors})));
     if (!dbRows.length) {
         grid.innerHTML = '<div style="font-size:9px;color:var(--pixel-dim);">暂无色板数据</div>';
         return;
