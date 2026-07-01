@@ -980,13 +980,15 @@ function refreshPaletteGrid() {
 
     dbRows.sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).forEach(r => {
         const bg = r.bg || '#cccccc';
-        const accent = r.accent || '#888888';
+        const text = r.text_color || bg;
+        const accent = r.accent || bg;
+        const muted = r.muted || bg;
         const swatch = document.createElement('div');
         swatch.className = 'palette-swatch';
         swatch.dataset.palette = r.value;
         swatch.title = r.value;
-        swatch.style.background = bg;
-        swatch.style.boxShadow = `inset 0 -5px 0 ${accent}`;
+        // 4色等分显示：bg | text | accent | muted
+        swatch.style.background = `linear-gradient(90deg, ${bg} 0 25%, ${text} 25% 50%, ${accent} 50% 75%, ${muted} 75% 100%)`;
         swatch.addEventListener('click', () => {
             document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('active'));
             swatch.classList.add('active');

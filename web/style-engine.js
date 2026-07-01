@@ -221,11 +221,13 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
     return defaultColors();
   }
 
-  // 2. 用 harmonyRow.bg 作为种子色，生成10阶色阶
-  const seed = harmonyRow.bg || '#3b82f6';
-  const scale = generateAntScale(seed);
+  // 2. 对 harmony_palette 的每个颜色列各自生成10阶色阶（支持多色相）
+  const scaleBg     = generateAntScale(harmonyRow.bg         || '#3b82f6');
+  const scaleText   = generateAntScale(harmonyRow.text_color || harmonyRow.bg || '#1a1a1a');
+  const scaleAccent = generateAntScale(harmonyRow.accent     || harmonyRow.bg || '#3b82f6');
+  const scaleMuted  = generateAntScale(harmonyRow.muted      || harmonyRow.bg || '#e5e5e5');
 
-  // 3. 找 tone_mapping 行，根据索引值从色阶取色
+  // 3. 找 tone_mapping 行，根据索引值从各自色阶取色
   const toneValue = tone || 'light_standard';
   const toneRow = paletteOptions.find(r => r.value === toneValue && r.sub_dim === 'tone_mapping');
   if (!toneRow) {
@@ -243,10 +245,10 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
   const mutedIdx  = getIdx(toneRow, 'muted',     4);
 
   let colors = [
-    scale[bgIdx],
-    scale[textIdx],
-    scale[accentIdx],
-    scale[mutedIdx]
+    scaleBg[bgIdx],
+    scaleText[textIdx],
+    scaleAccent[accentIdx],
+    scaleMuted[mutedIdx]
   ];
 
   // 4. 找 slot_assignment 行，重新排列4个颜色
@@ -276,7 +278,13 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
         : toneRow.extra_colors;
       for (const [k, v] of Object.entries(ec)) {
         const i = Math.max(0, Math.min(9, typeof v === 'number' ? v : parseInt(v)));
-        extra[k] = scale[i];
+        // 根据 key 名称选择对应色阶
+        const lk = k.toLowerCase();
+        const s = lk.includes('text')   ? scaleText
+                : lk.includes('accent') ? scaleAccent
+                : lk.includes('muted')  ? scaleMuted
+                : scaleBg;
+        extra[k] = s[i];
       }
     } catch (e) {
       console.warn('[resolvePaletteColors] extra_colors parse error:', e);
