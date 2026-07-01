@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Capsule Style Editor</title>
+<title>Capsule Style Editor v2</title>
 <link rel="stylesheet" href="style.css?v=20260614">
 <script type="module" src="script.js?v=20260602"></script>
 <style>
@@ -176,10 +176,6 @@
     .btn-row { display: flex; gap: 6px; flex-shrink: 0; }
     .btn-row button { flex: 1; }
 
-    /* ===== Preset 快速加载 ===== */
-    .preset-row { display: flex; gap: 5px; flex-shrink: 0; }
-    .preset-row select { flex: 1; }
-
     /* ===== 新增选项弹窗 ===== */
     #addOptModal {
         display: none;
@@ -212,7 +208,7 @@
 
 <!-- ========== 左：维度面板 ========== -->
 <div class="panel panel-left">
-    <div class="section-title">CAPSULE_STYLE_EDITOR :: v1.0</div>
+    <div class="section-title">CAPSULE_STYLE_EDITOR :: v2.0</div>
 
     <!-- capsule 选择 -->
     <div class="capsule-selector">
@@ -238,196 +234,248 @@
     <!-- ===== 维度面板 ===== -->
     <div class="dim-panel" id="dimPanel">
 
-        <!-- 粗粒度：布局骨架 -->
+        <!-- [粗] Layout 布局骨架 -->
         <div class="dim-group" id="grp-layout">
             <div class="dim-group-header" data-grp="layout">
-                <span>[粗] 布局骨架 LAYOUT <button class="btn-add-opt" data-grp="layout" title="新增布局选项">+新增</button></span>
-                <span class="toggle-icon">▼</span>
+                <span>[粗] LAYOUT 布局骨架 <button class="btn-add-opt" data-grp="layout" title="新增布局选项">+新增</button></span>
+                <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>Grid 网格模板</label>
+                    <select id="d-grid"></select>
+                </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Top 顶部组件</label>
-                        <select id="d-top"></select>
+                        <label>Density 密度</label>
+                        <select id="d-density"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Body 主体</label>
-                        <select id="d-body"></select>
+                        <label>Flow 流向</label>
+                        <select id="d-flow"></select>
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Bottom 底部</label>
-                        <select id="d-bottom"></select>
+                        <label>Block Align 块对齐</label>
+                        <select id="d-block-align"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Side 侧边</label>
-                        <select id="d-side"></select>
+                        <label>Inline Align 行内对齐</label>
+                        <select id="d-inline-align"></select>
                     </div>
                 </div>
                 <div class="dim-row">
-                    <label>Overlay 覆盖层</label>
-                    <select id="d-overlay"></select>
+                    <label>Spacing Scale 间距</label>
+                    <select id="d-spacing-scale"></select>
                 </div>
             </div>
         </div>
 
-        <!-- 中粒度：配色方案 -->
+        <!-- [中] Palette 配色 -->
         <div class="dim-group" id="grp-palette">
             <div class="dim-group-header" data-grp="palette">
-                <span>[中] 配色方案 PALETTE <button class="btn-add-opt" data-grp="palette" title="新增色板">+新增</button></span>
-                <span class="toggle-icon">▼</span>
+                <span>[中] PALETTE 配色方案 <button class="btn-add-opt" data-grp="palette" title="新增色板">+新增</button></span>
+                <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
-                <label>点击色块选择配色（当前: <span id="paletteLabel">industrial</span>）</label>
+                <label>点击色块选择配色（当前: <span id="paletteLabel">neutral_grey</span>）</label>
                 <div class="palette-grid" id="paletteGrid"></div>
             </div>
         </div>
 
-        <!-- 中粒度：排版规则 -->
+        <!-- [中] Typo 排版 -->
         <div class="dim-group" id="grp-typo">
             <div class="dim-group-header" data-grp="typo">
-                <span>[中] 排版规则 TYPOGRAPHY <button class="btn-add-opt" data-grp="typo" title="新增排版选项">+新增</button></span>
-                <span class="toggle-icon">▼</span>
+                <span>[中] TYPO 排版规则 <button class="btn-add-opt" data-grp="typo" title="新增排版选项">+新增</button></span>
+                <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>字体族 Font Family（全局）</label>
-                    <select id="d-font"></select>
+                    <label>Font Family 字体族</label>
+                    <select id="d-font-family"></select>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>字重梯度 Weight</label>
-                        <select id="d-weight"></select>
+                        <label>Weight Gradient 字重梯度</label>
+                        <select id="d-weight-gradient"></select>
                     </div>
                     <div class="dim-row">
-                        <label>字号阶梯 Size</label>
-                        <select id="d-size"></select>
+                        <label>Size Scale 字号阶梯</label>
+                        <select id="d-size-scale"></select>
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Alignment Mode 对齐</label>
+                        <select id="d-alignment-mode"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Spacing Tightness 字间距</label>
+                        <select id="d-spacing-tightness"></select>
                     </div>
                 </div>
                 <div class="dim-row">
-                    <label>对齐模式 Alignment</label>
-                    <select id="d-alignment"></select>
-                </div>
-                <div class="dim-row">
-                    <label>字间距 Spacing（全局）</label>
-                    <select id="d-spacing"></select>
-                </div>
-                <div class="dim-row">
-                    <label>文字装饰 Text Decoration（全局）</label>
-                    <select id="d-decoration"></select>
+                    <label>Text Decoration 文字装饰</label>
+                    <select id="d-text-decoration"></select>
                 </div>
             </div>
         </div>
 
-        <!-- 中粒度：边框与阴影 -->
+        <!-- [中] Border 边框 -->
         <div class="dim-group" id="grp-border">
             <div class="dim-group-header" data-grp="border">
-                <span>[中] 边框材质 BORDER <button class="btn-add-opt" data-grp="border" title="新增边框选项">+新增</button></span>
-                <span class="toggle-icon">▼</span>
+                <span>[中] BORDER 边框材质 <button class="btn-add-opt" data-grp="border" title="新增边框选项">+新增</button></span>
+                <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>边框样式 Style</label>
-                    <select id="d-border"></select>
+                    <label>Border Style 边框样式</label>
+                    <select id="d-border-style"></select>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>圆角 Radius</label>
-                        <select id="d-radius"></select>
+                        <label>Radius Size 圆角</label>
+                        <select id="d-radius-size"></select>
                     </div>
                     <div class="dim-row">
-                        <label>阴影 Shadow</label>
-                        <select id="d-shadow"></select>
+                        <label>Border Width 宽度</label>
+                        <select id="d-border-width"></select>
                     </div>
+                </div>
+                <div class="dim-row">
+                    <label>Border Shadow 阴影</label>
+                    <select id="d-border-shadow"></select>
                 </div>
             </div>
         </div>
 
-        <!-- 细粒度：元素变体 -->
-        <div class="dim-group" id="grp-elements">
-            <div class="dim-group-header" data-grp="elements">
-                <span>[细] 元素变体 ELEMENTS <button class="btn-add-opt" data-grp="elements" title="新增元素变体">+新增</button></span>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="dim-group-body">
-                <div class="dim-row-inline">
-                    <div class="dim-row">
-                        <label>Date 日期呈现</label>
-                        <select id="d-date-variant"></select>
-                    </div>
-                    <div class="dim-row">
-                        <label>Capsule 标签呈现</label>
-                        <select id="d-capsule-variant"></select>
-                    </div>
-                </div>
-                <div class="dim-row">
-                    <label>Title 标题额外处理</label>
-                    <select id="d-title-variant"></select>
-                </div>
-                <div class="dim-row">
-                    <label>Highlights 高亮句变体</label>
-                    <select id="d-highlights-variant"></select>
-                </div>
-            </div>
-        </div>
-
-        <!-- 细粒度：装饰层 -->
+        <!-- [细] Deco 容器造型 -->
         <div class="dim-group" id="grp-deco">
             <div class="dim-group-header" data-grp="deco">
-                <span>[细] 装饰层 DECORATION <button class="btn-add-opt" data-grp="deco" title="新增装饰选项">+新增</button></span>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="dim-group-body">
-                <div class="dim-row">
-                    <label>背景图案 BG Pattern</label>
-                    <select id="d-bg-pattern"></select>
-                </div>
-                <div class="dim-row">
-                    <label>句间分隔符 Separator</label>
-                    <select id="d-separator"></select>
-                </div>
-            </div>
-        </div>
-
-        <!-- 细粒度：动效层 -->
-        <div class="dim-group" id="grp-effect">
-            <div class="dim-group-header" data-grp="effect">
-                <span>[细] 动效层 EFFECTS <button class="btn-add-opt" data-grp="effect" title="新增动效选项">+新增</button></span>
-                <span class="toggle-icon">▼</span>
+                <span>[细] DECO 容器造型 <button class="btn-add-opt" data-grp="deco" title="新增容器造型">+新增</button></span>
+                <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>动画 Animation</label>
-                        <select id="d-animation"></select>
+                        <label>Bubble 气泡</label>
+                        <select id="d-bubble-style"></select>
                     </div>
                     <div class="dim-row">
-                        <label>滤镜 Filter</label>
-                        <select id="d-filter"></select>
+                        <label>Tag 标签</label>
+                        <select id="d-tag-style"></select>
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Avatar 头像</label>
+                        <select id="d-avatar-style"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Box 内容块</label>
+                        <select id="d-box-style"></select>
+                    </div>
+                </div>
+                <div class="dim-row">
+                    <label>Action 操作区</label>
+                    <select id="d-action-style"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- [细] Element 卡片装饰 -->
+        <div class="dim-group" id="grp-element">
+            <div class="dim-group-header" data-grp="element">
+                <span>[细] ELEMENT 卡片装饰 <button class="btn-add-opt" data-grp="element" title="新增装饰选项">+新增</button></span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Header Deco 顶栏</label>
+                        <select id="d-header-deco"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Side Accent 侧边</label>
+                        <select id="d-side-accent"></select>
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Divider 分隔线</label>
+                        <select id="d-divider"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Corner Badge 角标</label>
+                        <select id="d-corner-badge"></select>
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>BG Pattern 背景纹</label>
+                        <select id="d-bg-pattern"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Edge Deco 边缘</label>
+                        <select id="d-edge-deco"></select>
+                    </div>
+                </div>
+                <div class="dim-row">
+                    <label>Floating Deco 浮动</label>
+                    <select id="d-floating-deco"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- [细] Effect 动效 -->
+        <div class="dim-group" id="grp-effect">
+            <div class="dim-group-header" data-grp="effect">
+                <span>[细] EFFECT 动效层 <button class="btn-add-opt" data-grp="effect" title="新增动效选项">+新增</button></span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Filter Self 自身滤镜</label>
+                        <select id="d-filter-self"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Filter Backdrop 背景滤镜</label>
+                        <select id="d-filter-backdrop"></select>
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Transform 变换</label>
+                        <select id="d-transform"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Animation 动画</label>
+                        <select id="d-animation"></select>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 细粒度：容器组 -->
+        <!-- [细] Container Group 容器组 -->
         <div class="dim-group" id="grp-container-group">
             <div class="dim-group-header" data-grp="containerGroup">
-                <span>[细] 容器组 CONTAINER GROUP <button class="btn-add-opt" data-grp="containerGroup" title="新增容器组">+新增</button></span>
-                <span class="toggle-icon">▼</span>
+                <span>[细] CONTAINER GROUP 容器组 <button class="btn-add-opt" data-grp="containerGroup" title="新增容器组">+新增</button></span>
+                <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>Container Group 容器组</label>
+                    <label>Container Group</label>
                     <select id="d-container-group"></select>
                 </div>
             </div>
         </div>
 
-        <!-- 自定义兜底 -->
+        <!-- 兜底：自定义 CSS -->
         <div class="dim-group" id="grp-custom">
             <div class="dim-group-header" data-grp="custom">
-                [兜底] 自定义 CSS <span class="toggle-icon">▼</span>
+                [兜底] CUSTOM CSS <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
@@ -477,7 +525,7 @@
 <div class="modal-box">
     <h3 id="modalTitle">新增维度选项</h3>
     <div class="modal-field">
-        <label id="labelValue">value（存储值，英文小写）</label>
+        <label id="labelValue">option_key（存储值，英文小写）</label>
         <input type="text" id="modalValue" placeholder="e.g. my_new_option" />
     </div>
     <div class="modal-field">
@@ -488,23 +536,12 @@
         <label>description（可选）</label>
         <input type="text" id="modalDesc" placeholder="e.g. 说明文字" />
     </div>
-    <!-- css_template 字段：非色板选项显示，色板选项自动生成 -->
     <div class="modal-field" id="modalFieldCssTpl" style="display:none;">
-        <label>css_template（CSS 规则，如 .gallery-card[data-shadow="xxx"] { box-shadow:... }）</label>
-        <textarea id="modalCssTemplate" rows="4" style="width:100%; font-family:monospace; font-size:11px;" placeholder=".gallery-card[data-xxx=&quot;value&quot;] { /* CSS rules */ }"></textarea>
+        <label>css_template（CSS 规则）</label>
+        <textarea id="modalCssTemplate" rows="4" style="width:100%; font-family:monospace; font-size:11px;" placeholder="[data-style-xxx=&quot;value&quot;] { /* CSS rules */ }"></textarea>
         <div style="font-size:9px; color:var(--pixel-dim); margin-top:2px;">
             填写该选项对应的 CSS 规则。选择器用双引号。多条规则用换行分隔。
         </div>
-    </div>
-    <!-- elements 专用字段：所属元素（新增元素变体时必选） -->
-    <div class="modal-field" id="modalElementField" style="display:none;">
-        <label>element（所属元素）</label>
-        <select id="modalElement">
-            <option value="date">date 日期</option>
-            <option value="capsule">capsule 胶囊标签</option>
-            <option value="title">title 标题</option>
-            <option value="highlights">highlights 高亮句</option>
-        </select>
     </div>
     <!-- palette 专用字段 -->
     <div id="modalPaletteFields" style="display:none;">
@@ -538,52 +575,62 @@ import { supabase, checkAuth } from './script.js';
 import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js';
 
 // ============================================================
-// 维度 → DB 表映射
+// DIM_CONFIG: 维度 key → DB 表 + 过滤规则
+// style_element_options 是单数（不是 elements）
 // ============================================================
 const DIM_CONFIG = {
-    // layout 子维度（表 style_layout_options, 按 sub_dim 区分）
-    top:           { table: 'style_layout_options', col: 'sub_dim', colVal: 'top',       label: 'Layout → Top 顶部' },
-    body:          { table: 'style_layout_options', col: 'sub_dim', colVal: 'body',      label: 'Layout → Body 主体' },
-    bottom:        { table: 'style_layout_options', col: 'sub_dim', colVal: 'bottom',    label: 'Layout → Bottom 底部' },
-    side:          { table: 'style_layout_options', col: 'sub_dim', colVal: 'side',      label: 'Layout → Side 侧边' },
-    overlay:       { table: 'style_layout_options', col: 'sub_dim', colVal: 'overlay',   label: 'Layout → Overlay 覆盖层' },
-    // typo 子维度
-    font:          { table: 'style_typo_options',   col: 'sub_dim', colVal: 'font_family',     label: 'Typo → Font Family 字体族' },
-    weight:        { table: 'style_typo_options',   col: 'sub_dim', colVal: 'weight_gradient', label: 'Typo → Weight Gradient 字重' },
-    size:          { table: 'style_typo_options',   col: 'sub_dim', colVal: 'size_scale',      label: 'Typo → Size Scale 字号阶梯' },
-    alignment:     { table: 'style_typo_options',   col: 'sub_dim', colVal: 'alignment_mode',  label: 'Typo → Alignment 对齐' },
-    spacing:       { table: 'style_typo_options',   col: 'sub_dim', colVal: 'spacing_tightness', label: 'Typo → Spacing 字间距' },
-    decoration:    { table: 'style_typo_options',   col: 'sub_dim', colVal: 'text_decoration',  label: 'Typo → Text Decoration 装饰' },
-    // border 子维度
-    border:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'border_style',    label: 'Border → Style 样式' },
-    radius:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'radius_size',    label: 'Border → Radius 圆角' },
-    shadow:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'border_shadow',  label: 'Border → Shadow 阴影' },
-    // elements 子维度
-    dateVariant:   { table: 'style_elements_options', element: 'date',             label: 'Elements → Date 日期' },
-    capsuleVariant:{ table: 'style_elements_options', element: 'capsule',          label: 'Elements → Capsule 标签' },
-    titleVariant:  { table: 'style_elements_options', element: 'title',            label: 'Elements → Title 标题' },
-    highlightsVariant: { table: 'style_elements_options', element: 'highlights',    label: 'Elements → Highlights 高亮句' },
-    // deco 子维度
-    bgPattern:     { table: 'style_deco_options',   col: 'sub_dim', colVal: 'bg_pattern', label: 'Deco → BG Pattern 背景图案' },
-    separator:     { table: 'style_deco_options',   col: 'sub_dim', colVal: 'separator',  label: 'Deco → Separator 分隔符' },
-    // effect 子维度
-    animation:     { table: 'style_effect_options',  col: 'sub_dim', colVal: 'animation',  label: 'Effect → Animation 动画' },
-    filter:        { table: 'style_effect_options',  col: 'sub_dim', colVal: 'filter_self',  label: 'Effect → Filter 滤镜' },
-    transform:     { table: 'style_effect_options',  col: 'sub_dim', colVal: 'transform',  label: 'Effect → Transform 变换' },
-    // container_group 维度（整张表，option_key 即值）
-    containerGroup:{ table: 'style_container_group_options', isContainerGroup: true, label: 'Container Group 容器组' },
-    // palette 特殊：整张表，option_key 即 harmony 值
-    palette:        { table: 'style_palette_options', isPalette: true, label: 'Palette 配色方案' },
+    // layout (style_layout_options)
+    grid:         { table: 'style_layout_options', col: 'sub_dim', colVal: 'grid',          label: 'Layout / Grid' },
+    density:      { table: 'style_layout_options', col: 'sub_dim', colVal: 'density',       label: 'Layout / Density' },
+    flow:         { table: 'style_layout_options', col: 'sub_dim', colVal: 'flow',          label: 'Layout / Flow' },
+    block_align:  { table: 'style_layout_options', col: 'sub_dim', colVal: 'block_align',   label: 'Layout / Block Align' },
+    inline_align: { table: 'style_layout_options', col: 'sub_dim', colVal: 'inline_align',  label: 'Layout / Inline Align' },
+    spacing_scale:{ table: 'style_layout_options', col: 'sub_dim', colVal: 'spacing_scale', label: 'Layout / Spacing' },
+    // typo (style_typo_options)
+    font_family:      { table: 'style_typo_options', col: 'sub_dim', colVal: 'font_family',       label: 'Typo / Font' },
+    weight_gradient:  { table: 'style_typo_options', col: 'sub_dim', colVal: 'weight_gradient',   label: 'Typo / Weight' },
+    size_scale:       { table: 'style_typo_options', col: 'sub_dim', colVal: 'size_scale',        label: 'Typo / Size' },
+    alignment_mode:   { table: 'style_typo_options', col: 'sub_dim', colVal: 'alignment_mode',    label: 'Typo / Alignment' },
+    spacing_tightness:{ table: 'style_typo_options', col: 'sub_dim', colVal: 'spacing_tightness', label: 'Typo / Spacing' },
+    text_decoration:  { table: 'style_typo_options', col: 'sub_dim', colVal: 'text_decoration',   label: 'Typo / Decoration' },
+    // border (style_border_options)
+    border_style:  { table: 'style_border_options', col: 'sub_dim', colVal: 'border_style',  label: 'Border / Style' },
+    radius_size:   { table: 'style_border_options', col: 'sub_dim', colVal: 'radius_size',   label: 'Border / Radius' },
+    border_width:  { table: 'style_border_options', col: 'sub_dim', colVal: 'border_width',  label: 'Border / Width' },
+    border_shadow: { table: 'style_border_options', col: 'sub_dim', colVal: 'border_shadow', label: 'Border / Shadow' },
+    // deco (style_deco_options)
+    bubble_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'bubble_style', label: 'Deco / Bubble' },
+    tag_style:    { table: 'style_deco_options', col: 'sub_dim', colVal: 'tag_style',    label: 'Deco / Tag' },
+    avatar_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'avatar_style', label: 'Deco / Avatar' },
+    box_style:    { table: 'style_deco_options', col: 'sub_dim', colVal: 'box_style',    label: 'Deco / Box' },
+    action_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'action_style', label: 'Deco / Action' },
+    // element (style_element_options — 单数!)
+    header_deco:   { table: 'style_element_options', col: 'sub_dim', colVal: 'header_deco',   label: 'Element / Header' },
+    side_accent:   { table: 'style_element_options', col: 'sub_dim', colVal: 'side_accent',   label: 'Element / Side Accent' },
+    divider:       { table: 'style_element_options', col: 'sub_dim', colVal: 'divider',       label: 'Element / Divider' },
+    corner_badge:  { table: 'style_element_options', col: 'sub_dim', colVal: 'corner_badge',  label: 'Element / Corner Badge' },
+    bg_pattern:    { table: 'style_element_options', col: 'sub_dim', colVal: 'bg_pattern',    label: 'Element / BG Pattern' },
+    edge_deco:     { table: 'style_element_options', col: 'sub_dim', colVal: 'edge_deco',     label: 'Element / Edge' },
+    floating_deco: { table: 'style_element_options', col: 'sub_dim', colVal: 'floating_deco', label: 'Element / Floating' },
+    // effect (style_effect_options)
+    filter_self:     { table: 'style_effect_options', col: 'sub_dim', colVal: 'filter_self',     label: 'Effect / Filter Self' },
+    filter_backdrop: { table: 'style_effect_options', col: 'sub_dim', colVal: 'filter_backdrop', label: 'Effect / Backdrop' },
+    transform:       { table: 'style_effect_options', col: 'sub_dim', colVal: 'transform',       label: 'Effect / Transform' },
+    animation:       { table: 'style_effect_options', col: 'sub_dim', colVal: 'animation',       label: 'Effect / Animation' },
+    // container_group (style_container_group_options) — 全表，不过滤
+    containerGroup: { table: 'style_container_group_options', isContainerGroup: true, label: 'Container Group' },
+    // palette (style_palette_options) — 特殊，色板网格
+    palette:        { table: 'style_palette_options', isPalette: true, label: 'Palette' },
 };
 
 // ============================================================
 // 全局状态
 // ============================================================
-let stylePoolData   = [];       // 所有 STYLE_POOL 行
-let currentName     = null;       // 当前选中的 capsule name
-let currentDbJson  = null;      // DB 中存储的 style_json（原始值，用于 revert）
-let dimensionCache  = {};        // { tableName: [rows] }
-let currentAddDim  = null;       // 弹窗当前操作的 dim key
+let stylePoolData   = [];
+let currentName     = null;
+let currentDbJson   = null;
+let dimensionCache  = {};
+let currentAddDim   = null;
 
 // ============================================================
 // DOM 引用
@@ -604,63 +651,39 @@ const dom = {
     paletteLabel:  document.getElementById('paletteLabel'),
     dimPanel:      document.getElementById('dimPanel'),
     // 弹窗
-    addOptModal:   document.getElementById('addOptModal'),
-    modalTitle:    document.getElementById('modalTitle'),
-    modalValue:    document.getElementById('modalValue'),
-    modalLabel:    document.getElementById('modalLabel'),
+    addOptModal:    document.getElementById('addOptModal'),
+    modalTitle:     document.getElementById('modalTitle'),
+    modalValue:     document.getElementById('modalValue'),
+    modalLabel:     document.getElementById('modalLabel'),
     modalDesc:      document.getElementById('modalDesc'),
     modalFieldDesc: document.getElementById('modalFieldDesc'),
     modalFieldCssTpl: document.getElementById('modalFieldCssTpl'),
     modalCssTemplate: document.getElementById('modalCssTemplate'),
-    modalElementField: document.getElementById('modalElementField'),
-    modalElement:      document.getElementById('modalElement'),
-    modalErr:      document.getElementById('modalErr'),
+    modalErr:       document.getElementById('modalErr'),
     modalPaletteFields: document.getElementById('modalPaletteFields'),
-    modalBg:       document.getElementById('modalBg'),
+    modalBg:        document.getElementById('modalBg'),
     modalTextColor: document.getElementById('modalTextColor'),
-    modalAccent:   document.getElementById('modalAccent'),
-    modalMuted:    document.getElementById('modalMuted'),
+    modalAccent:    document.getElementById('modalAccent'),
+    modalMuted:     document.getElementById('modalMuted'),
     btnModalCancel: document.getElementById('btnModalCancel'),
     btnModalSave:   document.getElementById('btnModalSave'),
 };
 
-const DIMS = {
-    // layout
-    top:              document.getElementById('d-top'),
-    body:             document.getElementById('d-body'),
-    bottom:           document.getElementById('d-bottom'),
-    side:             document.getElementById('d-side'),
-    overlay:          document.getElementById('d-overlay'),
-    // typo — 全局维度（v2 结构）
-    font:             document.getElementById('d-font'),
-    weight:           document.getElementById('d-weight'),
-    size:             document.getElementById('d-size'),
-    alignment:        document.getElementById('d-alignment'),
-    spacing:          document.getElementById('d-spacing'),
-    decoration:       document.getElementById('d-decoration'),
-    // border
-    border:           document.getElementById('d-border'),
-    radius:           document.getElementById('d-radius'),
-    shadow:           document.getElementById('d-shadow'),
-    // elements
-    dateVariant:      document.getElementById('d-date-variant'),
-    capsuleVariant:   document.getElementById('d-capsule-variant'),
-    titleVariant:     document.getElementById('d-title-variant'),
-    highlightsVariant: document.getElementById('d-highlights-variant'),
-    // deco
-    bgPattern:        document.getElementById('d-bg-pattern'),
-    separator:        document.getElementById('d-separator'),
-    // effect
-    animation:        document.getElementById('d-animation'),
-    filter:           document.getElementById('d-filter'),
-    // container_group
-    containerGroup:    document.getElementById('d-container-group'),
-    // custom CSS
-    customCss:        document.getElementById('d-custom-css'),
-};
+// ============================================================
+// DIMS: 自动从 DIM_CONFIG + HTML select id 构建
+// HTML id = d-{key}，其中 key 中 _ 映射为 -
+// ============================================================
+const DIMS = {};
+for (const [key, cfg] of Object.entries(DIM_CONFIG)) {
+    if (cfg.isPalette) continue;
+    const htmlId = 'd-' + key.replace(/_/g, '-');
+    const el = document.getElementById(htmlId);
+    if (el) DIMS[key] = el;
+}
+DIMS.customCss = document.getElementById('d-custom-css');
 
 // ============================================================
-// Mock 数据（预览固定用）
+// Mock 数据
 // ============================================================
 const MOCK_DIARY = {
     id: 20260619,
@@ -676,63 +699,66 @@ const MOCK_DIARY = {
 };
 
 // ============================================================
-// 读取当前维度面板 → 组装 style_json（v2 结构）
+// buildStyleJson: 读取当前维度面板 → 组装 style_json
 // ============================================================
 function buildStyleJson() {
-    // palette: 从色板网格读取当前选中的 harmony 值
     const activeSwatch = document.querySelector('.palette-swatch.active');
     const harmony = activeSwatch ? activeSwatch.dataset.palette : 'neutral_grey';
-    // tone / slot: 暂时写死，后续可加 UI
-    const palette = { harmony, tone: 'light_standard', slot: 'original' };
+
+    function v(key, fallback) { return DIMS[key]?.value || fallback; }
+    function typoMap(key, fallback) {
+        const val = v(key, fallback);
+        return { title: val, date: val, capsule: val, highlights: val };
+    }
 
     const sj = {
-        palette,
+        palette: { harmony, tone: 'light_standard', slot: 'original' },
         layout: {
-            top:    DIMS.top?.value    || 'none',
-            body:   DIMS.body?.value   || 'standard',
-            bottom: DIMS.bottom?.value || 'none',
-            side:   DIMS.side?.value   || 'none',
-            overlay: DIMS.overlay?.value || 'none',
+            _base: 'grid_area_mapping',
+            grid: v('grid', 'single'),
+            density: v('density', 'normal'),
+            flow: v('flow', 'vertical'),
+            block_align: v('block_align', 'start'),
+            inline_align: v('inline_align', 'start'),
+            spacing_scale: v('spacing_scale', 'md'),
         },
         typo: {
-            font_family: DIMS.font?.value
-                ? { title: DIMS.font.value, date: DIMS.font.value, capsule: DIMS.font.value, highlights: DIMS.font.value }
-                : { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
-            weight_gradient: DIMS.weight?.value  || 'balanced',
-            size_scale:      DIMS.size?.value     || 'balanced_read',
-            alignment_mode:  DIMS.alignment?.value || 'left_flow',
-            spacing_tightness: DIMS.spacing?.value
-                ? { title: DIMS.spacing.value, date: DIMS.spacing.value, capsule: DIMS.spacing.value, highlights: DIMS.spacing.value }
-                : { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
-            text_decoration: DIMS.decoration?.value
-                ? { title: DIMS.decoration.value, date: DIMS.decoration.value, capsule: DIMS.decoration.value, highlights: DIMS.decoration.value }
-                : { title:'none', date:'none', capsule:'none', highlights:'none' },
+            font_family: typoMap('font_family', 'system_sans'),
+            weight_gradient: v('weight_gradient', 'balanced'),
+            size_scale: v('size_scale', 'balanced_read'),
+            alignment_mode: v('alignment_mode', 'left_flow'),
+            spacing_tightness: typoMap('spacing_tightness', 'normal'),
+            text_decoration: typoMap('text_decoration', 'none'),
         },
         border: {
-            border_style:  DIMS.border?.value || 'solid',
-            radius_size:   DIMS.radius?.value || 'none',
-            border_shadow: DIMS.shadow?.value || 'none',
+            border_style: v('border_style', 'solid'),
+            radius_size: v('radius_size', 'none'),
+            border_width: v('border_width', 'thin'),
+            border_shadow: v('border_shadow', 'none'),
         },
         deco: {
-            bg_pattern:  DIMS.bgPattern?.value || 'none',
-            separator:   DIMS.separator?.value || 'pipe',
+            bubble_style: v('bubble_style', 'none'),
+            tag_style: v('tag_style', 'none'),
+            avatar_style: v('avatar_style', 'none'),
+            box_style: v('box_style', 'none'),
+            action_style: v('action_style', 'none'),
         },
         element: {
-            header_deco:     'none',
-            side_accent:     'none',
-            divider:         'none',
-            corner_badge:    'none',
-            bg_pattern:      'none',
-            edge_deco:       'none',
-            floating_deco:   'none',
+            header_deco: v('header_deco', 'none'),
+            side_accent: v('side_accent', 'none'),
+            divider: v('divider', 'none'),
+            corner_badge: v('corner_badge', 'none'),
+            bg_pattern: v('bg_pattern', 'none'),
+            edge_deco: v('edge_deco', 'none'),
+            floating_deco: v('floating_deco', 'none'),
         },
         effect: {
-            filter_self:    DIMS.filter?.value    || 'none',
-            filter_backdrop: 'none',
-            transform:        'none',
-            animation:        DIMS.animation?.value || 'none',
+            filter_self: v('filter_self', 'none'),
+            filter_backdrop: v('filter_backdrop', 'none'),
+            transform: v('transform', 'none'),
+            animation: v('animation', 'none'),
         },
-        container_group: DIMS.containerGroup?.value || 'none',
+        container_group: v('containerGroup', 'none'),
     };
 
     const customCss = DIMS.customCss?.value.trim();
@@ -742,63 +768,71 @@ function buildStyleJson() {
 }
 
 // ============================================================
-// 将 style_json 回填到维度面板（v2 结构）
+// applyStyleJsonToPanel: 将 style_json 回填到维度面板
 // ============================================================
 function applyStyleJsonToPanel(sj) {
     if (!sj) return;
     const l  = sj.layout  || {};
-    const ty = sj.typo   || {};
+    const ty = sj.typo    || {};
     const bo = sj.border  || {};
-    const dc = sj.deco   || {};
-    const ef = sj.effect  || {};
+    const dc = sj.deco    || {};
     const el = sj.element || {};
+    const ef = sj.effect  || {};
     const cg = sj.container_group || 'none';
 
-    setSelect(DIMS.top,     l.top);
-    setSelect(DIMS.body,    l.body);
-    setSelect(DIMS.bottom,  l.bottom);
-    setSelect(DIMS.side,    l.side);
-    setSelect(DIMS.overlay, l.overlay);
+    // layout
+    setSelect(DIMS.grid,         l.grid);
+    setSelect(DIMS.density,      l.density);
+    setSelect(DIMS.flow,         l.flow);
+    setSelect(DIMS.block_align,  l.block_align);
+    setSelect(DIMS.inline_align, l.inline_align);
+    setSelect(DIMS.spacing_scale,l.spacing_scale);
 
-    // palette: 选中对应的色板色块
+    // palette
     const palName = (sj.palette && sj.palette.harmony) ? sj.palette.harmony : 'neutral_grey';
     document.querySelectorAll('.palette-swatch').forEach(s => {
         s.classList.toggle('active', s.dataset.palette === palName);
     });
     dom.paletteLabel.textContent = palName;
 
-    // typo — 全局维度
-    const fontVal = (ty.font_family && ty.font_family.title) || 'system_sans';
-    setSelect(DIMS.font,      fontVal);
-    setSelect(DIMS.weight,    ty.weight_gradient);
-    setSelect(DIMS.size,      ty.size_scale);
-    setSelect(DIMS.alignment, ty.alignment_mode);
-    const spVal = (ty.spacing_tightness && ty.spacing_tightness.title) || 'normal';
-    setSelect(DIMS.spacing,   spVal);
-    const decVal = (ty.text_decoration && ty.text_decoration.title) || 'none';
-    setSelect(DIMS.decoration, decVal);
+    // typo
+    setSelect(DIMS.font_family,       (ty.font_family || {}).title);
+    setSelect(DIMS.weight_gradient,   ty.weight_gradient);
+    setSelect(DIMS.size_scale,        ty.size_scale);
+    setSelect(DIMS.alignment_mode,    ty.alignment_mode);
+    setSelect(DIMS.spacing_tightness, (ty.spacing_tightness || {}).title);
+    setSelect(DIMS.text_decoration,   (ty.text_decoration || {}).title);
 
     // border
-    setSelect(DIMS.border, DIMS.border ? bo.border_style : null);
-    setSelect(DIMS.radius, bo.radius_size);
-    setSelect(DIMS.shadow, bo.border_shadow);
+    setSelect(DIMS.border_style,  bo.border_style);
+    setSelect(DIMS.radius_size,   bo.radius_size);
+    setSelect(DIMS.border_width,  bo.border_width);
+    setSelect(DIMS.border_shadow, bo.border_shadow);
 
     // deco
-    setSelect(DIMS.bgPattern, dc.bg_pattern);
-    setSelect(DIMS.separator, dc.separator);
+    setSelect(DIMS.bubble_style, dc.bubble_style);
+    setSelect(DIMS.tag_style,    dc.tag_style);
+    setSelect(DIMS.avatar_style, dc.avatar_style);
+    setSelect(DIMS.box_style,    dc.box_style);
+    setSelect(DIMS.action_style, dc.action_style);
+
+    // element
+    setSelect(DIMS.header_deco,   el.header_deco);
+    setSelect(DIMS.side_accent,   el.side_accent);
+    setSelect(DIMS.divider,       el.divider);
+    setSelect(DIMS.corner_badge,  el.corner_badge);
+    setSelect(DIMS.bg_pattern,    el.bg_pattern);
+    setSelect(DIMS.edge_deco,     el.edge_deco);
+    setSelect(DIMS.floating_deco, el.floating_deco);
 
     // effect
-    setSelect(DIMS.animation, ef.animation);
-    setSelect(DIMS.filter,    ef.filter_self);
+    setSelect(DIMS.filter_self,     ef.filter_self);
+    setSelect(DIMS.filter_backdrop, ef.filter_backdrop);
+    setSelect(DIMS.transform,       ef.transform);
+    setSelect(DIMS.animation,       ef.animation);
 
     // container_group
     setSelect(DIMS.containerGroup, cg);
-
-    // elements
-    setSelect(DIMS.dateVariant,      (el.date       || {}).variant);
-    setSelect(DIMS.capsuleVariant,  (el.capsule   || {}).variant);
-    setSelect(DIMS.titleVariant,    (el.title      || {}).variant);
-    setSelect(DIMS.highlightsVariant, (el.highlights || {}).variant);
 
     DIMS.customCss.value = sj.customCss || '';
 }
@@ -816,19 +850,18 @@ function setSelect(el, val) {
 function updatePreview() {
     const sj = buildStyleJson();
 
-    // 构造 allOptions（转换 dimensionCache 结构）
     const allOptions = {
-        palette:        dimensionCache['style_palette_options']   || [],
-        layout:         dimensionCache['style_layout_options']    || [],
-        typo:           dimensionCache['style_typo_options']      || [],
-        border:         dimensionCache['style_border_options']    || [],
-        deco:           dimensionCache['style_deco_options']      || [],
-        effect:         dimensionCache['style_effect_options']    || [],
-        element:        dimensionCache['style_elements_options']   || [],
-        container_group: dimensionCache['style_container_group_options'] || [],
+        palette:         dimensionCache['style_palette_options']          || [],
+        layout:          dimensionCache['style_layout_options']           || [],
+        typo:            dimensionCache['style_typo_options']             || [],
+        border:          dimensionCache['style_border_options']           || [],
+        deco:            dimensionCache['style_deco_options']             || [],
+        effect:          dimensionCache['style_effect_options']           || [],
+        element:         dimensionCache['style_element_options']          || [],
+        container_group: dimensionCache['style_container_group_options']  || [],
     };
 
-    // 注入 customCss 作用域
+    // customCss 作用域
     let styleEl = document.getElementById('preview-custom-css');
     if (styleEl) styleEl.remove();
     if (sj.customCss) {
@@ -842,7 +875,7 @@ function updatePreview() {
     dom.previewArea.innerHTML = '';
     const labelEl = document.createElement('div');
     labelEl.style.cssText = 'text-align:center;margin-bottom:12px;font-size:9px;color:var(--pixel-dim);';
-    labelEl.textContent = (currentName || '[mock]') + ' · ' + (sj.palette && sj.palette.harmony ? sj.palette.harmony : 'default');
+    labelEl.textContent = (currentName || '[mock]') + ' . ' + (sj.palette && sj.palette.harmony ? sj.palette.harmony : 'default');
     dom.previewArea.appendChild(labelEl);
 
     const cardHtml = renderStyleJson(sj, diary, allOptions);
@@ -851,9 +884,6 @@ function updatePreview() {
     dom.jsonDisplay.textContent = JSON.stringify(sj, null, 2);
 }
 
-// ============================================================
-// customCss 作用域注入
-// ============================================================
 function scopeCustomCss(css) {
     return css.replace(/([^{}\n]+)\s*\{/g, (match, sel) => {
         const trimmed = sel.trim();
@@ -863,7 +893,7 @@ function scopeCustomCss(css) {
 }
 
 // ============================================================
-// 从 DB 加载所有维度选项到缓存
+// 从 DB 加载所有维度选项
 // ============================================================
 async function loadDimensionOptions() {
     const tables = [...new Set(Object.values(DIM_CONFIG).map(c => c.table))];
@@ -874,13 +904,12 @@ async function loadDimensionOptions() {
                 .select('*')
                 .order('sort_order');
             if (!error) dimensionCache[t] = data || [];
-        } catch (e) { /* 忽略单表不存在的错误 */ }
+        } catch (e) { /* 单表不存在则跳过 */ }
     }
 }
 
 // ============================================================
-// 将缓存的维度选项填充到对应的 <select>
-// v2: 支持 isContainerGroup（不过滤 sub_dim/element）
+// 填充 <select> 选项
 // ============================================================
 function applyDimensionOptionsToUI() {
     for (const [key, cfg] of Object.entries(DIM_CONFIG)) {
@@ -889,23 +918,16 @@ function applyDimensionOptionsToUI() {
         if (!el) continue;
 
         const rows = dimensionCache[cfg.table] || [];
-        // 过滤：子维度表按 col/colVal，elements 表按 element
-        // isContainerGroup: 不过滤，直接用全部行
         const filtered = cfg.isContainerGroup ? rows : rows.filter(r => {
             if (cfg.col && cfg.colVal !== undefined) return r[cfg.col] === cfg.colVal;
-            if (cfg.element) return r.element === cfg.element;
             return true;
         });
 
-        // 保存当前值
         const currentVal = el.value;
-
-        // 清空并重建 option
         el.innerHTML = '';
-        // 额外加一个空选项
         const emptyOpt = document.createElement('option');
         emptyOpt.value = '';
-        emptyOpt.textContent = '-- 请选择 --';
+        emptyOpt.textContent = '--';
         el.appendChild(emptyOpt);
 
         filtered
@@ -917,18 +939,16 @@ function applyDimensionOptionsToUI() {
                 el.appendChild(opt);
             });
 
-        // 尝试恢复之前选中的值
         if ([...el.options].some(o => o.value === currentVal)) {
             el.value = currentVal;
         }
     }
 
-    // palette 色板：从 DB 加载
     refreshPaletteGrid();
 }
 
 // ============================================================
-// 色板网格刷新（v2: 只用 DB 数据，不依赖 PALETTES 常量）
+// 色板网格
 // ============================================================
 function refreshPaletteGrid() {
     const grid = dom.paletteGrid;
@@ -936,7 +956,7 @@ function refreshPaletteGrid() {
 
     const dbRows = dimensionCache['style_palette_options'] || [];
     if (!dbRows.length) {
-        grid.innerHTML = '<div style="font-size:9px;color:var(--pixel-dim);">暂无色板数据，请先从 DB 加载</div>';
+        grid.innerHTML = '<div style="font-size:9px;color:var(--pixel-dim);">暂无色板数据</div>';
         return;
     }
 
@@ -960,24 +980,15 @@ function refreshPaletteGrid() {
     });
 }
 
-function hexToRgb(hex) {
-    if (!hex || !hex.startsWith('#')) return '100,100,100';
-    const n = parseInt(hex.slice(1), 16);
-    return [(n>>16)&255, (n>>8)&255, n&255].join(',');
-}
-
 // ============================================================
-// 加载 STYLE_POOL 列表
+// 加载 STYLE_POOL
 // ============================================================
 async function loadPool() {
     const { data, error } = await supabase
         .from('STYLE_POOL')
         .select('name, category, desc, style_json')
         .order('name');
-    if (error) {
-        setStatus('加载失败: ' + error.message, false);
-        return;
-    }
+    if (error) { setStatus('加载失败: ' + error.message, false); return; }
     stylePoolData = data || [];
 
     const cats = [...new Set(stylePoolData.map(r => r.category).filter(Boolean))].sort();
@@ -994,21 +1005,18 @@ async function loadPool() {
 }
 
 function rebuildCapsuleList(catVal) {
-    const rows = catVal
-        ? stylePoolData.filter(r => r.category === catVal)
-        : stylePoolData;
+    const rows = catVal ? stylePoolData.filter(r => r.category === catVal) : stylePoolData;
     dom.capsuleSelect.innerHTML = `<option value="">-- 选择扭蛋 (${rows.length}) --</option>`;
     rows.forEach(row => {
         const opt = document.createElement('option');
         opt.value = row.name;
-        const hasJson = row.style_json ? ' [√]' : '';
-        opt.textContent = row.name + hasJson;
+        opt.textContent = row.name + (row.style_json ? ' [v]' : '');
         dom.capsuleSelect.appendChild(opt);
     });
 }
 
 // ============================================================
-// 加载选中 capsule 的 style_json 到面板
+// 加载 capsule
 // ============================================================
 function loadCapsule(name) {
     if (!name) return;
@@ -1018,7 +1026,7 @@ function loadCapsule(name) {
     currentName = name;
     currentDbJson = row.style_json || null;
 
-    dom.dbInfoLine.textContent = `DB: ${name} · category: ${row.category || '-'} · desc: ${row.desc || '-'}`;
+    dom.dbInfoLine.textContent = `DB: ${name} . category: ${row.category || '-'} . desc: ${row.desc || '-'}`;
     dom.dbJsonDisplay.textContent = currentDbJson
         ? JSON.stringify(currentDbJson, null, 2)
         : '// 该 capsule 尚无 style_json';
@@ -1033,7 +1041,7 @@ function loadCapsule(name) {
 }
 
 // ============================================================
-// 保存 style_json 到 DB
+// 保存到 DB
 // ============================================================
 async function saveToDb() {
     if (!currentName) { dom.saveStatus.textContent = '请先选择 capsule'; dom.saveStatus.className = 'status err'; return; }
@@ -1055,7 +1063,7 @@ async function saveToDb() {
         if (row) row.style_json = sj;
         dom.dbJsonDisplay.textContent = JSON.stringify(sj, null, 2);
         const opt = dom.capsuleSelect.querySelector(`option[value="${currentName.replace(/"/g, '&quot;')}"]`);
-        if (opt && !opt.textContent.includes('[√]')) opt.textContent = currentName + ' [√]';
+        if (opt && !opt.textContent.includes('[v]')) opt.textContent = currentName + ' [v]';
         dom.saveStatus.textContent = '已保存: ' + currentName; dom.saveStatus.className = 'status ok';
     }
 }
@@ -1069,25 +1077,21 @@ function debouncedUpdate() {
     _updateTimer = setTimeout(updatePreview, 80);
 }
 
-// ============================================================
-// 工具
-// ============================================================
 function setStatus(msg, ok) {
     dom.statusMsg.textContent = msg;
     dom.statusMsg.className = 'status ' + (ok ? 'ok' : 'err');
 }
 
 // ============================================================
-// 折叠/展开 dim-group
+// 折叠/展开
 // ============================================================
 document.querySelectorAll('.dim-group-header').forEach(header => {
     header.addEventListener('click', (e) => {
-        // 如果点到按钮则不触发折叠
         if (e.target.closest('.btn-add-opt')) return;
         const grp = header.closest('.dim-group');
         grp.classList.toggle('collapsed');
         const icon = header.querySelector('.toggle-icon');
-        icon.textContent = grp.classList.contains('collapsed') ? '▶' : '▼';
+        icon.textContent = grp.classList.contains('collapsed') ? '\u25b6' : '\u25bc';
     });
 });
 
@@ -1099,37 +1103,20 @@ function showAddOptionModal(dimKey) {
     if (!cfg) return;
     currentAddDim = dimKey;
 
-    dom.modalTitle.textContent = '新增选项 — ' + cfg.label;
+    dom.modalTitle.textContent = '新增选项 -- ' + cfg.label;
     dom.modalValue.value = '';
     dom.modalLabel.value = '';
     dom.modalDesc.value = '';
     dom.modalErr.textContent = '';
 
-    // 显示/隐藏 palette 专用字段
-    const isPalette = cfg.isPalette || dimKey === 'palette';
+    const isPalette = cfg.isPalette;
     dom.modalPaletteFields.style.display = isPalette ? '' : 'none';
     dom.modalFieldDesc.style.display = isPalette ? 'none' : '';
-    // css_template 字段：非色板选项需要填写
     dom.modalFieldCssTpl.style.display = isPalette ? 'none' : '';
     dom.modalCssTemplate.value = '';
 
-    // 显示/隐藏 elements 专用字段（所属元素）
-    const isElements = cfg.table === 'style_elements_options';
-    dom.modalElementField.style.display = isElements ? '' : 'none';
-    if (isElements && cfg.element) {
-        dom.modalElement.value = cfg.element;
-    } else if (isElements) {
-        dom.modalElement.value = 'date';
-    }
-
-    // 更新 label 提示
-    if (isPalette) {
-        document.getElementById('labelValue').textContent = 'value（色板名，英文小写）';
-        document.getElementById('labelLabel').textContent = 'label（显示名，中文）';
-    } else {
-        document.getElementById('labelValue').textContent = 'value（存储值，英文小写）';
-        document.getElementById('labelLabel').textContent = 'label（显示名，中文）';
-    }
+    document.getElementById('labelValue').textContent = isPalette
+        ? 'option_key（色板名，英文小写）' : 'option_key（存储值，英文小写）';
 
     dom.addOptModal.classList.add('show');
     dom.modalValue.focus();
@@ -1149,55 +1136,35 @@ async function saveNewOption() {
     const desc  = dom.modalDesc.value.trim();
 
     if (!value || !label) {
-        dom.modalErr.textContent = 'value 和 label 为必填项';
+        dom.modalErr.textContent = 'option_key 和 label 为必填项';
         return;
-    }
-
-    // 辅助: hex → "r,g,b"
-    function hexToRgb(hex) {
-        if (!hex || !hex.startsWith('#') || hex.length < 7) return '0,0,0';
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `${r},${g},${b}`;
     }
 
     dom.btnModalSave.disabled = true;
     dom.modalErr.textContent = '保存中...';
 
     try {
-        if (cfg.isPalette || currentAddDim === 'palette') {
-            // 写入 style_palette_options
+        if (cfg.isPalette) {
             const bg     = dom.modalBg.value.trim() || '#cccccc';
             const text   = dom.modalTextColor.value.trim() || '#000000';
             const accent = dom.modalAccent.value.trim() || '#888888';
             const muted  = dom.modalMuted.value.trim() || '#888888';
-            const accentRgb = hexToRgb(accent);
-            const bgRgb     = hexToRgb(bg);
-            // 自动生成 css_template
-            const cssTpl = `.gallery-card[data-palette="${value}"] { --card-bg:${bg}; --card-text:${text}; --card-accent:${accent}; --card-muted:${muted}; --card-accent-rgb:${accentRgb}; --card-bg-rgb:${bgRgb}; }`;
-
+            const cssTpl = `.gallery-card[data-style-palette="${value}"] { background: var(--card-bg); color: var(--card-text); border: 1px solid var(--card-accent); }`;
             const { error } = await supabase.from('style_palette_options').insert({
-                option_key: value, label, bg, text_color: text, accent, muted, description: desc || null, css_template: cssTpl
+                option_key: value, label, bg, text_color: text, accent, muted,
+                description: desc || null, css_template: cssTpl
             });
             if (error) throw error;
         } else {
-            const row = { value, label };
+            const row = { option_key: value, label };
             if (desc) row.description = desc;
-            // css_template
             const cssTpl = dom.modalCssTemplate.value.trim();
             if (cssTpl) row.css_template = cssTpl;
-            // 确定过滤列
+            // 过滤列（sub_dim）
             if (cfg.col && cfg.colVal !== undefined) {
                 row[cfg.col] = cfg.colVal;
             }
-            // elements 表需要从弹窗下拉框读取所属元素
-            else if (cfg.table === 'style_elements_options') {
-                row.element = dom.modalElement.value;
-            } else if (cfg.element) {
-                row.element = cfg.element;
-            }
-            // 计算 sort_order
+            // sort_order
             const existing = dimensionCache[cfg.table] || [];
             row.sort_order = existing.length > 0
                 ? Math.max(...existing.map(r => r.sort_order || 0)) + 10
@@ -1207,22 +1174,19 @@ async function saveNewOption() {
             if (error) throw error;
         }
 
-        // 刷新缓存 + UI
         await loadDimensionOptions();
         applyDimensionOptionsToUI();
-        // 重新注入动态 CSS（含新增选项的 css_template）
         injectDynamicStyles({
-            palette:        dimensionCache['style_palette_options']   || [],
-            layout:         dimensionCache['style_layout_options']    || [],
-            typo:           dimensionCache['style_typo_options']      || [],
-            border:         dimensionCache['style_border_options']    || [],
-            deco:           dimensionCache['style_deco_options']      || [],
-            effect:         dimensionCache['style_effect_options']    || [],
-            element:        dimensionCache['style_elements_options']   || [],
-            container_group: dimensionCache['style_container_group_options'] || [],
+            palette:         dimensionCache['style_palette_options']          || [],
+            layout:          dimensionCache['style_layout_options']           || [],
+            typo:            dimensionCache['style_typo_options']             || [],
+            border:          dimensionCache['style_border_options']           || [],
+            deco:            dimensionCache['style_deco_options']             || [],
+            effect:          dimensionCache['style_effect_options']           || [],
+            element:         dimensionCache['style_element_options']          || [],
+            container_group: dimensionCache['style_container_group_options']  || [],
         });
 
-        // 选中刚新增的选项
         const el = DIMS[currentAddDim];
         if (el) el.value = value;
 
@@ -1238,27 +1202,21 @@ async function saveNewOption() {
 // ============================================================
 // 事件绑定
 // ============================================================
-
-// category 筛选
 dom.catFilter.addEventListener('change', () => rebuildCapsuleList(dom.catFilter.value));
 
-// capsule 切换
 dom.capsuleSelect.addEventListener('change', () => {
     const name = dom.capsuleSelect.value;
     if (name) loadCapsule(name);
 });
 
-// 所有维度控件 → 防抖更新预览
 Object.values(DIMS).forEach(el => {
     if (!el) return;
     const evt = el.tagName === 'TEXTAREA' ? 'input' : 'change';
     el.addEventListener(evt, debouncedUpdate);
 });
 
-// 保存
 dom.btnSave.addEventListener('click', saveToDb);
 
-// 复制 JSON
 dom.btnCopyJson.addEventListener('click', () => {
     const txt = dom.jsonDisplay.textContent;
     navigator.clipboard.writeText(txt).then(() => {
@@ -1269,7 +1227,6 @@ dom.btnCopyJson.addEventListener('click', () => {
     });
 });
 
-// 从 DB 重置面板
 dom.btnRevertDb.addEventListener('click', () => {
     if (!currentName) return;
     applyStyleJsonToPanel(currentDbJson || DEFAULT_STYLE_JSON);
@@ -1277,46 +1234,40 @@ dom.btnRevertDb.addEventListener('click', () => {
     dom.saveStatus.textContent = '已从 DB 重置'; dom.saveStatus.className = 'status ok';
 });
 
-// 弹窗：取消 / 保存
 dom.btnModalCancel.addEventListener('click', hideAddOptionModal);
 dom.btnModalSave.addEventListener('click', saveNewOption);
 
-// 弹窗：点击遮罩关闭
 dom.addOptModal.addEventListener('click', (e) => {
     if (e.target === dom.addOptModal) hideAddOptionModal();
 });
 
-// 弹窗：ESC 关闭
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && dom.addOptModal.classList.contains('show')) {
         hideAddOptionModal();
     }
 });
 
-// 「新增」按钮绑定（事件委托）
+// 「新增」按钮绑定
 document.querySelectorAll('.btn-add-opt').forEach(btn => {
     btn.addEventListener('click', (e) => {
-        e.stopPropagation(); // 防止触发 header 折叠
+        e.stopPropagation();
         const grp = btn.dataset.grp;
-        // 将 grp 名映射到 DIM_CONFIG 的 key
-        // grp 可能是 "layout" / "palette" / "typo" / "border" / "elements" / "deco" / "effect"
-        // 需要找到该组对应的第一个 key
         const key = findFirstDimKeyByGroup(grp);
         if (key) showAddOptionModal(key);
     });
 });
 
 function findFirstDimKeyByGroup(grp) {
-    if (grp === 'palette')       return 'palette';
-    if (grp === 'layout')         return 'top';
-    if (grp === 'border')         return 'border';
-    if (grp === 'containerGroup') return 'containerGroup';
+    if (grp === 'palette')          return 'palette';
+    if (grp === 'layout')           return 'grid';
+    if (grp === 'border')           return 'border_style';
+    if (grp === 'containerGroup')   return 'containerGroup';
     const tableMap = {
-        typo:   'style_typo_options',
-        border: 'style_border_options',
-        deco:   'style_deco_options',
-        effect: 'style_effect_options',
-        elements: 'style_elements_options',
+        typo:    'style_typo_options',
+        border:  'style_border_options',
+        deco:    'style_deco_options',
+        effect:  'style_effect_options',
+        element: 'style_element_options',
     };
     const tbl = tableMap[grp];
     if (!tbl) return null;
@@ -1331,18 +1282,17 @@ async function init() {
     const authed = await checkAuth();
     if (!authed) { setStatus('认证失败，无法连接数据库', false); return; }
 
-    // 注入基础 CSS + 动态样式
     injectBaseCss();
     await loadDimensionOptions();
     injectDynamicStyles({
-        palette:        dimensionCache['style_palette_options']   || [],
-        layout:         dimensionCache['style_layout_options']    || [],
-        typo:           dimensionCache['style_typo_options']      || [],
-        border:         dimensionCache['style_border_options']    || [],
-        deco:           dimensionCache['style_deco_options']      || [],
-        effect:         dimensionCache['style_effect_options']    || [],
-        element:        dimensionCache['style_elements_options']   || [],
-        container_group: dimensionCache['style_container_group_options'] || [],
+        palette:         dimensionCache['style_palette_options']          || [],
+        layout:          dimensionCache['style_layout_options']           || [],
+        typo:            dimensionCache['style_typo_options']             || [],
+        border:          dimensionCache['style_border_options']           || [],
+        deco:            dimensionCache['style_deco_options']             || [],
+        effect:          dimensionCache['style_effect_options']           || [],
+        element:         dimensionCache['style_element_options']          || [],
+        container_group: dimensionCache['style_container_group_options']  || [],
     });
 
     applyDimensionOptionsToUI();
