@@ -24,11 +24,11 @@ const BASE_CSS = `/* style-engine v2.0 — base structural CSS */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   grid-template-areas: "date" "title" "highlights" "capsule";
 }
-.card-date   { grid-area: date; }
+.card-date   { grid-area: date; color: var(--card-muted, inherit); }
 .card-title  { grid-area: title; word-break: break-word; }
 .card-highlights { grid-area: highlights; }
 .card-highlight-item { display: block; }
-.card-capsule { grid-area: capsule; }
+.card-capsule { grid-area: capsule; color: var(--card-accent, inherit); }
 .hl-sep { display: inline; }
 .cg-slot { display: block; }
 
