@@ -1027,7 +1027,7 @@ function loadCapsule(name) {
     applyStyleJsonToPanel(sjToApply);
     updatePreview();
 
-    setStatus(`已加载: ${name}${currentDbJson ? ' (style_json)' : ' (fallback to DEFAULT)'}`), true);
+    setStatus(`已加载: ${name}${currentDbJson ? ' (style_json)' : ' (fallback to DEFAULT)'}`, true);
     dom.saveStatus.textContent = '未修改';
     dom.saveStatus.className = 'status';
 }
