@@ -42,7 +42,7 @@
 </style>
 </head>
 <body>
-<h1>STYLE_ENGINE · 18 Preset Preview</h1>
+<h1>STYLE_ENGINE v2.0 · DB驱动架构 · 色板预览</h1>
 <div class="filter-bar">
     <label>筛选：</label>
     <select id="filterPalette">
@@ -54,28 +54,44 @@
 <div class="grid" id="grid"></div>
 
 <script type="module">
-    import { injectCardEngineCss, renderStyleJson, STYLE_PRESETS, PALETTES } from './style-engine.js';
+    import { injectBaseCss, renderStyleJson, DEFAULT_STYLE_JSON } from './style-engine.js';
 
-    // 注入引擎 CSS
-    injectCardEngineCss();
+    // 注入 BASE_CSS
+    injectBaseCss();
 
     const grid = document.getElementById('grid');
     const filterSel = document.getElementById('filterPalette');
     const countEl = document.getElementById('count');
 
+    // Mock 色板数据（模拟 DB style_palette_options）
+    const mockPalettes = [
+        { option_key: 'industrial',        option_value: '{"bg":"#1e2622","text":"#cadbb7","accent":"#1e2622","muted":"#707a65"}' },
+        { option_key: 'repair_yellow',     option_value: '{"bg":"#d2c89f","text":"#403d30","accent":"#615a42","muted":"#837b5a"}' },
+        { option_key: 'printer_green',     option_value: '{"bg":"#e5ebda","text":"#1e2622","accent":"#8a8f7c","muted":"#8a8f7c"}' },
+        { option_key: 'bsod_blue',         option_value: '{"bg":"#1e2669","text":"#cadbb7","accent":"#4a5d8f","muted":"#7f86ba"}' },
+        { option_key: 'diary_cream',       option_value: '{"bg":"#faf7e8","text":"#4a453d","accent":"#c9c2b0","muted":"#9a9385"}' },
+        { option_key: 'terminal_black',    option_value: '{"bg":"#0b0c0a","text":"#707a65","accent":"#1e2622","muted":"#43473b"}' },
+        { option_key: 'mystery_dark',      option_value: '{"bg":"#2a2a2a","text":"#9a9a9a","accent":"#555555","muted":"#666666"}' },
+    ];
+
+    // Mock allOptions（模拟 gallery.html 传入的数据结构）
+    const mockAllOptions = {
+        palette: mockPalettes,
+        layout: [], typo: [], border: [], deco: [], effect: [], element: [], container_group: []
+    };
+
     // 填充色板筛选器
-    const paletteNames = Object.keys(PALETTES);
-    paletteNames.forEach(p => {
+    mockPalettes.forEach(p => {
         const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
+        opt.value = p.option_key;
+        opt.textContent = p.option_key;
         filterSel.appendChild(opt);
     });
 
     // 示例日记数据
     const sampleDiary = {
         id: 20260613,
-        title: '星屑陪伴机器人·自主进化愿望单',
+        title: '星屑陪伴机器人 · 自主进化愿望单',
         date: '2026/06/13',
         dateRaw: '2026-06-13',
         highlights: [
@@ -83,27 +99,34 @@
             '用户情绪：平静，适合深度对话。',
             '今日学习：ESP32-S3 PSRAM 稳定性优化。'
         ],
-        capsuleName: 'default'
+        capsuleName: 'test-preset'
     };
+
+    // 测试 style_json 变体
+    const TEST_STYLES = [
+        { name: 'default',       sj: { ...DEFAULT_STYLE_JSON, palette: { harmony:'industrial', tone:'dark', slot:'original' } } },
+        { name: 'repair_yellow', sj: { ...DEFAULT_STYLE_JSON, palette: { harmony:'repair_yellow', tone:'light', slot:'original' } } },
+        { name: 'printer_green', sj: { ...DEFAULT_STYLE_JSON, palette: { harmony:'printer_green', tone:'light', slot:'original' } } },
+        { name: 'bsod_blue',     sj: { ...DEFAULT_STYLE_JSON, palette: { harmony:'bsod_blue', tone:'dark', slot:'original' } } },
+        { name: 'diary_cream',   sj: { ...DEFAULT_STYLE_JSON, palette: { harmony:'diary_cream', tone:'light', slot:'original' } } },
+        { name: 'terminal',      sj: { ...DEFAULT_STYLE_JSON, palette: { harmony:'terminal_black', tone:'dark', slot:'original' } } },
+        { name: 'mystery_dark',  sj: { ...DEFAULT_STYLE_JSON, palette: { harmony:'mystery_dark', tone:'dark', slot:'original' } } },
+    ];
 
     function renderAll(filterPalette) {
         grid.innerHTML = '';
         let count = 0;
-        const names = Object.keys(STYLE_PRESETS);
-        names.sort();
-        names.forEach(name => {
-            const preset = STYLE_PRESETS[name];
-            if (filterPalette && preset.palette !== filterPalette) return;
+        TEST_STYLES.forEach(({ name, sj }) => {
+            if (filterPalette && sj.palette && sj.palette.harmony !== filterPalette) return;
             count++;
 
             const wrapper = document.createElement('div');
-
-            const cardHtml = renderStyleJson(preset, { ...sampleDiary, capsuleName: name });
+            const cardHtml = renderStyleJson(sj, sampleDiary, mockAllOptions);
             wrapper.insertAdjacentHTML('beforeend', cardHtml);
 
             const label = document.createElement('div');
             label.className = 'preset-label';
-            label.textContent = name + '  [' + preset.palette + ']';
+            label.textContent = name + '  [' + (sj.palette ? sj.palette.harmony : 'default') + ']';
             wrapper.appendChild(label);
 
             grid.appendChild(wrapper);

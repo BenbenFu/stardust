@@ -213,81 +213,24 @@
     const PAGE_SIZE = 20;
     let currentDiaries = [];
     let styleMap = {};
+    let dimCache = null;  // 维度选项缓存，供 renderCard 使用
     let hasMore = true;
     let isLoading = false;
     let totalCount = null;
 
     // 将原始 DIARIES 行映射为日记数据
-    function mapDiary(row, i) {
+    function mapDiary(row) {
         const capsule = (row.capsule || '').trim();
-        let cardType, capsuleName, capsuleCSS, styleJson;
-        const baseTypes = ['default','repair','print','overheat','tamagotchi','api-debt','panic'];
-        if (!capsule || capsule === '/') {
-            cardType = baseTypes[i % baseTypes.length];
-            capsuleName = null;
-            capsuleCSS = null;
-            styleJson = null;
-        } else {
-            const style = styleMap[capsule];
-            const category = style ? style.category : null;
-            const slug = cat2slug(category || capsule);
-            cardType = slug || baseTypes[i % baseTypes.length];
-            capsuleName = capsule;
-            capsuleCSS = (style && style.card_css) ? style.card_css : null;
-            styleJson = (style && style.style_json) ? style.style_json : null;
-            if (capsuleCSS) cardType = 'custom';
-        }
+        const style = (capsule && capsule !== '/') ? styleMap[capsule] : null;
         return {
             id: row.id,
             title: row.title || '\u65e0\u6807\u9898',
             date: (function(d){if(!d)return'----/--/--';var p=d.split('-');return p.length===3?p[0]+'/'+p[1]+'/'+p[2]:d;})(row.date),
             dateRaw: row.date,
             highlights: Array.isArray(row.highlights) ? row.highlights : [],
-            cardType: cardType,
-            capsuleName: capsuleName,
-            capsuleCSS: capsuleCSS,
-            style_json: styleJson
+            capsuleName: (capsule && capsule !== '/') ? capsule : null,
+            style_json: (style && style.style_json) ? style.style_json : null
         };
-    }
-
-    function cat2slug(cat) {
-        if (!cat) return null;
-        const lower = cat.toLowerCase().trim();
-        const map = {
-            'code':'code-forge','tech':'tech-archive','work':'work-bench',
-            'life':'life-logbook','social':'social-broadcast','creative':'creative-engine',
-            'media':'media-stream','format':'format-deck','misc':'misc-mystery',
-            'fiction':'fiction-realm','roleplay':'role-engine',
-            'code-forge':'code-forge','\u4ee3\u7801\u7f16\u7a0b':'code-forge',
-            'tech-archive':'tech-archive','\u6280\u672f\u6587\u6863':'tech-archive',
-            'work-bench':'work-bench','\u5de5\u4f5c\u529e\u516c':'work-bench',
-            'life-logbook':'life-logbook','\u751f\u6d3b\u8bb0\u5f55':'life-logbook',
-            'social-broadcast':'social-broadcast','\u793e\u4ea4\u7f51\u7edc':'social-broadcast',
-            'creative-engine':'creative-engine','\u521b\u610f\u5199\u4f5c':'creative-engine',
-            'media-stream':'media-stream','\u5a92\u4f53\u901a\u7a3f':'media-stream',
-            'role-engine':'role-engine','\u89d2\u8272\u626e\u6f14':'role-engine',
-            'fiction-realm':'fiction-realm','\u5c0f\u8bf4\u53d9\u4e8b':'fiction-realm',
-            'format-deck':'format-deck','\u683c\u5f0f\u89c4\u8303':'format-deck',
-            'misc-mystery':'misc-mystery','\u672a\u77e5\u5206\u7c7b':'misc-mystery',
-        };
-        return map[lower] || map[cat] || null;
-    }
-
-    // 注入自定义 CSS
-    function injectCustomCSS(diaries) {
-        const injectedCSS = new Set();
-        let styleEl = document.getElementById('capsule-custom-css');
-        if (!styleEl) {
-            styleEl = document.createElement('style');
-            styleEl.id = 'capsule-custom-css';
-            document.head.appendChild(styleEl);
-        }
-        diaries.forEach(d => {
-            if (d.capsuleCSS && !injectedCSS.has(d.capsuleName)) {
-                injectedCSS.add(d.capsuleName);
-                styleEl.textContent += '\n' + scopeCSS(d.capsuleCSS, d.capsuleName);
-            }
-        });
     }
 
     // 加载更多（初始加载和滚动加载共用）
@@ -320,9 +263,8 @@
 
         if (data.length < PAGE_SIZE) hasMore = false;
 
-        const newDiaries = data.map((row, i) => mapDiary(row, offset + i));
+        const newDiaries = data.map(row => mapDiary(row));
         currentDiaries = currentDiaries.concat(newDiaries);
-        injectCustomCSS(newDiaries);
         renderAll();
         galleryCount.textContent = totalCount ? `\u5361\u7247 ${currentDiaries.length} / ${totalCount}` : `\u5361\u7247 ${currentDiaries.length}`;
         updateSystemStatus(totalCount || currentDiaries.length);
@@ -331,7 +273,8 @@
     // 加载所有维度选项（供 injectDynamicStyles 注入 css_template）
     async function loadDimensionOptions() {
         const tables = ['style_palette_options','style_layout_options','style_typo_options',
-            'style_border_options','style_deco_options','style_effect_options','style_elements_options'];
+            'style_border_options','style_deco_options','style_effect_options','style_elements_options',
+            'style_container_group_options'];
         const cache = {};
         for (const t of tables) {
             try {
@@ -347,25 +290,27 @@
         galleryGrid.innerHTML = '<div class="gallery-status">>>> LOADING... \u52a0\u8f7d\u4e2d... <<<</div>';
 
         // 并行加载：STYLE_POOL + 维度选项
-        const [styleRes, dimCache] = await Promise.all([
-            supabase.from('STYLE_POOL').select('name, category, card_css, style_json'),
+        const [styleRes, loadedDimCache] = await Promise.all([
+            supabase.from('STYLE_POOL').select('name, category, style_json'),
             loadDimensionOptions()
         ]);
+        dimCache = loadedDimCache;  // 存储供 renderAll 使用
         if (styleRes.data && !styleRes.error) {
             styleRes.data.forEach(row => {
-                if (row.name) styleMap[row.name] = { category: row.category, card_css: row.card_css || null, style_json: row.style_json || null };
+                if (row.name) styleMap[row.name] = { category: row.category, style_json: row.style_json || null };
             });
         }
 
-        // 注入维度表 css_template 动态 CSS（与 capsule-preview 一致）
+        // 注入维度表 css_template 动态 CSS
         injectDynamicStyles({
-            palette:  dimCache['style_palette_options'] || [],
-            layout:   dimCache['style_layout_options'] || [],
-            typo:     dimCache['style_typo_options'] || [],
-            border:   dimCache['style_border_options'] || [],
-            deco:     dimCache['style_deco_options'] || [],
-            effect:   dimCache['style_effect_options'] || [],
-            elements: dimCache['style_elements_options'] || [],
+            palette:  loadedDimCache['style_palette_options'] || [],
+            layout:   loadedDimCache['style_layout_options'] || [],
+            typo:     loadedDimCache['style_typo_options'] || [],
+            border:   loadedDimCache['style_border_options'] || [],
+            deco:     loadedDimCache['style_deco_options'] || [],
+            effect:   loadedDimCache['style_effect_options'] || [],
+            element:  loadedDimCache['style_elements_options'] || [],
+            container_group: loadedDimCache['style_container_group_options'] || [],
         });
 
         await loadMoreDiaries();
@@ -388,26 +333,6 @@
         }
     }
 
-    // 将数据库中的 CSS 片段加上 [data-cs="name"] 作用域前缀
-    function scopeCSS(css, name) {
-        // 转义 name 中的特殊字符（引号、反斜杠）
-        const attr = CSS.escape(name);
-        // 在每个顶层选择器前加上作用域
-        return css.replace(/([^\n{]*)\s*\{/g, (match, selector) => {
-            const trimmed = selector.trim();
-            if (!trimmed || trimmed.startsWith('@')) return match;
-            const parts = trimmed.split(',').map(s => {
-                const sel = s.trim();
-                // .gallery-card 和 data-cs 是同一个元素，紧贴不加空格
-                if (sel.startsWith('.gallery-card')) {
-                    return `[data-cs="${attr}"]${sel}`;
-                }
-                return `[data-cs="${attr}"] ${sel}`;
-            });
-            return parts.join(', ') + ' {';
-        });
-    }
-
     function getColumnCount() {
         const w = window.innerWidth;
         if (w >= 900) return 3;
@@ -427,9 +352,19 @@
         const scrollTop = lcd ? lcd.scrollTop : 0;
         const colCount = getColumnCount();
         const reordered = reorderRowToColumn(currentDiaries, colCount);
+        const allOptions = dimCache ? {
+            palette:  dimCache['style_palette_options'] || [],
+            layout:   dimCache['style_layout_options'] || [],
+            typo:     dimCache['style_typo_options'] || [],
+            border:   dimCache['style_border_options'] || [],
+            deco:     dimCache['style_deco_options'] || [],
+            effect:   dimCache['style_effect_options'] || [],
+            element:  dimCache['style_elements_options'] || [],
+            container_group: dimCache['style_container_group_options'] || [],
+        } : {};
         galleryGrid.innerHTML = '';
         reordered.forEach(diary => {
-            galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary));
+            galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary, allOptions));
         });
         if (lcd) lcd.scrollTop = scrollTop;
     }
