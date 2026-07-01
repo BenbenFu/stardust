@@ -54,24 +54,54 @@
 <div class="grid" id="grid"></div>
 
 <script type="module">
-    import { injectBaseCss, renderStyleJson, DEFAULT_STYLE_JSON } from './style-engine.js';
+    import { injectBaseCss, injectDynamicStyles, renderStyleJson, DEFAULT_STYLE_JSON } from './style-engine.js';
 
-    // 注入 BASE_CSS
+    // 注入 BASE_CSS + 动态样式（DB css_template）
     injectBaseCss();
+    injectDynamicStyles(mockAllOptions);
 
     const grid = document.getElementById('grid');
     const filterSel = document.getElementById('filterPalette');
     const countEl = document.getElementById('count');
 
     // Mock 色板数据（模拟 DB style_palette_options）
+    // 新增 css_template 字段，让 injectDynamicStyles 能注入配色样式
     const mockPalettes = [
-        { option_key: 'industrial',        option_value: '{"bg":"#1e2622","text":"#cadbb7","accent":"#1e2622","muted":"#707a65"}' },
-        { option_key: 'repair_yellow',     option_value: '{"bg":"#d2c89f","text":"#403d30","accent":"#615a42","muted":"#837b5a"}' },
-        { option_key: 'printer_green',     option_value: '{"bg":"#e5ebda","text":"#1e2622","accent":"#8a8f7c","muted":"#8a8f7c"}' },
-        { option_key: 'bsod_blue',         option_value: '{"bg":"#1e2669","text":"#cadbb7","accent":"#4a5d8f","muted":"#7f86ba"}' },
-        { option_key: 'diary_cream',       option_value: '{"bg":"#faf7e8","text":"#4a453d","accent":"#c9c2b0","muted":"#9a9385"}' },
-        { option_key: 'terminal_black',    option_value: '{"bg":"#0b0c0a","text":"#707a65","accent":"#1e2622","muted":"#43473b"}' },
-        { option_key: 'mystery_dark',      option_value: '{"bg":"#2a2a2a","text":"#9a9a9a","accent":"#555555","muted":"#666666"}' },
+        {
+            option_key: 'industrial',
+            option_value: '{"bg":"#1e2622","text":"#cadbb7","accent":"#1e2622","muted":"#707a65"}',
+            css_template: `.gallery-card[data-style-palette="industrial"] { background: var(--card-bg); color: var(--card-text); border: 2px solid var(--card-text); font-family: "Courier New", monospace; }`
+        },
+        {
+            option_key: 'repair_yellow',
+            option_value: '{"bg":"#d2c89f","text":"#403d30","accent":"#615a42","muted":"#837b5a"}',
+            css_template: `.gallery-card[data-style-palette="repair_yellow"] { background: var(--card-bg); color: var(--card-text); border: 1px solid var(--card-accent); font-family: "Courier New", monospace; }`
+        },
+        {
+            option_key: 'printer_green',
+            option_value: '{"bg":"#e5ebda","text":"#1e2622","accent":"#8a8f7c","muted":"#8a8f7c"}',
+            css_template: `.gallery-card[data-style-palette="printer_green"] { background: var(--card-bg); color: var(--card-text); border: 1px dashed var(--card-accent); }`
+        },
+        {
+            option_key: 'bsod_blue',
+            option_value: '{"bg":"#1e2669","text":"#cadbb7","accent":"#4a5d8f","muted":"#7f86ba"}',
+            css_template: `.gallery-card[data-style-palette="bsod_blue"] { background: var(--card-bg); color: var(--card-text); border: 2px solid var(--card-accent); text-shadow: 0 0 4px var(--card-accent); }`
+        },
+        {
+            option_key: 'diary_cream',
+            option_value: '{"bg":"#faf7e8","text":"#4a453d","accent":"#c9c2b0","muted":"#9a9385"}',
+            css_template: `.gallery-card[data-style-palette="diary_cream"] { background: var(--card-bg); color: var(--card-text); border: 1px solid var(--card-muted); border-radius: 2px; }`
+        },
+        {
+            option_key: 'terminal_black',
+            option_value: '{"bg":"#0b0c0a","text":"#707a65","accent":"#1e2622","muted":"#43473b"}',
+            css_template: `.gallery-card[data-style-palette="terminal_black"] { background: var(--card-bg); color: var(--card-text); border: 1px solid var(--card-text); font-family: "Courier New", monospace; text-transform: uppercase; font-size: 11px; }`
+        },
+        {
+            option_key: 'mystery_dark',
+            option_value: '{"bg":"#2a2a2a","text":"#9a9a9a","accent":"#555555","muted":"#666666"}',
+            css_template: `.gallery-card[data-style-palette="mystery_dark"] { background: var(--card-bg); color: var(--card-text); border: 1px solid var(--card-accent); letter-spacing: 1px; }`
+        },
     ];
 
     // Mock allOptions（模拟 gallery.html 传入的数据结构）

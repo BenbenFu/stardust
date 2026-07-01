@@ -202,6 +202,11 @@ function buildDataAttrs(styleJson) {
     && styleJson.effect.filter_backdrop
     && styleJson.effect.filter_backdrop !== 'none';
 
+  // palette: 生成 data-style-palette="harmony_value" 属性
+  if (styleJson.palette && styleJson.palette.harmony) {
+    attrs['data-style-palette'] = escapeAttr(styleJson.palette.harmony);
+  }
+
   for (const [dim, subDims] of Object.entries(styleJson)) {
     if (dim === 'palette' || dim === 'container_group') continue;
     if (!subDims || typeof subDims !== 'object') continue;

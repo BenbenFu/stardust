@@ -235,15 +235,6 @@
         <div id="statusMsg" class="status">正在连接数据库...</div>
     </div>
 
-    <!-- Preset 快速加载 -->
-    <div>
-        <div class="section-title">PRESET 快速加载</div>
-        <div class="preset-row">
-            <select id="presetSelect"><option value="">-- 选择预设 --</option></select>
-            <button id="btnLoadPreset" style="flex-shrink:0;width:80px;">[ 加载 ]</button>
-        </div>
-    </div>
-
     <!-- ===== 维度面板 ===== -->
     <div class="dim-panel" id="dimPanel">
 
@@ -300,23 +291,31 @@
                 <span class="toggle-icon">▼</span>
             </div>
             <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>字体族 Font Family（全局）</label>
+                    <select id="d-font"></select>
+                </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>字体族 Family</label>
-                        <select id="d-font"></select>
+                        <label>字重梯度 Weight</label>
+                        <select id="d-weight"></select>
                     </div>
                     <div class="dim-row">
-                        <label>标题字号 Size</label>
-                        <select id="d-title-size"></select>
+                        <label>字号阶梯 Size</label>
+                        <select id="d-size"></select>
                     </div>
                 </div>
                 <div class="dim-row">
-                    <label>标题装饰 Title Deco</label>
-                    <select id="d-title-deco"></select>
+                    <label>对齐模式 Alignment</label>
+                    <select id="d-alignment"></select>
                 </div>
                 <div class="dim-row">
-                    <label>高亮句变体 Highlights Variant</label>
-                    <select id="d-hl-variant"></select>
+                    <label>字间距 Spacing（全局）</label>
+                    <select id="d-spacing"></select>
+                </div>
+                <div class="dim-row">
+                    <label>文字装饰 Text Decoration（全局）</label>
+                    <select id="d-decoration"></select>
                 </div>
             </div>
         </div>
@@ -366,6 +365,10 @@
                     <label>Title 标题额外处理</label>
                     <select id="d-title-variant"></select>
                 </div>
+                <div class="dim-row">
+                    <label>Highlights 高亮句变体</label>
+                    <select id="d-highlights-variant"></select>
+                </div>
             </div>
         </div>
 
@@ -384,10 +387,6 @@
                     <label>句间分隔符 Separator</label>
                     <select id="d-separator"></select>
                 </div>
-                <div class="dim-row">
-                    <label>伪标签 Pseudo Label</label>
-                    <select id="d-pseudo-label"></select>
-                </div>
             </div>
         </div>
 
@@ -401,16 +400,26 @@
                 <div class="dim-row-inline">
                     <div class="dim-row">
                         <label>动画 Animation</label>
-                        <select id="d-anim"></select>
+                        <select id="d-animation"></select>
                     </div>
                     <div class="dim-row">
                         <label>滤镜 Filter</label>
                         <select id="d-filter"></select>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 细粒度：容器组 -->
+        <div class="dim-group" id="grp-container-group">
+            <div class="dim-group-header" data-grp="containerGroup">
+                <span>[细] 容器组 CONTAINER GROUP <button class="btn-add-opt" data-grp="containerGroup" title="新增容器组">+新增</button></span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>变换 Transform</label>
-                    <select id="d-transform"></select>
+                    <label>Container Group 容器组</label>
+                    <select id="d-container-group"></select>
                 </div>
             </div>
         </div>
@@ -526,8 +535,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js';
-import { renderCard } from './gallery-cards.js';
-import { STYLE_PRESETS, PALETTES, renderStyleJson, registerPalette, injectCardEngineCss, injectDynamicStyles } from './style-engine.js';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js';
 
 // ============================================================
 // 维度 → DB 表映射
@@ -540,27 +548,31 @@ const DIM_CONFIG = {
     side:          { table: 'style_layout_options', col: 'sub_dim', colVal: 'side',      label: 'Layout → Side 侧边' },
     overlay:       { table: 'style_layout_options', col: 'sub_dim', colVal: 'overlay',   label: 'Layout → Overlay 覆盖层' },
     // typo 子维度
-    font:          { table: 'style_typo_options',   col: 'sub_dim', colVal: 'family',     label: 'Typo → Family 字体族' },
-    titleSize:     { table: 'style_typo_options',   col: 'sub_dim', colVal: 'title_size', label: 'Typo → Title Size 字号' },
-    titleDeco:     { table: 'style_typo_options',   col: 'sub_dim', colVal: 'title_deco', label: 'Typo → Title Deco 装饰' },
-    hlVariant:     { table: 'style_elements_options', element: 'highlights',            label: 'Elements → Highlights 高亮句' },
+    font:          { table: 'style_typo_options',   col: 'sub_dim', colVal: 'font_family',     label: 'Typo → Font Family 字体族' },
+    weight:        { table: 'style_typo_options',   col: 'sub_dim', colVal: 'weight_gradient', label: 'Typo → Weight Gradient 字重' },
+    size:          { table: 'style_typo_options',   col: 'sub_dim', colVal: 'size_scale',      label: 'Typo → Size Scale 字号阶梯' },
+    alignment:     { table: 'style_typo_options',   col: 'sub_dim', colVal: 'alignment_mode',  label: 'Typo → Alignment 对齐' },
+    spacing:       { table: 'style_typo_options',   col: 'sub_dim', colVal: 'spacing_tightness', label: 'Typo → Spacing 字间距' },
+    decoration:    { table: 'style_typo_options',   col: 'sub_dim', colVal: 'text_decoration',  label: 'Typo → Text Decoration 装饰' },
     // border 子维度
-    border:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'style',      label: 'Border → Style 样式' },
-    radius:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'radius',     label: 'Border → Radius 圆角' },
-    shadow:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'shadow',     label: 'Border → Shadow 阴影' },
+    border:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'border_style',    label: 'Border → Style 样式' },
+    radius:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'radius_size',    label: 'Border → Radius 圆角' },
+    shadow:        { table: 'style_border_options',  col: 'sub_dim', colVal: 'border_shadow',  label: 'Border → Shadow 阴影' },
     // elements 子维度
     dateVariant:   { table: 'style_elements_options', element: 'date',             label: 'Elements → Date 日期' },
     capsuleVariant:{ table: 'style_elements_options', element: 'capsule',          label: 'Elements → Capsule 标签' },
     titleVariant:  { table: 'style_elements_options', element: 'title',            label: 'Elements → Title 标题' },
+    highlightsVariant: { table: 'style_elements_options', element: 'highlights',    label: 'Elements → Highlights 高亮句' },
     // deco 子维度
     bgPattern:     { table: 'style_deco_options',   col: 'sub_dim', colVal: 'bg_pattern', label: 'Deco → BG Pattern 背景图案' },
     separator:     { table: 'style_deco_options',   col: 'sub_dim', colVal: 'separator',  label: 'Deco → Separator 分隔符' },
-    pseudoLabel:   { table: 'style_deco_options',   col: 'sub_dim', colVal: 'pseudo_label', label: 'Deco → Pseudo Label 伪标签' },
     // effect 子维度
-    anim:          { table: 'style_effect_options',  col: 'sub_dim', colVal: 'animation',  label: 'Effect → Animation 动画' },
-    filter:        { table: 'style_effect_options',  col: 'sub_dim', colVal: 'filter',     label: 'Effect → Filter 滤镜' },
+    animation:     { table: 'style_effect_options',  col: 'sub_dim', colVal: 'animation',  label: 'Effect → Animation 动画' },
+    filter:        { table: 'style_effect_options',  col: 'sub_dim', colVal: 'filter_self',  label: 'Effect → Filter 滤镜' },
     transform:     { table: 'style_effect_options',  col: 'sub_dim', colVal: 'transform',  label: 'Effect → Transform 变换' },
-    // palette 特殊：整张表
+    // container_group 维度（整张表，option_key 即值）
+    containerGroup:{ table: 'style_container_group_options', isContainerGroup: true, label: 'Container Group 容器组' },
+    // palette 特殊：整张表，option_key 即 harmony 值
     palette:        { table: 'style_palette_options', isPalette: true, label: 'Palette 配色方案' },
 };
 
@@ -588,8 +600,6 @@ const dom = {
     btnSave:       document.getElementById('btnSave'),
     btnCopyJson:   document.getElementById('btnCopyJson'),
     btnRevertDb:   document.getElementById('btnRevertDb'),
-    btnLoadPreset: document.getElementById('btnLoadPreset'),
-    presetSelect:  document.getElementById('presetSelect'),
     paletteGrid:   document.getElementById('paletteGrid'),
     paletteLabel:  document.getElementById('paletteLabel'),
     dimPanel:      document.getElementById('dimPanel'),
@@ -615,28 +625,38 @@ const dom = {
 };
 
 const DIMS = {
-    top:           document.getElementById('d-top'),
-    body:           document.getElementById('d-body'),
-    bottom:         document.getElementById('d-bottom'),
-    side:           document.getElementById('d-side'),
-    overlay:        document.getElementById('d-overlay'),
-    font:           document.getElementById('d-font'),
-    titleSize:      document.getElementById('d-title-size'),
-    titleDeco:      document.getElementById('d-title-deco'),
-    hlVariant:      document.getElementById('d-hl-variant'),
-    border:         document.getElementById('d-border'),
-    radius:         document.getElementById('d-radius'),
-    shadow:         document.getElementById('d-shadow'),
-    dateVariant:    document.getElementById('d-date-variant'),
-    capsuleVariant: document.getElementById('d-capsule-variant'),
-    titleVariant:   document.getElementById('d-title-variant'),
-    bgPattern:      document.getElementById('d-bg-pattern'),
-    separator:      document.getElementById('d-separator'),
-    pseudoLabel:    document.getElementById('d-pseudo-label'),
-    anim:           document.getElementById('d-anim'),
-    filter:         document.getElementById('d-filter'),
-    transform:      document.getElementById('d-transform'),
-    customCss:      document.getElementById('d-custom-css'),
+    // layout
+    top:              document.getElementById('d-top'),
+    body:             document.getElementById('d-body'),
+    bottom:           document.getElementById('d-bottom'),
+    side:             document.getElementById('d-side'),
+    overlay:          document.getElementById('d-overlay'),
+    // typo — 全局维度（v2 结构）
+    font:             document.getElementById('d-font'),
+    weight:           document.getElementById('d-weight'),
+    size:             document.getElementById('d-size'),
+    alignment:        document.getElementById('d-alignment'),
+    spacing:          document.getElementById('d-spacing'),
+    decoration:       document.getElementById('d-decoration'),
+    // border
+    border:           document.getElementById('d-border'),
+    radius:           document.getElementById('d-radius'),
+    shadow:           document.getElementById('d-shadow'),
+    // elements
+    dateVariant:      document.getElementById('d-date-variant'),
+    capsuleVariant:   document.getElementById('d-capsule-variant'),
+    titleVariant:     document.getElementById('d-title-variant'),
+    highlightsVariant: document.getElementById('d-highlights-variant'),
+    // deco
+    bgPattern:        document.getElementById('d-bg-pattern'),
+    separator:        document.getElementById('d-separator'),
+    // effect
+    animation:        document.getElementById('d-animation'),
+    filter:           document.getElementById('d-filter'),
+    // container_group
+    containerGroup:    document.getElementById('d-container-group'),
+    // custom CSS
+    customCss:        document.getElementById('d-custom-css'),
 };
 
 // ============================================================
@@ -656,56 +676,73 @@ const MOCK_DIARY = {
 };
 
 // ============================================================
-// 读取当前维度面板 → 组装 style_json
+// 读取当前维度面板 → 组装 style_json（v2 结构）
 // ============================================================
 function buildStyleJson() {
-    const currentPalette = document.querySelector('.palette-swatch.active')?.dataset.palette || 'industrial';
+    // palette: 从色板网格读取当前选中的 harmony 值
+    const activeSwatch = document.querySelector('.palette-swatch.active');
+    const harmony = activeSwatch ? activeSwatch.dataset.palette : 'neutral_grey';
+    // tone / slot: 暂时写死，后续可加 UI
+    const palette = { harmony, tone: 'light_standard', slot: 'original' };
 
     const sj = {
+        palette,
         layout: {
-            top:     DIMS.top.value,
-            body:    DIMS.body.value,
-            bottom:  DIMS.bottom.value,
-            side:    DIMS.side.value,
-            overlay: DIMS.overlay.value,
+            top:    DIMS.top?.value    || 'none',
+            body:   DIMS.body?.value   || 'standard',
+            bottom: DIMS.bottom?.value || 'none',
+            side:   DIMS.side?.value   || 'none',
+            overlay: DIMS.overlay?.value || 'none',
         },
-        palette: currentPalette,
         typo: {
-            family:      DIMS.font.value,
-            title_size:  parseInt(DIMS.titleSize.value) || 13,
-            title_deco:  DIMS.titleDeco.value,
+            font_family: DIMS.font?.value
+                ? { title: DIMS.font.value, date: DIMS.font.value, capsule: DIMS.font.value, highlights: DIMS.font.value }
+                : { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
+            weight_gradient: DIMS.weight?.value  || 'balanced',
+            size_scale:      DIMS.size?.value     || 'balanced_read',
+            alignment_mode:  DIMS.alignment?.value || 'left_flow',
+            spacing_tightness: DIMS.spacing?.value
+                ? { title: DIMS.spacing.value, date: DIMS.spacing.value, capsule: DIMS.spacing.value, highlights: DIMS.spacing.value }
+                : { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
+            text_decoration: DIMS.decoration?.value
+                ? { title: DIMS.decoration.value, date: DIMS.decoration.value, capsule: DIMS.decoration.value, highlights: DIMS.decoration.value }
+                : { title:'none', date:'none', capsule:'none', highlights:'none' },
         },
         border: {
-            style:  DIMS.border.value,
-            radius: DIMS.radius.value,
-            shadow: DIMS.shadow.value,
+            border_style:  DIMS.border?.value || 'solid',
+            radius_size:   DIMS.radius?.value || 'none',
+            border_shadow: DIMS.shadow?.value || 'none',
         },
         deco: {
-            bg_pattern:   DIMS.bgPattern.value,
-            separator:    DIMS.separator.value,
-            pseudo_label: DIMS.pseudoLabel.value,
+            bg_pattern:  DIMS.bgPattern?.value || 'none',
+            separator:   DIMS.separator?.value || 'pipe',
+        },
+        element: {
+            header_deco:     'none',
+            side_accent:     'none',
+            divider:         'none',
+            corner_badge:    'none',
+            bg_pattern:      'none',
+            edge_deco:       'none',
+            floating_deco:   'none',
         },
         effect: {
-            animation: DIMS.anim.value,
-            filter:    DIMS.filter.value,
-            transform: DIMS.transform.value,
+            filter_self:    DIMS.filter?.value    || 'none',
+            filter_backdrop: 'none',
+            transform:        'none',
+            animation:        DIMS.animation?.value || 'none',
         },
-        elements: {
-            date:       { variant: DIMS.dateVariant.value },
-            capsule:    { variant: DIMS.capsuleVariant.value },
-            title:      { variant: DIMS.titleVariant.value },
-            highlights: { variant: DIMS.hlVariant.value },
-        },
+        container_group: DIMS.containerGroup?.value || 'none',
     };
 
-    const customCss = DIMS.customCss.value.trim();
+    const customCss = DIMS.customCss?.value.trim();
     if (customCss) sj.customCss = customCss;
 
     return sj;
 }
 
 // ============================================================
-// 将 style_json 回填到维度面板
+// 将 style_json 回填到维度面板（v2 结构）
 // ============================================================
 function applyStyleJsonToPanel(sj) {
     if (!sj) return;
@@ -714,7 +751,8 @@ function applyStyleJsonToPanel(sj) {
     const bo = sj.border  || {};
     const dc = sj.deco   || {};
     const ef = sj.effect  || {};
-    const el = sj.elements || {};
+    const el = sj.element || {};
+    const cg = sj.container_group || 'none';
 
     setSelect(DIMS.top,     l.top);
     setSelect(DIMS.body,    l.body);
@@ -722,33 +760,45 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.side,    l.side);
     setSelect(DIMS.overlay, l.overlay);
 
-    // palette
-    const palName = sj.palette || 'industrial';
+    // palette: 选中对应的色板色块
+    const palName = (sj.palette && sj.palette.harmony) ? sj.palette.harmony : 'neutral_grey';
     document.querySelectorAll('.palette-swatch').forEach(s => {
         s.classList.toggle('active', s.dataset.palette === palName);
     });
     dom.paletteLabel.textContent = palName;
 
-    setSelect(DIMS.font,       ty.family);
-    setSelect(DIMS.titleSize,  ty.title_size != null ? String(ty.title_size) : '13');
-    setSelect(DIMS.titleDeco,  ty.title_deco);
+    // typo — 全局维度
+    const fontVal = (ty.font_family && ty.font_family.title) || 'system_sans';
+    setSelect(DIMS.font,      fontVal);
+    setSelect(DIMS.weight,    ty.weight_gradient);
+    setSelect(DIMS.size,      ty.size_scale);
+    setSelect(DIMS.alignment, ty.alignment_mode);
+    const spVal = (ty.spacing_tightness && ty.spacing_tightness.title) || 'normal';
+    setSelect(DIMS.spacing,   spVal);
+    const decVal = (ty.text_decoration && ty.text_decoration.title) || 'none';
+    setSelect(DIMS.decoration, decVal);
 
-    setSelect(DIMS.border, bo.style);
-    setSelect(DIMS.radius, bo.radius);
-    setSelect(DIMS.shadow, bo.shadow);
+    // border
+    setSelect(DIMS.border, DIMS.border ? bo.border_style : null);
+    setSelect(DIMS.radius, bo.radius_size);
+    setSelect(DIMS.shadow, bo.border_shadow);
 
-    setSelect(DIMS.bgPattern,   dc.bg_pattern);
-    setSelect(DIMS.separator,   dc.separator);
-    setSelect(DIMS.pseudoLabel, dc.pseudo_label);
+    // deco
+    setSelect(DIMS.bgPattern, dc.bg_pattern);
+    setSelect(DIMS.separator, dc.separator);
 
-    setSelect(DIMS.anim,       ef.animation);
-    setSelect(DIMS.filter,     ef.filter);
-    setSelect(DIMS.transform,   ef.transform);
+    // effect
+    setSelect(DIMS.animation, ef.animation);
+    setSelect(DIMS.filter,    ef.filter_self);
 
-    setSelect(DIMS.dateVariant,   (el.date    || {}).variant);
-    setSelect(DIMS.capsuleVariant, (el.capsule || {}).variant);
-    setSelect(DIMS.titleVariant,  (el.title   || {}).variant);
-    setSelect(DIMS.hlVariant,     (el.highlights || {}).variant);
+    // container_group
+    setSelect(DIMS.containerGroup, cg);
+
+    // elements
+    setSelect(DIMS.dateVariant,      (el.date       || {}).variant);
+    setSelect(DIMS.capsuleVariant,  (el.capsule   || {}).variant);
+    setSelect(DIMS.titleVariant,    (el.title      || {}).variant);
+    setSelect(DIMS.highlightsVariant, (el.highlights || {}).variant);
 
     DIMS.customCss.value = sj.customCss || '';
 }
@@ -766,6 +816,18 @@ function setSelect(el, val) {
 function updatePreview() {
     const sj = buildStyleJson();
 
+    // 构造 allOptions（转换 dimensionCache 结构）
+    const allOptions = {
+        palette:        dimensionCache['style_palette_options']   || [],
+        layout:         dimensionCache['style_layout_options']    || [],
+        typo:           dimensionCache['style_typo_options']      || [],
+        border:         dimensionCache['style_border_options']    || [],
+        deco:           dimensionCache['style_deco_options']      || [],
+        effect:         dimensionCache['style_effect_options']    || [],
+        element:        dimensionCache['style_elements_options']   || [],
+        container_group: dimensionCache['style_container_group_options'] || [],
+    };
+
     // 注入 customCss 作用域
     let styleEl = document.getElementById('preview-custom-css');
     if (styleEl) styleEl.remove();
@@ -780,10 +842,10 @@ function updatePreview() {
     dom.previewArea.innerHTML = '';
     const labelEl = document.createElement('div');
     labelEl.style.cssText = 'text-align:center;margin-bottom:12px;font-size:9px;color:var(--pixel-dim);';
-    labelEl.textContent = (currentName || '[mock]') + ' · ' + sj.palette;
+    labelEl.textContent = (currentName || '[mock]') + ' · ' + (sj.palette && sj.palette.harmony ? sj.palette.harmony : 'default');
     dom.previewArea.appendChild(labelEl);
 
-    const cardHtml = renderStyleJson(sj, diary);
+    const cardHtml = renderStyleJson(sj, diary, allOptions);
     dom.previewArea.insertAdjacentHTML('beforeend', cardHtml);
 
     dom.jsonDisplay.textContent = JSON.stringify(sj, null, 2);
@@ -818,6 +880,7 @@ async function loadDimensionOptions() {
 
 // ============================================================
 // 将缓存的维度选项填充到对应的 <select>
+// v2: 支持 isContainerGroup（不过滤 sub_dim/element）
 // ============================================================
 function applyDimensionOptionsToUI() {
     for (const [key, cfg] of Object.entries(DIM_CONFIG)) {
@@ -827,7 +890,8 @@ function applyDimensionOptionsToUI() {
 
         const rows = dimensionCache[cfg.table] || [];
         // 过滤：子维度表按 col/colVal，elements 表按 element
-        const filtered = rows.filter(r => {
+        // isContainerGroup: 不过滤，直接用全部行
+        const filtered = cfg.isContainerGroup ? rows : rows.filter(r => {
             if (cfg.col && cfg.colVal !== undefined) return r[cfg.col] === cfg.colVal;
             if (cfg.element) return r.element === cfg.element;
             return true;
@@ -848,8 +912,8 @@ function applyDimensionOptionsToUI() {
             .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
             .forEach(r => {
                 const opt = document.createElement('option');
-                opt.value = r.value;
-                opt.textContent = r.label || r.value;
+                opt.value = r.option_key || r.value;
+                opt.textContent = r.label || r.option_key || r.value;
                 el.appendChild(opt);
             });
 
@@ -859,58 +923,39 @@ function applyDimensionOptionsToUI() {
         }
     }
 
-    // palette 色板：从 DB 加载的也合并进来（目前仍用 PALETTES 常量，DB 有数据时覆盖）
+    // palette 色板：从 DB 加载
     refreshPaletteGrid();
 }
 
 // ============================================================
-// 色板网格刷新
+// 色板网格刷新（v2: 只用 DB 数据，不依赖 PALETTES 常量）
 // ============================================================
 function refreshPaletteGrid() {
     const grid = dom.paletteGrid;
     grid.innerHTML = '';
 
-    // 先用 DB 数据（如果有），否则用 PALETTES 常量
     const dbRows = dimensionCache['style_palette_options'] || [];
-    const useDb = dbRows.length > 0;
-
-    const entries = useDb
-        ? dbRows.sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).map(r => [r.value, {
-            bg: r.bg, text: r.text_color, accent: r.accent, muted: r.muted,
-            bgRgb: r.bg !== 'transparent' ? hexToRgb(r.bg) : '200,200,200',
-            accentRgb: hexToRgb(r.accent),
-        }])
-        : Object.entries(PALETTES);
-
-    // 注册 DB 中的新色板（注入 CSS 规则）
-    if (useDb) {
-        dbRows.forEach(r => {
-            if (!PALETTES[r.value]) {
-                registerPalette(r.value, {
-                    bg: r.bg, text: r.text_color, accent: r.accent, muted: r.muted,
-                    bgRgb: r.bg !== 'transparent' ? hexToRgb(r.bg) : '200,200,200',
-                    accentRgb: hexToRgb(r.accent),
-                });
-            }
-        });
+    if (!dbRows.length) {
+        grid.innerHTML = '<div style="font-size:9px;color:var(--pixel-dim);">暂无色板数据，请先从 DB 加载</div>';
+        return;
     }
 
-    entries.forEach(([name, p]) => {
+    dbRows.sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).forEach(r => {
+        const bg = r.bg || '#cccccc';
+        const accent = r.accent || '#888888';
         const swatch = document.createElement('div');
         swatch.className = 'palette-swatch';
-        swatch.dataset.palette = name;
-        swatch.title = name;
-        swatch.style.background = p.bg && p.bg !== 'transparent'
-            ? p.bg
-            : `rgba(${p.bgRgb || '200,200,200'},0.5)`;
-        swatch.style.boxShadow = `inset 0 -5px 0 rgba(${p.accentRgb || '100,100,100'},0.6)`;
+        swatch.dataset.palette = r.option_key;
+        swatch.title = r.option_key;
+        swatch.style.background = bg;
+        swatch.style.boxShadow = `inset 0 -5px 0 ${accent}`;
         swatch.addEventListener('click', () => {
             document.querySelectorAll('.palette-swatch').forEach(s => s.classList.remove('active'));
             swatch.classList.add('active');
-            dom.paletteLabel.textContent = name;
+            dom.paletteLabel.textContent = r.option_key;
             debouncedUpdate();
         });
-        if (name === 'industrial') swatch.classList.add('active');
+        if (r.option_key === 'neutral_grey') swatch.classList.add('active');
         grid.appendChild(swatch);
     });
 }
@@ -978,11 +1023,11 @@ function loadCapsule(name) {
         ? JSON.stringify(currentDbJson, null, 2)
         : '// 该 capsule 尚无 style_json';
 
-    const sjToApply = currentDbJson || STYLE_PRESETS['default'];
+    const sjToApply = currentDbJson || DEFAULT_STYLE_JSON;
     applyStyleJsonToPanel(sjToApply);
     updatePreview();
 
-    setStatus(`已加载: ${name}${currentDbJson ? ' (style_json)' : ' (fallback to default)'}`, true);
+    setStatus(`已加载: ${name}${currentDbJson ? ' (style_json)' : ' (fallback to DEFAULT)'}`), true);
     dom.saveStatus.textContent = '未修改';
     dom.saveStatus.className = 'status';
 }
@@ -1133,7 +1178,7 @@ async function saveNewOption() {
             const cssTpl = `.gallery-card[data-palette="${value}"] { --card-bg:${bg}; --card-text:${text}; --card-accent:${accent}; --card-muted:${muted}; --card-accent-rgb:${accentRgb}; --card-bg-rgb:${bgRgb}; }`;
 
             const { error } = await supabase.from('style_palette_options').insert({
-                value, label, bg, text_color: text, accent, muted, description: desc, css_template: cssTpl
+                option_key: value, label, bg, text_color: text, accent, muted, description: desc || null, css_template: cssTpl
             });
             if (error) throw error;
         } else {
@@ -1147,7 +1192,7 @@ async function saveNewOption() {
                 row[cfg.col] = cfg.colVal;
             }
             // elements 表需要从弹窗下拉框读取所属元素
-            if (cfg.table === 'style_elements_options') {
+            else if (cfg.table === 'style_elements_options') {
                 row.element = dom.modalElement.value;
             } else if (cfg.element) {
                 row.element = cfg.element;
@@ -1167,13 +1212,14 @@ async function saveNewOption() {
         applyDimensionOptionsToUI();
         // 重新注入动态 CSS（含新增选项的 css_template）
         injectDynamicStyles({
-            palette:  dimensionCache['style_palette_options'] || [],
-            layout:   dimensionCache['style_layout_options'] || [],
-            typo:     dimensionCache['style_typo_options'] || [],
-            border:   dimensionCache['style_border_options'] || [],
-            deco:     dimensionCache['style_deco_options'] || [],
-            effect:   dimensionCache['style_effect_options'] || [],
-            elements: dimensionCache['style_elements_options'] || [],
+            palette:        dimensionCache['style_palette_options']   || [],
+            layout:         dimensionCache['style_layout_options']    || [],
+            typo:           dimensionCache['style_typo_options']      || [],
+            border:         dimensionCache['style_border_options']    || [],
+            deco:           dimensionCache['style_deco_options']      || [],
+            effect:         dimensionCache['style_effect_options']    || [],
+            element:        dimensionCache['style_elements_options']   || [],
+            container_group: dimensionCache['style_container_group_options'] || [],
         });
 
         // 选中刚新增的选项
@@ -1226,20 +1272,9 @@ dom.btnCopyJson.addEventListener('click', () => {
 // 从 DB 重置面板
 dom.btnRevertDb.addEventListener('click', () => {
     if (!currentName) return;
-    applyStyleJsonToPanel(currentDbJson || STYLE_PRESETS['default']);
+    applyStyleJsonToPanel(currentDbJson || DEFAULT_STYLE_JSON);
     updatePreview();
     dom.saveStatus.textContent = '已从 DB 重置'; dom.saveStatus.className = 'status ok';
-});
-
-// 预设快速加载
-dom.btnLoadPreset.addEventListener('click', () => {
-    const name = dom.presetSelect.value;
-    if (!name) return;
-    const preset = STYLE_PRESETS[name];
-    if (!preset) return;
-    applyStyleJsonToPanel(preset);
-    updatePreview();
-    setStatus('已加载预设: ' + name, true);
 });
 
 // 弹窗：取消 / 保存
@@ -1272,11 +1307,10 @@ document.querySelectorAll('.btn-add-opt').forEach(btn => {
 });
 
 function findFirstDimKeyByGroup(grp) {
-    // 扫描 DIM_CONFIG，找到属于该 grp 的第一个 key
-    if (grp === 'palette')  return 'palette';
-    if (grp === 'layout')   return 'top';
-    if (grp === 'border')   return 'border';
-    // typo/border/deco/effect 取该表对应的第一个 key
+    if (grp === 'palette')       return 'palette';
+    if (grp === 'layout')         return 'top';
+    if (grp === 'border')         return 'border';
+    if (grp === 'containerGroup') return 'containerGroup';
     const tableMap = {
         typo:   'style_typo_options',
         border: 'style_border_options',
@@ -1297,31 +1331,21 @@ async function init() {
     const authed = await checkAuth();
     if (!authed) { setStatus('认证失败，无法连接数据库', false); return; }
 
-    // 注入卡片渲染引擎 CSS
-    injectCardEngineCss();
+    // 注入基础 CSS + 动态样式
+    injectBaseCss();
     await loadDimensionOptions();
-
-    // 从 DB 选项注入动态 CSS（css_template 字段）
     injectDynamicStyles({
-        palette:  dimensionCache['style_palette_options'] || [],
-        layout:   dimensionCache['style_layout_options'] || [],
-        typo:     dimensionCache['style_typo_options'] || [],
-        border:   dimensionCache['style_border_options'] || [],
-        deco:     dimensionCache['style_deco_options'] || [],
-        effect:   dimensionCache['style_effect_options'] || [],
-        elements: dimensionCache['style_elements_options'] || [],
+        palette:        dimensionCache['style_palette_options']   || [],
+        layout:         dimensionCache['style_layout_options']    || [],
+        typo:           dimensionCache['style_typo_options']      || [],
+        border:         dimensionCache['style_border_options']    || [],
+        deco:           dimensionCache['style_deco_options']      || [],
+        effect:         dimensionCache['style_effect_options']    || [],
+        element:        dimensionCache['style_elements_options']   || [],
+        container_group: dimensionCache['style_container_group_options'] || [],
     });
 
     applyDimensionOptionsToUI();
-
-    // 填充预设下拉
-    Object.keys(STYLE_PRESETS).sort().forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name + ' [' + STYLE_PRESETS[name].palette + ']';
-        dom.presetSelect.appendChild(opt);
-    });
-
     await loadPool();
     updatePreview();
 }
