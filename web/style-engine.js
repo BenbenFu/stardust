@@ -157,21 +157,28 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
   const { harmony, tone, slot } = paletteConfig;
   if (!harmony) return defaultColors();
 
-  // 精确匹配 value（harmony_palette 行）
+  // 精确匹配 value（harmony_palette 行）—— v3 主路径
   let row = paletteOptions.find(r => r.value === harmony && r.sub_dim === 'harmony_palette');
-  // 回退：value 包含 harmony（老数据兼容）
+  // 回退1: 仅匹配 value（兼容缺失 sub_dim 的旧数据）
+  if (!row) {
+    row = paletteOptions.find(r => r.value === harmony);
+    console.warn('[resolvePaletteColors] fallback: matched by value only, no sub_dim check:', harmony);
+  }
+  // 回退2: value 包含 harmony（模糊匹配）
   if (!row) {
     row = paletteOptions.find(r => {
       const v = r.value || '';
       return v.includes(harmony);
     });
+    console.warn('[resolvePaletteColors] fuzzy match for:', harmony);
   }
   if (!row) {
-    console.debug('[resolvePaletteColors] NO ROW FOUND for harmony:', harmony, 'available values:', paletteOptions.slice(0,5).map(r => ({v:r.value, sd:r.sub_dim})));
+    console.warn('[resolvePaletteColors] NO ROW FOUND for harmony:', harmony,
+      'available:', paletteOptions.slice(0,5).map(r => ({v:r.value, sd:r.sub_dim})));
     return defaultColors();
   }
 
-  console.debug('[resolvePaletteColors] found row:', {value: row.value, sub_dim: row.sub_dim, bg: row.bg, text_color: row.text_color});
+  console.log('[resolvePaletteColors] FOUND:', {value: row.value, sub_dim: row.sub_dim, bg: row.bg, text: row.text_color});
 
   // 颜色直接从列读取（v3架构：bg/text_color/accent/muted 独立列）
   const bg     = row.bg         || '#ffffff';
@@ -183,7 +190,7 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
     extra = typeof row.extra_colors === 'string'
       ? JSON.parse(row.extra_colors)
       : (row.extra_colors || {});
-  } catch { extra = {}; }
+  } catch { extra = {} }
 
   return {
     bg, text, accent, muted,
@@ -377,7 +384,7 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   // 1. 解析色板颜色
   const paletteOptions = (allOptions && allOptions.palette) || [];
   const colors = resolvePaletteColors(sj.palette, paletteOptions);
-  console.debug('[renderStyleJson] palette harmony:', sj.palette?.harmony, 'colors.bg:', colors.bg, 'paletteOptions count:', paletteOptions.length);
+  console.log('[renderStyleJson] palette harmony:', sj.palette?.harmony, '-> bg:', colors.bg, 'text:', colors.text, 'optionsN:', paletteOptions.length);
 
   // 2. 构建 inline 样式（CSS变量 + 直接属性，确保无css_template时也能显示）
   const paletteCssVars = [
