@@ -185,15 +185,14 @@ function hslToHex(h, s, l) {
 }
 
 function generateAntScale(seedHex) {
-  const hsl = hexToHSL(seedHex);
-  const { h, s, l } = hsl;
-  const lightnessSteps = [95, 85, 75, 65, 55, 45, 35, 25, 18, 12];
-  const saturationAdj = s > 50
-    ? [20, 30, 45, 60, 80, 100, 110, 120, 130, 140]
-    : [30, 40, 55, 70, 85, 100, 110, 120, 130, 135];
-  return lightnessSteps.map((lightness, i) => {
-    const sat = Math.min(100, Math.max(6, Math.round(s * saturationAdj[i] / 100)));
-    return hslToHex(h, sat, lightness);
+  const { h, s, l } = hexToHSL(seedHex);
+  // 相对偏移曲线：index 4 (step 5) 的偏移=0, 系数=100% → 恒等于种子原色
+  const lOffsets = [40, 30, 20, 10,   0, -10, -20, -30, -40, -50];
+  const sFactors = [20, 30, 45, 60, 100, 110, 120, 130, 140, 150];
+  return lOffsets.map((offset, i) => {
+    const targetL = Math.max(2, Math.min(98, l + offset));
+    const sat     = Math.min(100, Math.max(6, Math.round(s * sFactors[i] / 100)));
+    return hslToHex(h, sat, targetL);
   });
 }
 
@@ -269,22 +268,30 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
 
   const [bg, text, accent, muted] = colors;
 
-  // 5. 处理 extra_colors（toneRow.extra_colors 里的值是索引）
+  // 5. 处理 extra_colors
+  // 新格式：harmony 行的 extra_colors 存目标原色（如 "#93C5FD"），直接使用
+  // 兼容旧格式：tone 行的 extra_colors 存索引数字，从对应色阶取色
   let extra = {};
-  if (toneRow && toneRow.extra_colors) {
+  const ecSource = (harmonyRow.extra_colors && harmonyRow.extra_colors !== null)
+    ? harmonyRow.extra_colors
+    : (toneRow && toneRow.extra_colors ? toneRow.extra_colors : null);
+  if (ecSource) {
     try {
-      const ec = typeof toneRow.extra_colors === 'string'
-        ? JSON.parse(toneRow.extra_colors)
-        : toneRow.extra_colors;
+      const ec = typeof ecSource === 'string' ? JSON.parse(ecSource) : ecSource;
       for (const [k, v] of Object.entries(ec)) {
-        const i = Math.max(0, Math.min(9, typeof v === 'number' ? v : parseInt(v)));
-        // 根据 key 名称选择对应色阶
-        const lk = k.toLowerCase();
-        const s = lk.includes('text')   ? scaleText
-                : lk.includes('accent') ? scaleAccent
-                : lk.includes('muted')  ? scaleMuted
-                : scaleBg;
-        extra[k] = s[i];
+        if (typeof v === 'string' && v.startsWith('#')) {
+          // 新格式：直接是目标原色，生成色阶后取 index 4（种子色本身）
+          extra[k] = generateAntScale(v)[4];
+        } else {
+          // 旧格式兼容：数字索引，从对应色阶取色
+          const idx = Math.max(0, Math.min(9, typeof v === 'number' ? v : parseInt(v)));
+          const lk = k.toLowerCase();
+          const scale = lk.includes('text')   ? scaleText
+                      : lk.includes('accent') ? scaleAccent
+                      : lk.includes('muted')  ? scaleMuted
+                      : scaleBg;
+          extra[k] = scale[idx];
+        }
       }
     } catch (e) {
       console.warn('[resolvePaletteColors] extra_colors parse error:', e);
