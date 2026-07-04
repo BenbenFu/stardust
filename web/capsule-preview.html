@@ -890,6 +890,7 @@ function setSelect(el, val) {
 
 function updateFlowVerticalVisibility(flowVal) {
     const row = document.getElementById('flowVerticalRow');
+    console.log('[updateFlowVerticalVisibility] flowVal=', flowVal, 'row found=', !!row);
     if (row) row.style.display = (flowVal === 'mixed') ? '' : 'none';
 }
 
@@ -1284,8 +1285,10 @@ Object.values(DIMS).forEach(el => {
 });
 
 // flow select 联动 flow_vertical 显隐
+console.log('[init] DIMS.flow exists:', !!DIMS.flow);
 if (DIMS.flow) {
     DIMS.flow.addEventListener('change', () => {
+        console.log('[flow change] value=', DIMS.flow.value);
         updateFlowVerticalVisibility(DIMS.flow.value);
     });
 }

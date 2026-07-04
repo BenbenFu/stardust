@@ -31,27 +31,23 @@ WHERE sub_dim = 'flow' AND value = 'mixed';
 -- CSS 规则: 覆盖 --wm-{field} 为 vertical-rl
 -- ============================================================
 
-INSERT INTO style_layout_options (option_key, value, label, sub_dim, css_template, description, sort_order, is_enabled)
+INSERT INTO style_layout_options (sub_dim, value, label, description, sort_order, css_template)
 VALUES
-  ('date',       'date',       'Date 竖排',
-   'flow_vertical',
-   '[data-style-layout-flow-vertical-date]{--wm-date:vertical-rl;}',
-   'mixed 流向下将日期设为竖排书写', 410, true),
+  ('flow_vertical', 'date',       'Date 竖排',
+   'mixed 流向下将日期设为竖排书写', 410,
+   '[data-style-layout-flow-vertical-date]{--wm-date:vertical-rl;}'),
 
-  ('title',      'title',      'Title 竖排',
-   'flow_vertical',
-   '[data-style-layout-flow-vertical-title]{--wm-title:vertical-rl;}',
-   'mixed 流向下将标题设为竖排书写', 420, true),
+  ('flow_vertical', 'title',      'Title 竖排',
+   'mixed 流向下将标题设为竖排书写', 420,
+   '[data-style-layout-flow-vertical-title]{--wm-title:vertical-rl;}'),
 
-  ('highlights', 'highlights', 'Highlights 竖排',
-   'flow_vertical',
-   '[data-style-layout-flow-vertical-highlights]{--wm-highlights:vertical-rl;}',
-   'mixed 流向下将精华句设为竖排书写', 430, true),
+  ('flow_vertical', 'highlights', 'Highlights 竖排',
+   'mixed 流向下将精华句设为竖排书写', 430,
+   '[data-style-layout-flow-vertical-highlights]{--wm-highlights:vertical-rl;}'),
 
-  ('capsule',    'capsule',    'Capsule 竖排',
-   'flow_vertical',
-   '[data-style-layout-flow-vertical-capsule]{--wm-capsule:vertical-rl;}',
-   'mixed 流向下将胶囊标签设为竖排书写', 440, true);
+  ('flow_vertical', 'capsule',    'Capsule 竖排',
+   'mixed 流向下将胶囊标签设为竖排书写', 440,
+   '[data-style-layout-flow-vertical-capsule]{--wm-capsule:vertical-rl;}');
 
 -- ============================================================
 -- 步骤 7 (建议): grid 模板微调
