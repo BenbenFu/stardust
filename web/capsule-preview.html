@@ -255,6 +255,23 @@
                         <select id="d-flow"></select>
                     </div>
                 </div>
+                <div class="dim-row" id="flowVerticalRow" style="display:none;">
+                    <label>Vertical Fields 竖排字段 (mixed)</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:10px;">
+                        <label style="display:flex;align-items:center;gap:2px;font-size:10px;text-transform:none;letter-spacing:0;margin:0;">
+                            <input type="checkbox" id="fv-date"> date
+                        </label>
+                        <label style="display:flex;align-items:center;gap:2px;font-size:10px;text-transform:none;letter-spacing:0;margin:0;">
+                            <input type="checkbox" id="fv-title"> title
+                        </label>
+                        <label style="display:flex;align-items:center;gap:2px;font-size:10px;text-transform:none;letter-spacing:0;margin:0;">
+                            <input type="checkbox" id="fv-highlights"> highlights
+                        </label>
+                        <label style="display:flex;align-items:center;gap:2px;font-size:10px;text-transform:none;letter-spacing:0;margin:0;">
+                            <input type="checkbox" id="fv-capsule"> capsule
+                        </label>
+                    </div>
+                </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
                         <label>Block Align 块对齐</label>
@@ -591,6 +608,7 @@ const DIM_CONFIG = {
     grid:         { table: 'style_layout_options', col: 'sub_dim', colVal: 'grid',          label: 'Layout / Grid' },
     density:      { table: 'style_layout_options', col: 'sub_dim', colVal: 'density',       label: 'Layout / Density' },
     flow:         { table: 'style_layout_options', col: 'sub_dim', colVal: 'flow',          label: 'Layout / Flow' },
+    flow_vertical:{ table: 'style_layout_options', col: 'sub_dim', colVal: 'flow_vertical', label: 'Layout / Flow Vertical', isCheckbox: true },
     block_align:  { table: 'style_layout_options', col: 'sub_dim', colVal: 'block_align',   label: 'Layout / Block Align' },
     inline_align: { table: 'style_layout_options', col: 'sub_dim', colVal: 'inline_align',  label: 'Layout / Inline Align' },
     spacing_scale:{ table: 'style_layout_options', col: 'sub_dim', colVal: 'spacing_scale', label: 'Layout / Spacing' },
@@ -692,6 +710,11 @@ for (const [key, cfg] of Object.entries(DIM_CONFIG)) {
 }
 DIMS.customCss = document.getElementById('d-custom-css');
 
+// flow_vertical checkboxes (不参与 DIMS 常规循环)
+const FV_FIELDS = ['date', 'title', 'highlights', 'capsule'];
+const FV_CHECKBOXES = {};
+FV_FIELDS.forEach(f => { FV_CHECKBOXES[f] = document.getElementById('fv-' + f); });
+
 // ============================================================
 // Mock 数据
 // ============================================================
@@ -729,6 +752,7 @@ function buildStyleJson() {
             grid: v('grid', 'single'),
             density: v('density', 'normal'),
             flow: v('flow', 'vertical'),
+            flow_vertical: FV_FIELDS.filter(f => FV_CHECKBOXES[f] && FV_CHECKBOXES[f].checked),
             block_align: v('block_align', 'start'),
             inline_align: v('inline_align', 'start'),
             spacing_scale: v('spacing_scale', 'md'),
@@ -799,6 +823,13 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.inline_align, l.inline_align);
     setSelect(DIMS.spacing_scale,l.spacing_scale);
 
+    // flow_vertical checkboxes
+    const fvArr = Array.isArray(l.flow_vertical) ? l.flow_vertical : [];
+    FV_FIELDS.forEach(f => {
+        if (FV_CHECKBOXES[f]) FV_CHECKBOXES[f].checked = fvArr.includes(f);
+    });
+    updateFlowVerticalVisibility(l.flow);
+
     // palette
     const palName = (sj.palette && sj.palette.harmony) ? sj.palette.harmony : 'neutral_grey';
     document.querySelectorAll('.palette-swatch').forEach(s => {
@@ -855,6 +886,11 @@ function setSelect(el, val) {
     const strVal = String(val);
     const opt = [...el.options].find(o => o.value === strVal);
     if (opt) el.value = strVal;
+}
+
+function updateFlowVerticalVisibility(flowVal) {
+    const row = document.getElementById('flowVerticalRow');
+    if (row) row.style.display = (flowVal === 'mixed') ? '' : 'none';
 }
 
 // ============================================================
@@ -1245,6 +1281,18 @@ Object.values(DIMS).forEach(el => {
     if (!el) return;
     const evt = el.tagName === 'TEXTAREA' ? 'input' : 'change';
     el.addEventListener(evt, debouncedUpdate);
+});
+
+// flow select 联动 flow_vertical 显隐
+if (DIMS.flow) {
+    DIMS.flow.addEventListener('change', () => {
+        updateFlowVerticalVisibility(DIMS.flow.value);
+    });
+}
+
+// flow_vertical checkboxes
+FV_FIELDS.forEach(f => {
+    if (FV_CHECKBOXES[f]) FV_CHECKBOXES[f].addEventListener('change', debouncedUpdate);
 });
 
 dom.btnSave.addEventListener('click', saveToDb);

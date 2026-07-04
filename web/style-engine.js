@@ -24,11 +24,15 @@ const BASE_CSS = `/* style-engine v2.0 — base structural CSS */
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   grid-template-areas: "date" "title" "highlights" "capsule";
 }
-.card-date   { grid-area: date; color: var(--card-muted, inherit); }
-.card-title  { grid-area: title; word-break: break-word; }
-.card-highlights { grid-area: highlights; }
+.card-date   { grid-area: date; writing-mode: var(--wm-date, horizontal-tb);
+               color: var(--card-muted, inherit); }
+.card-title  { grid-area: title; writing-mode: var(--wm-title, horizontal-tb);
+               word-break: break-word; overflow-wrap: break-word; }
+.card-highlights { grid-area: highlights; writing-mode: var(--wm-highlights, horizontal-tb);
+                   overflow-wrap: break-word; word-break: break-word; }
 .card-highlight-item { display: block; }
-.card-capsule { grid-area: capsule; color: var(--card-accent, inherit); }
+.card-capsule { grid-area: capsule; writing-mode: var(--wm-capsule, horizontal-tb);
+                color: var(--card-accent, inherit); }
 .hl-sep { display: inline; }
 .cg-slot { display: block; }
 
@@ -53,6 +57,7 @@ const ATTR_MAP = {
   // layout
   'layout_grid':         { attr: 'data-style-layout-grid' },
   'layout_flow':         { attr: 'data-style-layout-flow' },
+  'layout_flow_vertical':{ attr: 'data-style-layout-flow-vertical', isArray: true },
   'layout_density':      { attr: 'data-style-layout-density' },
   'layout_block_align':  { attr: 'data-style-layout-block-align' },
   'layout_inline_align': { attr: 'data-style-layout-inline-align' },
@@ -99,7 +104,7 @@ const ATTR_MAP = {
 
 export const DEFAULT_STYLE_JSON = {
   palette: { harmony: 'neutral_grey', tone: 'light_standard', slot: 'original' },
-  layout: { grid: 'single', flow: 'vertical', density: 'normal',
+  layout: { grid: 'single', flow: 'vertical', flow_vertical: [], density: 'normal',
     block_align: 'left', inline_align: 'left', spacing_scale: 'standard' },
   typo: {
     font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
@@ -338,6 +343,18 @@ function buildDataAttrs(styleJson) {
 
       // filter_self: backdrop 优先，self 仅在不设 backdrop 时生效
       if (dim === 'effect' && subDim === 'filter_self' && hasBackdrop) continue;
+
+      // isArray: 数组型维度（如 flow_vertical），每个元素生成一个 data-attr
+      // flow_vertical 仅在 flow=mixed 时生效
+      if (mapping.isArray && Array.isArray(value)) {
+        if (dim === 'layout' && subDim === 'flow_vertical'
+            && styleJson.layout && styleJson.layout.flow !== 'mixed') continue;
+        for (const item of value) {
+          if (item == null || item === 'none') continue;
+          attrs[mapping.attr + '-' + item] = '';
+        }
+        continue;
+      }
 
       if (mapping.perElement && typeof value === 'object') {
         for (const el of mapping.elements) {
