@@ -1383,6 +1383,72 @@ async function init() {
     updatePreview();
 }
 
+// ============================================================
+// 诊断工具: 浏览器控制台运行 debugFlow()
+// ============================================================
+window.debugFlow = function() {
+    console.group('=== Flow Debug ===');
+
+    // 1. 基础样式是否注入
+    const baseEl = document.getElementById('card-engine-css');
+    console.log('1. BASE_CSS injected:', !!baseEl);
+    if (baseEl) {
+        const hasWm = baseEl.textContent.includes('--wm-');
+        console.log('   contains --wm-* vars:', hasWm);
+    }
+
+    // 2. 动态样式是否注入
+    const dynEl = document.getElementById('card-engine-dynamic-css');
+    console.log('2. Dynamic CSS injected:', !!dynEl);
+    if (dynEl) {
+        const css = dynEl.textContent;
+        const flowMatches = css.match(/\[data-style-layout-flow[^\]]*\]/g) || [];
+        console.log('   flow-related rules:', flowMatches.length);
+        flowMatches.forEach(m => console.log('   ', m));
+    }
+
+    // 3. 当前卡片的 data-* 属性
+    const card = document.querySelector('.gallery-card');
+    console.log('3. Card found:', !!card);
+    if (card) {
+        const flowAttrs = [...card.attributes].filter(a => a.name.includes('flow'));
+        console.log('   flow attrs on card:', flowAttrs.map(a => a.name));
+    }
+
+    // 4. 当前 DIMS 值
+    console.log('4. UI state:');
+    console.log('   flow select value:', DIMS.flow ? DIMS.flow.value : 'N/A');
+    const checked = FV_FIELDS.filter(f => FV_CHECKBOXES[f] && FV_CHECKBOXES[f].checked);
+    console.log('   flow_vertical checked:', checked);
+
+    // 5. 计算样式
+    if (card) {
+        const dateEl = card.querySelector('.card-date');
+        if (dateEl) {
+            const wm = getComputedStyle(dateEl).writingMode;
+            console.log('5. .card-date computed writing-mode:', wm);
+        }
+        const titleEl = card.querySelector('.card-title');
+        if (titleEl) {
+            const wm = getComputedStyle(titleEl).writingMode;
+            console.log('   .card-title computed writing-mode:', wm);
+        }
+    }
+
+    // 6. CSS 变量实际值
+    if (card) {
+        const cardStyle = getComputedStyle(card);
+        console.log('6. CSS vars on .gallery-card:');
+        console.log('   --wm-date:', cardStyle.getPropertyValue('--wm-date').trim() || '(empty)');
+        console.log('   --wm-title:', cardStyle.getPropertyValue('--wm-title').trim() || '(empty)');
+        console.log('   --wm-highlights:', cardStyle.getPropertyValue('--wm-highlights').trim() || '(empty)');
+        console.log('   --wm-capsule:', cardStyle.getPropertyValue('--wm-capsule').trim() || '(empty)');
+    }
+
+    console.groupEnd();
+};
+console.log('[debug] Run debugFlow() in console to diagnose flow issues.');
+
 init();
 </script>
 </body>
