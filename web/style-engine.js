@@ -303,8 +303,6 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
     }
   }
 
-  console.log('[resolvePaletteColors] DONE:', { harmony, tone: toneValue, slot: slotValue, bg, text });
-
   return {
     bg, text, accent, muted,
     extra_colors: extra,
@@ -369,13 +367,6 @@ function buildDataAttrs(styleJson) {
   }
 
   const parts = Object.entries(attrs).map(([k, v]) => k + '="' + v + '"');
-
-  // 诊断: 检查 flow 相关属性
-  const flowAttrs = Object.keys(attrs).filter(k => k.includes('flow'));
-  if (flowAttrs.length) console.log('[buildDataAttrs] flow attrs:', flowAttrs,
-    '| styleJson.layout.flow:', styleJson.layout && styleJson.layout.flow,
-    '| styleJson.layout.flow_vertical:', styleJson.layout && styleJson.layout.flow_vertical);
-
   return parts.length ? ' ' + parts.join(' ') : '';
 }
 
@@ -516,7 +507,6 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   // 1. 解析色板颜色
   const paletteOptions = (allOptions && allOptions.palette) || [];
   const colors = resolvePaletteColors(sj.palette, paletteOptions);
-  console.log('[renderStyleJson] palette harmony:', sj.palette?.harmony, '-> bg:', colors.bg, 'text:', colors.text, 'optionsN:', paletteOptions.length);
 
   // 2. 构建 inline 样式（CSS变量 + 直接属性，确保无css_template时也能显示）
   const paletteCssVars = [
@@ -572,44 +562,34 @@ export function injectBaseCss() {
  */
 export function injectDynamicStyles(allOptions) {
   if (typeof document === 'undefined') return;
-  if (!allOptions) { console.warn('[injectDynamicStyles] allOptions is null/undefined'); return; }
+  if (!allOptions) return;
 
   let css = '';
 
-  const collect = (rows, label) => {
+  const collect = (rows) => {
     if (!Array.isArray(rows)) return;
-    let count = 0;
     rows.forEach(r => {
       if (r && r.css_template && r.css_template.trim()) {
         css += r.css_template.trim() + '\n';
-        count++;
       }
     });
-    if (label) console.log('[injectDynamicStyles]', label + ':', count, 'rows with css_template');
   };
 
   // 七张核心表
-  collect(allOptions.palette, 'palette');
-  collect(allOptions.layout, 'layout');
-  collect(allOptions.typo, 'typo');
-  collect(allOptions.border, 'border');
-  collect(allOptions.deco, 'deco');
-  collect(allOptions.effect, 'effect');
-  collect(allOptions.element, 'element');
+  collect(allOptions.palette);
+  collect(allOptions.layout);
+  collect(allOptions.typo);
+  collect(allOptions.border);
+  collect(allOptions.deco);
+  collect(allOptions.effect);
+  collect(allOptions.element);
 
-  // 诊断: flow 相关行
-  if (Array.isArray(allOptions.layout)) {
-    const flowRows = allOptions.layout.filter(r => r && r.sub_dim && r.sub_dim.startsWith('flow'));
-    console.log('[injectDynamicStyles] flow-related DB rows:', flowRows.length,
-      flowRows.map(r => ({ sub_dim: r.sub_dim, value: r.value, has_css_template: !!r.css_template, css_len: (r.css_template||'').length })));
-  }
-
-  // container_group.extra_css
+  // container_group
   if (allOptions.container_group) {
-    collect(allOptions.container_group, 'container_group');
+    collect(allOptions.container_group);
   }
 
-  if (!css) { console.warn('[injectDynamicStyles] NO CSS collected at all!'); return; }
+  if (!css) return;
 
   // 行级去重
   const lines = css.split('\n');
@@ -624,15 +604,6 @@ export function injectDynamicStyles(allOptions) {
   }
   css = deduped.join('\n');
 
-  // 诊断: 检查是否包含 flow 相关 CSS
-  const hasFlowCss = css.includes('data-style-layout-flow');
-  console.log('[injectDynamicStyles] total CSS lines:', deduped.length,
-    '| contains flow-related rules:', hasFlowCss);
-  if (hasFlowCss) {
-    const flowCssLines = deduped.filter(l => l.includes('data-style-layout-flow'));
-    console.log('[injectDynamicStyles] flow CSS lines:', flowCssLines);
-  }
-
   let styleEl = document.getElementById('card-engine-dynamic-css');
   if (styleEl) {
     styleEl.textContent = css;
@@ -642,5 +613,4 @@ export function injectDynamicStyles(allOptions) {
     document.head.appendChild(styleEl);
     styleEl.textContent = css;
   }
-  console.log('[injectDynamicStyles] injected into <style id="card-engine-dynamic-css">');
 }

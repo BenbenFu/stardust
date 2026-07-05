@@ -737,7 +737,6 @@ const MOCK_DIARY = {
 function buildStyleJson() {
     const activeSwatch = document.querySelector('.palette-swatch.active');
     const harmony = activeSwatch ? activeSwatch.dataset.palette : 'neutral_grey';
-    console.log('[buildStyleJson] harmony:', harmony, 'activeSwatch:', !!activeSwatch);
 
     function v(key, fallback) { return DIMS[key]?.value || fallback; }
     function typoMap(key, fallback) {
@@ -890,7 +889,6 @@ function setSelect(el, val) {
 
 function updateFlowVerticalVisibility(flowVal) {
     const row = document.getElementById('flowVerticalRow');
-    console.log('[updateFlowVerticalVisibility] flowVal=', flowVal, 'row found=', !!row);
     if (row) row.style.display = (flowVal === 'mixed') ? '' : 'none';
 }
 
@@ -898,7 +896,6 @@ function updateFlowVerticalVisibility(flowVal) {
 // 更新预览 + JSON 展示
 // ============================================================
 function updatePreview() {
-    console.log('[updatePreview] called');
     const sj = buildStyleJson();
 
     const allOptions = {
@@ -930,7 +927,6 @@ function updatePreview() {
     dom.previewArea.appendChild(labelEl);
 
     const cardHtml = renderStyleJson(sj, diary, allOptions);
-    console.log('[updatePreview] cardHtml preview (first 300):', cardHtml.substring(0, 300));
     dom.previewArea.insertAdjacentHTML('beforeend', cardHtml);
 
     dom.jsonDisplay.textContent = JSON.stringify(sj, null, 2);
@@ -1008,8 +1004,6 @@ function refreshPaletteGrid() {
 
     const dbRows = (dimensionCache['style_palette_options'] || [])
         .filter(r => r.sub_dim === 'harmony_palette');
-    console.log('[refreshPaletteGrid] harmony_palette rows:', dbRows.length,
-      'sample:', dbRows.slice(0,2).map(r => ({v:r.value,bg:r.bg,text:r.text_color})));
     if (!dbRows.length) {
         grid.innerHTML = '<div style="font-size:9px;color:var(--pixel-dim);">暂无色板数据</div>';
         return;
@@ -1040,7 +1034,6 @@ function refreshPaletteGrid() {
     if (!grid.querySelector('.palette-swatch.active') && grid.firstChild) {
         grid.firstChild.classList.add('active');
         dom.paletteLabel.textContent = grid.firstChild.dataset.palette;
-        console.log('[refreshPaletteGrid] auto-selected first palette:', grid.firstChild.dataset.palette);
     }
 }
 
@@ -1285,10 +1278,8 @@ Object.values(DIMS).forEach(el => {
 });
 
 // flow select 联动 flow_vertical 显隐
-console.log('[init] DIMS.flow exists:', !!DIMS.flow);
 if (DIMS.flow) {
     DIMS.flow.addEventListener('change', () => {
-        console.log('[flow change] value=', DIMS.flow.value);
         updateFlowVerticalVisibility(DIMS.flow.value);
     });
 }
@@ -1382,72 +1373,6 @@ async function init() {
     await loadPool();
     updatePreview();
 }
-
-// ============================================================
-// 诊断工具: 浏览器控制台运行 debugFlow()
-// ============================================================
-window.debugFlow = function() {
-    console.group('=== Flow Debug ===');
-
-    // 1. 基础样式是否注入
-    const baseEl = document.getElementById('card-engine-css');
-    console.log('1. BASE_CSS injected:', !!baseEl);
-    if (baseEl) {
-        const hasWm = baseEl.textContent.includes('--wm-');
-        console.log('   contains --wm-* vars:', hasWm);
-    }
-
-    // 2. 动态样式是否注入
-    const dynEl = document.getElementById('card-engine-dynamic-css');
-    console.log('2. Dynamic CSS injected:', !!dynEl);
-    if (dynEl) {
-        const css = dynEl.textContent;
-        const flowMatches = css.match(/\[data-style-layout-flow[^\]]*\]/g) || [];
-        console.log('   flow-related rules:', flowMatches.length);
-        flowMatches.forEach(m => console.log('   ', m));
-    }
-
-    // 3. 当前卡片的 data-* 属性
-    const card = document.querySelector('.gallery-card');
-    console.log('3. Card found:', !!card);
-    if (card) {
-        const flowAttrs = [...card.attributes].filter(a => a.name.includes('flow'));
-        console.log('   flow attrs on card:', flowAttrs.map(a => a.name));
-    }
-
-    // 4. 当前 DIMS 值
-    console.log('4. UI state:');
-    console.log('   flow select value:', DIMS.flow ? DIMS.flow.value : 'N/A');
-    const checked = FV_FIELDS.filter(f => FV_CHECKBOXES[f] && FV_CHECKBOXES[f].checked);
-    console.log('   flow_vertical checked:', checked);
-
-    // 5. 计算样式
-    if (card) {
-        const dateEl = card.querySelector('.card-date');
-        if (dateEl) {
-            const wm = getComputedStyle(dateEl).writingMode;
-            console.log('5. .card-date computed writing-mode:', wm);
-        }
-        const titleEl = card.querySelector('.card-title');
-        if (titleEl) {
-            const wm = getComputedStyle(titleEl).writingMode;
-            console.log('   .card-title computed writing-mode:', wm);
-        }
-    }
-
-    // 6. CSS 变量实际值
-    if (card) {
-        const cardStyle = getComputedStyle(card);
-        console.log('6. CSS vars on .gallery-card:');
-        console.log('   --wm-date:', cardStyle.getPropertyValue('--wm-date').trim() || '(empty)');
-        console.log('   --wm-title:', cardStyle.getPropertyValue('--wm-title').trim() || '(empty)');
-        console.log('   --wm-highlights:', cardStyle.getPropertyValue('--wm-highlights').trim() || '(empty)');
-        console.log('   --wm-capsule:', cardStyle.getPropertyValue('--wm-capsule').trim() || '(empty)');
-    }
-
-    console.groupEnd();
-};
-console.log('[debug] Run debugFlow() in console to diagnose flow issues.');
 
 init();
 </script>
