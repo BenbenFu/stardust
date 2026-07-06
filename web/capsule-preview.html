@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Style Editor v2</title>
-<link rel="stylesheet" href="style.css?v=20260706">
-<script type="module" src="script.js?v=20260706"></script>
+<link rel="stylesheet" href="style.css?v=20260706b">
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -208,7 +207,7 @@
 
 <!-- ========== 左：维度面板 ========== -->
 <div class="panel panel-left">
-    <div class="section-title">CAPSULE_STYLE_EDITOR :: v2.0</div>
+    <div class="section-title">CAPSULE_STYLE_EDITOR :: v2.1-slot <span style="background:red;color:white;padding:1px 4px;font-size:8px;border-radius:2px;">SLOT MODE</span></div>
 
     <!-- capsule 选择 -->
     <div class="capsule-selector">
@@ -617,8 +616,8 @@
 </div>
 
 <script type="module">
-import { supabase, checkAuth } from './script.js?v=20260706';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260706';
+import { supabase, checkAuth } from './script.js?v=20260706b';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260706b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1410,22 +1409,28 @@ async function init() {
     const authed = await checkAuth();
     if (!authed) { setStatus('认证失败，无法连接数据库', false); return; }
 
-    injectBaseCss();
-    await loadDimensionOptions();
-    injectDynamicStyles({
-        palette:         dimensionCache['style_palette_options']          || [],
-        layout:          dimensionCache['style_layout_options']           || [],
-        typo:            dimensionCache['style_typo_options']             || [],
-        border:          dimensionCache['style_border_options']           || [],
-        deco:            dimensionCache['style_deco_options']             || [],
-        effect:          dimensionCache['style_effect_options']           || [],
-        element:         dimensionCache['style_element_options']          || [],
-        container_group: dimensionCache['style_container_group_options']  || [],
-    });
+    try {
+        injectBaseCss();
+        await loadDimensionOptions();
+        injectDynamicStyles({
+            palette:         dimensionCache['style_palette_options']          || [],
+            layout:          dimensionCache['style_layout_options']           || [],
+            typo:            dimensionCache['style_typo_options']             || [],
+            border:          dimensionCache['style_border_options']           || [],
+            deco:            dimensionCache['style_deco_options']             || [],
+            effect:          dimensionCache['style_effect_options']           || [],
+            element:         dimensionCache['style_element_options']          || [],
+            container_group: dimensionCache['style_container_group_options']  || [],
+        });
 
-    applyDimensionOptionsToUI();
-    await loadPool();
-    updatePreview();
+        applyDimensionOptionsToUI();
+        await loadPool();
+        updatePreview();
+        console.log('[capsule-preview] init() completed successfully. SLOT_SELECTS:', Object.keys(SLOT_SELECTS));
+    } catch (e) {
+        console.error('[capsule-preview] init() error:', e);
+        setStatus('初始化错误: ' + e.message, false);
+    }
 }
 
 init();
