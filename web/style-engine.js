@@ -16,23 +16,23 @@
 // 所有视觉效果由 DB css_template 的 data-attr 选择器提供
 // ============================================================
 
-const BASE_CSS = `/* style-engine v2.0 — base structural CSS */
+const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
 .gallery-card {
   display: grid; position: relative; overflow: hidden;
   break-inside: avoid; margin-bottom: 16px;
   cursor: pointer; text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  grid-template-areas: "date" "title" "highlights" "capsule";
+  grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
 }
-.card-date   { grid-area: date; writing-mode: var(--wm-date, horizontal-tb);
-               color: var(--card-muted, inherit); }
-.card-title  { grid-area: title; writing-mode: var(--wm-title, horizontal-tb);
-               word-break: break-word; overflow-wrap: break-word; }
-.card-highlights { grid-area: highlights; writing-mode: var(--wm-highlights, horizontal-tb);
-                   overflow-wrap: break-word; word-break: break-word; }
+.card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
+.card-slot-b { grid-area: slot-b; writing-mode: var(--wm-b, horizontal-tb); }
+.card-slot-c { grid-area: slot-c; writing-mode: var(--wm-c, horizontal-tb); }
+.card-slot-d { grid-area: slot-d; writing-mode: var(--wm-d, horizontal-tb); }
+.card-date   { color: var(--card-muted, inherit); }
+.card-title  { word-break: break-word; overflow-wrap: break-word; }
+.card-highlights { overflow-wrap: break-word; word-break: break-word; }
 .card-highlight-item { display: block; }
-.card-capsule { grid-area: capsule; writing-mode: var(--wm-capsule, horizontal-tb);
-                color: var(--card-accent, inherit); }
+.card-capsule { color: var(--card-accent, inherit); }
 .hl-sep { display: inline; }
 .cg-slot { display: block; }
 
@@ -57,7 +57,6 @@ const ATTR_MAP = {
   // layout
   'layout_grid':         { attr: 'data-style-layout-grid' },
   'layout_flow':         { attr: 'data-style-layout-flow' },
-  'layout_flow_vertical':{ attr: 'data-style-layout-flow-vertical', isArray: true },
   'layout_density':      { attr: 'data-style-layout-density' },
   'layout_block_align':  { attr: 'data-style-layout-block-align' },
   'layout_inline_align': { attr: 'data-style-layout-inline-align' },
@@ -104,7 +103,9 @@ const ATTR_MAP = {
 
 export const DEFAULT_STYLE_JSON = {
   palette: { harmony: 'neutral_grey', tone: 'light_standard', slot: 'original' },
-  layout: { grid: 'single', flow: 'vertical', flow_vertical: [], density: 'normal',
+  layout: { grid: 'single', flow: 'vertical', flow_vertical: [],
+    slot_assignment: { a: 'date', b: 'title', c: 'highlights', d: 'capsule' },
+    density: 'normal',
     block_align: 'left', inline_align: 'left', spacing_scale: 'standard' },
   typo: {
     font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
@@ -342,18 +343,6 @@ function buildDataAttrs(styleJson) {
       // filter_self: backdrop 优先，self 仅在不设 backdrop 时生效
       if (dim === 'effect' && subDim === 'filter_self' && hasBackdrop) continue;
 
-      // isArray: 数组型维度（如 flow_vertical），每个元素生成一个 data-attr
-      // flow_vertical 仅在 flow=mixed 时生效
-      if (mapping.isArray && Array.isArray(value)) {
-        if (dim === 'layout' && subDim === 'flow_vertical'
-            && styleJson.layout && styleJson.layout.flow !== 'mixed') continue;
-        for (const item of value) {
-          if (item == null || item === 'none') continue;
-          attrs[mapping.attr + '-' + item] = '';
-        }
-        continue;
-      }
-
       if (mapping.perElement && typeof value === 'object') {
         for (const el of mapping.elements) {
           const elVal = value[el];
@@ -371,12 +360,12 @@ function buildDataAttrs(styleJson) {
 }
 
 // ============================================================
-// Section 7: buildHighlightsHtml — 渲染 highlights 列表
+// Section 7: buildHighlightsInner — 渲染 highlights 列表内容(无外层div)
 // ============================================================
 
-function buildHighlightsHtml(highlights) {
+function buildHighlightsInner(highlights) {
   if (!highlights || !highlights.length) return '';
-  let h = '<div class="card-highlights">';
+  let h = '';
   for (let i = 0; i < highlights.length; i++) {
     h += '<div class="card-highlight-item">' + escapeHtml(highlights[i]);
     if (i < highlights.length - 1) {
@@ -384,8 +373,12 @@ function buildHighlightsHtml(highlights) {
     }
     h += '</div>';
   }
-  h += '</div>';
   return h;
+}
+
+function buildHighlightsHtml(highlights) {
+  if (!highlights || !highlights.length) return '';
+  return '<div class="card-highlights">' + buildHighlightsInner(highlights) + '</div>';
 }
 
 // ============================================================
@@ -393,7 +386,7 @@ function buildHighlightsHtml(highlights) {
 // 两种模式：container_group="none" 标准grid / 其他值嵌套slot
 // ============================================================
 
-function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions) {
+function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, verticalFields) {
   const d = diary || {};
   const date = escapeHtml(d.date || '----/--/--');
   const title = escapeHtml(d.title || '');
@@ -405,18 +398,36 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions) {
   const containerGroup = (styleJson && styleJson.container_group) || 'none';
 
   if (containerGroup === 'none') {
-    // --- 标准 grid 模式 ---
+    // --- slot skeleton 模式 ---
+    const slotAssignment = (styleJson && styleJson.layout && styleJson.layout.slot_assignment)
+      || { a: 'date', b: 'title', c: 'highlights', d: 'capsule' };
+
+    // 字段内容 (不含外层 div)
+    const fieldContent = {
+      date: date || '',
+      title: title || '',
+      highlights: highlights.length ? buildHighlightsInner(highlights) : '',
+      capsule: capsule || ''
+    };
+    const fieldClass = {
+      date: 'card-date', title: 'card-title',
+      highlights: 'card-highlights', capsule: 'card-capsule'
+    };
+
+    let slotHtml = '';
+    for (const slot of ['a', 'b', 'c', 'd']) {
+      const field = slotAssignment[slot];
+      if (!field || !fieldContent[field]) continue;
+      slotHtml += '<div class="card-slot-' + slot + ' ' + fieldClass[field] + '">'
+        + fieldContent[field] + '</div>';
+    }
+
     let html = '<a class="gallery-card"' + dataAttrs
       + ' style="' + paletteStyle + '"'
       + ' href="diary.html?date=' + escapeAttr(dateRaw) + '" target="_blank"'
       + ' title="' + escapeAttr(d.title || '') + '"'
       + ' data-id="' + escapeAttr(String(id)) + '"'
-      + '>';
-    if (date)       html += '<div class="card-date">' + date + '</div>';
-    if (title)      html += '<div class="card-title">' + title + '</div>';
-    if (highlights.length) html += buildHighlightsHtml(highlights);
-    if (capsule)    html += '<div class="card-capsule">' + capsule + '</div>';
-    html += '</a>';
+      + '>' + slotHtml + '</a>';
     return html;
   }
 
@@ -426,7 +437,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions) {
   if (!cgRow) {
     // 回退标准模式
     return buildCardHtml(
-      { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions
+      { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions, verticalFields
     );
   }
 
@@ -440,7 +451,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions) {
 
   if (!Object.keys(fieldSlotMap).length) {
     return buildCardHtml(
-      { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions
+      { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions, verticalFields
     );
   }
 
@@ -483,7 +494,12 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions) {
     const content = (slotFields[slotId] || []).map(fieldHtml).filter(Boolean).join('');
 
     if (content) {
-      html += '<div class="cg-slot" style="grid-area:' + area + '"'
+      const fieldsInSlot = slotFields[slotId] || [];
+      const hasVertical = verticalFields && verticalFields.length
+        && fieldsInSlot.some(f => verticalFields.includes(f));
+      let slotStyle = 'grid-area:' + area;
+      if (hasVertical) slotStyle += ';writing-mode:vertical-rl';
+      html += '<div class="cg-slot" style="' + slotStyle + '"'
         + (slotAttr ? ' ' + slotAttr : '') + '>' + content + '</div>';
     }
   }
@@ -526,13 +542,30 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   }
   paletteCssVars.push('--card-accent-rgb:' + colors.accentRgb,
     '--card-bg-rgb:' + colors.bgRgb);
-  const paletteStyle = paletteCssVars.join(';');
 
-  // 3. 构建 data-* 属性
+  // 3. 计算 per-slot writing-mode (从 flow_vertical + slot_assignment)
+  const layout = sj.layout || {};
+  const slotAssignment = layout.slot_assignment
+    || { a: 'date', b: 'title', c: 'highlights', d: 'capsule' };
+  const verticalFields = Array.isArray(layout.flow_vertical) ? layout.flow_vertical : [];
+
+  for (const slot of ['a', 'b', 'c', 'd']) {
+    const field = slotAssignment[slot];
+    if (field && verticalFields.includes(field)) {
+      paletteCssVars.push('--wm-' + slot + ':vertical-rl');
+    }
+  }
+  // 全部竖排时，容器加 writing-mode:vertical-rl 转置 grid
+  if (verticalFields.length >= 4) {
+    paletteCssVars.push('writing-mode:vertical-rl', 'max-height:400px', 'overflow:hidden');
+  }
+  const fullStyle = paletteCssVars.join(';');
+
+  // 4. 构建 data-* 属性
   const dataAttrs = buildDataAttrs(sj);
 
-  // 4. 构建 HTML
-  return buildCardHtml(sj, diary, dataAttrs, paletteStyle, allOptions);
+  // 5. 构建 HTML
+  return buildCardHtml(sj, diary, dataAttrs, fullStyle, allOptions, verticalFields);
 }
 
 // ============================================================

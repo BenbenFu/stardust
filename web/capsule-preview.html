@@ -245,18 +245,39 @@
                     <label>Grid 网格模板</label>
                     <select id="d-grid"></select>
                 </div>
+                <div class="dim-row" id="slotAssignmentRow">
+                    <label>Slot Assignment 槽位分配 (A/B/C/D → 字段)</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+                        <div style="display:flex;flex-direction:column;gap:1px;">
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot A</label>
+                            <select id="sa-a" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;">
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot B</label>
+                            <select id="sa-b" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;">
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot C</label>
+                            <select id="sa-c" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:1px;">
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot D</label>
+                            <select id="sa-d" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                        </div>
+                    </div>
+                </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
                         <label>Density 密度</label>
                         <select id="d-density"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Flow 流向</label>
+                        <label>Flow 流向 (预设)</label>
                         <select id="d-flow"></select>
                     </div>
                 </div>
-                <div class="dim-row" id="flowVerticalRow" style="display:none;">
-                    <label>Vertical Fields 竖排字段 (mixed)</label>
+                <div class="dim-row" id="flowVerticalRow">
+                    <label>Vertical Fields 竖排字段</label>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:10px;">
                         <label style="display:flex;align-items:center;gap:2px;font-size:10px;text-transform:none;letter-spacing:0;margin:0;">
                             <input type="checkbox" id="fv-date"> date
@@ -715,6 +736,11 @@ const FV_FIELDS = ['date', 'title', 'highlights', 'capsule'];
 const FV_CHECKBOXES = {};
 FV_FIELDS.forEach(f => { FV_CHECKBOXES[f] = document.getElementById('fv-' + f); });
 
+// slot assignment dropdowns
+const SLOT_SLOTS = ['a', 'b', 'c', 'd'];
+const SLOT_SELECTS = {};
+SLOT_SLOTS.forEach(s => { SLOT_SELECTS[s] = document.getElementById('sa-' + s); });
+
 // ============================================================
 // Mock 数据
 // ============================================================
@@ -749,6 +775,12 @@ function buildStyleJson() {
         layout: {
             _base: 'grid_area_mapping',
             grid: v('grid', 'single'),
+            slot_assignment: {
+                a: SLOT_SELECTS.a ? SLOT_SELECTS.a.value : 'date',
+                b: SLOT_SELECTS.b ? SLOT_SELECTS.b.value : 'title',
+                c: SLOT_SELECTS.c ? SLOT_SELECTS.c.value : 'highlights',
+                d: SLOT_SELECTS.d ? SLOT_SELECTS.d.value : 'capsule',
+            },
             density: v('density', 'normal'),
             flow: v('flow', 'vertical'),
             flow_vertical: FV_FIELDS.filter(f => FV_CHECKBOXES[f] && FV_CHECKBOXES[f].checked),
@@ -822,6 +854,10 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.inline_align, l.inline_align);
     setSelect(DIMS.spacing_scale,l.spacing_scale);
 
+    // slot_assignment (旧记录无此字段时使用默认映射)
+    const sa = l.slot_assignment || { a: 'date', b: 'title', c: 'highlights', d: 'capsule' };
+    SLOT_SLOTS.forEach(s => { setSelect(SLOT_SELECTS[s], sa[s]); });
+
     // flow_vertical checkboxes
     const fvArr = Array.isArray(l.flow_vertical) ? l.flow_vertical : [];
     FV_FIELDS.forEach(f => {
@@ -888,8 +924,9 @@ function setSelect(el, val) {
 }
 
 function updateFlowVerticalVisibility(flowVal) {
+    // checkbox 区域始终显示，flow 仅作为预设
     const row = document.getElementById('flowVerticalRow');
-    if (row) row.style.display = (flowVal === 'mixed') ? '' : 'none';
+    if (row) row.style.display = '';
 }
 
 // ============================================================
@@ -1277,12 +1314,29 @@ Object.values(DIMS).forEach(el => {
     el.addEventListener(evt, debouncedUpdate);
 });
 
-// flow select 联动 flow_vertical 显隐
+// flow 预设联动 checkbox
 if (DIMS.flow) {
     DIMS.flow.addEventListener('change', () => {
-        updateFlowVerticalVisibility(DIMS.flow.value);
+        applyFlowPreset(DIMS.flow.value);
     });
 }
+
+function applyFlowPreset(flowVal) {
+    if (flowVal === 'horizontal') {
+        FV_FIELDS.forEach(f => { if (FV_CHECKBOXES[f]) FV_CHECKBOXES[f].checked = false; });
+    } else if (flowVal === 'vertical') {
+        FV_FIELDS.forEach(f => { if (FV_CHECKBOXES[f]) FV_CHECKBOXES[f].checked = true; });
+    } else if (flowVal === 'mixed') {
+        FV_FIELDS.forEach(f => { if (FV_CHECKBOXES[f]) FV_CHECKBOXES[f].checked = false; });
+        if (FV_CHECKBOXES[FV_FIELDS[0]]) FV_CHECKBOXES[FV_FIELDS[0]].checked = true;
+    }
+    debouncedUpdate();
+}
+
+// slot assignment dropdowns
+SLOT_SLOTS.forEach(s => {
+    if (SLOT_SELECTS[s]) SLOT_SELECTS[s].addEventListener('change', debouncedUpdate);
+});
 
 // flow_vertical checkboxes
 FV_FIELDS.forEach(f => {
