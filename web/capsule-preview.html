@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Style Editor v2</title>
-<link rel="stylesheet" href="style.css?v=20260614">
-<script type="module" src="script.js?v=20260602"></script>
+<link rel="stylesheet" href="style.css?v=20260706">
+<script type="module" src="script.js?v=20260706"></script>
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -617,8 +617,8 @@
 </div>
 
 <script type="module">
-import { supabase, checkAuth } from './script.js';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js';
+import { supabase, checkAuth } from './script.js?v=20260706';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260706';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则

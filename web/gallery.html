@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STARDUST_v0.1_DIARY_GALLERY</title>
-<link rel="stylesheet" href="style.css?v=20260610">
-<script type="module" src="script.js?v=20260602"></script>
+<link rel="stylesheet" href="style.css?v=20260706">
+<script type="module" src="script.js?v=20260706"></script>
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -205,9 +205,9 @@
 </div>
 
 <script type="module">
-    import { supabase, checkAuth } from './script.js';
-    import { renderCard } from './gallery-cards.js';
-    import { injectDynamicStyles } from './style-engine.js';
+    import { supabase, checkAuth } from './script.js?v=20260706';
+    import { renderCard } from './gallery-cards.js?v=20260706';
+    import { injectDynamicStyles } from './style-engine.js?v=20260706';
 
     const galleryGrid = document.getElementById('galleryGrid');
     const galleryCount = document.getElementById('galleryCount');
