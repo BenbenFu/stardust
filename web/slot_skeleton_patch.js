@@ -38,16 +38,12 @@ async function patchRecord(value, subDim, cssTemplate) {
 const gridTemplates = [
   // single
   ['single', '.gallery-card[data-style-layout-grid="single"] { grid-template-columns: 1fr; grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d"; }'],
-  // 2col_equal
-  ['2col_equal', '.gallery-card[data-style-layout-grid="2col_equal"] { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-a slot-a" "slot-c slot-b" "slot-c slot-d"; }'],
-  // 2col_left_wide
-  ['2col_left_wide', '.gallery-card[data-style-layout-grid="2col_left_wide"] { grid-template-columns: 2fr 1fr; grid-template-areas: "slot-a slot-a" "slot-c slot-b" "slot-c slot-d"; }'],
-  // 2col_right_wide
-  ['2col_right_wide', '.gallery-card[data-style-layout-grid="2col_right_wide"] { grid-template-columns: 1fr 2fr; grid-template-areas: "slot-a slot-a" "slot-b slot-c" "slot-d slot-c"; }'],
-  // 2col_left_narrow
-  ['2col_left_narrow', '.gallery-card[data-style-layout-grid="2col_left_narrow"] { grid-template-columns: 1fr 3fr; grid-template-areas: "slot-a slot-a" "slot-b slot-c" "slot-d slot-c"; }'],
-  // 2col_right_narrow
-  ['2col_right_narrow', '.gallery-card[data-style-layout-grid="2col_right_narrow"] { grid-template-columns: 3fr 1fr; grid-template-areas: "slot-a slot-a" "slot-c slot-b" "slot-c slot-d"; }'],
+  // 2col_* — 全部 2x2 网格, 仅列宽不同
+  ['2col_equal', '.gallery-card[data-style-layout-grid="2col_equal"] { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'],
+  ['2col_left_wide', '.gallery-card[data-style-layout-grid="2col_left_wide"] { grid-template-columns: 2fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'],
+  ['2col_right_wide', '.gallery-card[data-style-layout-grid="2col_right_wide"] { grid-template-columns: 1fr 2fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'],
+  ['2col_left_narrow', '.gallery-card[data-style-layout-grid="2col_left_narrow"] { grid-template-columns: 1fr 3fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'],
+  ['2col_right_narrow', '.gallery-card[data-style-layout-grid="2col_right_narrow"] { grid-template-columns: 3fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'],
   // 3col_equal
   ['3col_equal', '.gallery-card[data-style-layout-grid="3col_equal"] { grid-template-columns: 1fr 1fr 1fr; grid-template-areas: "slot-a slot-b slot-d" "slot-c slot-c slot-c"; }'],
   // 3col_left_focus
@@ -73,13 +69,13 @@ const gridTemplates = [
 ];
 
 // ============================================================
-// 2. Flow 记录: 3 条 — 改为 slot-based --wm-a/b/c/d (作为 fallback)
+// 2. Flow 记录: 3 条 — 清空 css_template (flow 降级为 UI 预设标签, writing-mode 由 renderStyleJson 全权计算)
 // ============================================================
 
 const flowTemplates = [
-  ['horizontal', '[data-style-layout-flow="horizontal"]{--wm-a:horizontal-tb;--wm-b:horizontal-tb;--wm-c:horizontal-tb;--wm-d:horizontal-tb;}'],
-  ['vertical', '[data-style-layout-flow="vertical"]{--wm-a:vertical-rl;--wm-b:vertical-rl;--wm-c:vertical-rl;--wm-d:vertical-rl;writing-mode:vertical-rl;max-height:400px;overflow:hidden;}'],
-  ['mixed', '[data-style-layout-flow="mixed"]{--wm-a:horizontal-tb;--wm-b:horizontal-tb;--wm-c:horizontal-tb;--wm-d:horizontal-tb;}'],
+  ['horizontal', ''],
+  ['vertical', ''],
+  ['mixed', ''],
 ];
 
 // ============================================================

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Style Editor v2</title>
-<link rel="stylesheet" href="style.css?v=20260706b">
+<link rel="stylesheet" href="style.css?v=20260707b">
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -249,19 +249,19 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
                         <div style="display:flex;flex-direction:column;gap:1px;">
                             <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot A</label>
-                            <select id="sa-a" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                            <select id="sa-a" class="slot-select" style="font-size:10px;"><option value="date" selected>date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:1px;">
                             <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot B</label>
-                            <select id="sa-b" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                            <select id="sa-b" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title" selected>title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:1px;">
                             <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot C</label>
-                            <select id="sa-c" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                            <select id="sa-c" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights" selected>highlights</option><option value="capsule">capsule</option></select>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:1px;">
                             <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot D</label>
-                            <select id="sa-d" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
+                            <select id="sa-d" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule" selected>capsule</option></select>
                         </div>
                     </div>
                 </div>
@@ -616,8 +616,8 @@
 </div>
 
 <script type="module">
-import { supabase, checkAuth } from './script.js?v=20260706b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260706b';
+import { supabase, checkAuth } from './script.js?v=20260707b';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260707b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -781,7 +781,7 @@ function buildStyleJson() {
                 d: SLOT_SELECTS.d ? SLOT_SELECTS.d.value : 'capsule',
             },
             density: v('density', 'normal'),
-            flow: v('flow', 'vertical'),
+            flow: v('flow', 'horizontal'),
             flow_vertical: FV_FIELDS.filter(f => FV_CHECKBOXES[f] && FV_CHECKBOXES[f].checked),
             block_align: v('block_align', 'start'),
             inline_align: v('inline_align', 'start'),
@@ -1425,6 +1425,7 @@ async function init() {
 
         applyDimensionOptionsToUI();
         await loadPool();
+        applyStyleJsonToPanel(DEFAULT_STYLE_JSON);
         updatePreview();
         console.log('[capsule-preview] init() completed successfully. SLOT_SELECTS:', Object.keys(SLOT_SELECTS));
     } catch (e) {

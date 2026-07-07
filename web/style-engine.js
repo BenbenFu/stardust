@@ -103,7 +103,7 @@ const ATTR_MAP = {
 
 export const DEFAULT_STYLE_JSON = {
   palette: { harmony: 'neutral_grey', tone: 'light_standard', slot: 'original' },
-  layout: { grid: 'single', flow: 'vertical', flow_vertical: [],
+  layout: { grid: 'single', flow: 'horizontal', flow_vertical: [],
     slot_assignment: { a: 'date', b: 'title', c: 'highlights', d: 'capsule' },
     density: 'normal',
     block_align: 'left', inline_align: 'left', spacing_scale: 'standard' },

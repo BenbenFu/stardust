@@ -26,23 +26,23 @@ SET css_template = '.gallery-card[data-style-layout-grid="single"] { grid-templa
 WHERE sub_dim = 'grid' AND value = 'single';
 
 UPDATE style_layout_options
-SET css_template = '.gallery-card[data-style-layout-grid="2col_equal"] { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-a slot-a" "slot-c slot-b" "slot-c slot-d"; }'
+SET css_template = '.gallery-card[data-style-layout-grid="2col_equal"] { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'
 WHERE sub_dim = 'grid' AND value = '2col_equal';
 
 UPDATE style_layout_options
-SET css_template = '.gallery-card[data-style-layout-grid="2col_left_wide"] { grid-template-columns: 2fr 1fr; grid-template-areas: "slot-a slot-a" "slot-c slot-b" "slot-c slot-d"; }'
+SET css_template = '.gallery-card[data-style-layout-grid="2col_left_wide"] { grid-template-columns: 2fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'
 WHERE sub_dim = 'grid' AND value = '2col_left_wide';
 
 UPDATE style_layout_options
-SET css_template = '.gallery-card[data-style-layout-grid="2col_right_wide"] { grid-template-columns: 1fr 2fr; grid-template-areas: "slot-a slot-a" "slot-b slot-c" "slot-d slot-c"; }'
+SET css_template = '.gallery-card[data-style-layout-grid="2col_right_wide"] { grid-template-columns: 1fr 2fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'
 WHERE sub_dim = 'grid' AND value = '2col_right_wide';
 
 UPDATE style_layout_options
-SET css_template = '.gallery-card[data-style-layout-grid="2col_left_narrow"] { grid-template-columns: 1fr 3fr; grid-template-areas: "slot-a slot-a" "slot-b slot-c" "slot-d slot-c"; }'
+SET css_template = '.gallery-card[data-style-layout-grid="2col_left_narrow"] { grid-template-columns: 1fr 3fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'
 WHERE sub_dim = 'grid' AND value = '2col_left_narrow';
 
 UPDATE style_layout_options
-SET css_template = '.gallery-card[data-style-layout-grid="2col_right_narrow"] { grid-template-columns: 3fr 1fr; grid-template-areas: "slot-a slot-a" "slot-c slot-b" "slot-c slot-d"; }'
+SET css_template = '.gallery-card[data-style-layout-grid="2col_right_narrow"] { grid-template-columns: 3fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }'
 WHERE sub_dim = 'grid' AND value = '2col_right_narrow';
 
 UPDATE style_layout_options
@@ -90,20 +90,12 @@ SET css_template = '.gallery-card[data-style-layout-grid="timeline"] { grid-temp
 WHERE sub_dim = 'grid' AND value = 'timeline';
 
 -- ============================================================
--- 2. Flow 记录: 3 条 — slot-based --wm-a/b/c/d (作为 fallback)
+-- 2. Flow 记录: 3 条 — 清空 css_template (flow 降级为 UI 预设标签, writing-mode 由 renderStyleJson 全权计算)
 -- ============================================================
 
-UPDATE style_layout_options
-SET css_template = '[data-style-layout-flow="horizontal"]{--wm-a:horizontal-tb;--wm-b:horizontal-tb;--wm-c:horizontal-tb;--wm-d:horizontal-tb;}'
-WHERE sub_dim = 'flow' AND value = 'horizontal';
-
-UPDATE style_layout_options
-SET css_template = '[data-style-layout-flow="vertical"]{--wm-a:vertical-rl;--wm-b:vertical-rl;--wm-c:vertical-rl;--wm-d:vertical-rl;writing-mode:vertical-rl;max-height:400px;overflow:hidden;}'
-WHERE sub_dim = 'flow' AND value = 'vertical';
-
-UPDATE style_layout_options
-SET css_template = '[data-style-layout-flow="mixed"]{--wm-a:horizontal-tb;--wm-b:horizontal-tb;--wm-c:horizontal-tb;--wm-d:horizontal-tb;}'
-WHERE sub_dim = 'flow' AND value = 'mixed';
+UPDATE style_layout_options SET css_template = '' WHERE sub_dim = 'flow' AND value = 'horizontal';
+UPDATE style_layout_options SET css_template = '' WHERE sub_dim = 'flow' AND value = 'vertical';
+UPDATE style_layout_options SET css_template = '' WHERE sub_dim = 'flow' AND value = 'mixed';
 
 -- ============================================================
 -- 3. flow_vertical 记录: 4 条 — 清空 css_template (渲染器全权处理)
