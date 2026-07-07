@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Typo Diagnostic — Post-Fix Verification</title>
+<link rel="stylesheet" href="style.css?v=20260707c">
+<style>
+body { background: #1a1a2e; color: #e0e0e0; font-family: monospace; padding: 20px; }
+h1 { font-size: 14px; color: #cadbb7; border-bottom: 1px solid #555; padding-bottom: 6px; }
+.section { margin-bottom: 30px; }
+.section-title { font-size: 12px; color: #8f341d; margin-bottom: 8px; font-weight: bold; }
+.card-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.gallery-card { width: 220px; }
+.verify-table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 8px; }
+.verify-table th, .verify-table td { border: 1px solid #444; padding: 4px 8px; text-align: left; }
+.verify-table th { background: #2a2a4e; color: #cadbb7; }
+.verify-table .ok { color: #3a7d44; }
+.verify-table .fail { color: #e74c3c; }
+#log { white-space: pre-wrap; font-size: 11px; color: #aaa; max-height: 300px; overflow-y: auto; border: 1px solid #444; padding: 8px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h1>TYPO DIMENSION VERIFICATION (Post-Dedup-Fix)</h1>
+<div id="log">Loading...</div>
+
+<div id="results"></div>
+
+<script type="module">
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260707g';
+import { supabase, checkAuth } from './script.js?v=20260707c';
+
+const MOCK_DIARY = {
+    id: 20260619,
+    title: '预览示例 · 调试日记',
+    date: '2026/06/19',
+    dateRaw: '2026-06-19',
+    highlights: ['第一条精华句用于预览效果。', '第二条精华句测试间距。'],
+    capsuleName: '样式预览',
+};
+
+function log(msg) {
+    const el = document.getElementById('log');
+    el.textContent += '\n' + msg;
+    console.log(msg);
+}
+
+async function init() {
+    const authed = await checkAuth();
+    if (!authed) { log('Auth failed'); return; }
+
+    // Load all dimension options
+    const tables = ['style_typo_options', 'style_layout_options', 'style_palette_options',
+                    'style_border_options', 'style_deco_options', 'style_effect_options',
+                    'style_element_options', 'style_container_group_options'];
+    const cache = {};
+    for (const t of tables) {
+        const { data } = await supabase.from(t).select('*').order('sort_order');
+        cache[t] = data || [];
+    }
+
+    const allOptions = {
+        palette: cache['style_palette_options'] || [],
+        layout: cache['style_layout_options'] || [],
+        typo: cache['style_typo_options'] || [],
+        border: cache['style_border_options'] || [],
+        deco: cache['style_deco_options'] || [],
+        effect: cache['style_effect_options'] || [],
+        element: cache['style_element_options'] || [],
+        container_group: cache['style_container_group_options'] || [],
+    };
+
+    injectBaseCss();
+    injectDynamicStyles(allOptions);
+
+    // Verify CSS injection
+    const dynCss = document.getElementById('card-engine-dynamic-css');
+    if (dynCss) {
+        const cssText = dynCss.textContent;
+        const openB = (cssText.match(/{/g) || []).length;
+        const closeB = (cssText.match(/}/g) || []).length;
+        log(`CSS injected: ${cssText.length} chars, ${openB} open braces, ${closeB} close braces, match=${openB === closeB}`);
+    } else {
+        log('ERROR: card-engine-dynamic-css not found!');
+    }
+
+    // Test each typo sub_dim
+    const typoOptions = cache['style_typo_options'] || [];
+    const subDims = [...new Set(typoOptions.map(r => r.sub_dim))];
+
+    const resultsDiv = document.getElementById('results');
+    let html = '';
+
+    for (const sd of subDims) {
+        const opts = typoOptions.filter(r => r.sub_dim === sd);
+        html += `<div class="section"><div class="section-title">[${sd}] ${opts.length} options</div><div class="card-row">`;
+
+        for (const opt of opts) {
+            // Build style_json with this option
+            const sj = JSON.parse(JSON.stringify(DEFAULT_STYLE_JSON));
+
+            if (['font_family', 'spacing_tightness', 'text_decoration'].includes(sd)) {
+                // perElement — set all elements to this value
+                sj.typo[sd] = { title: opt.value, date: opt.value, capsule: opt.value, highlights: opt.value };
+            } else {
+                // single value
+                sj.typo[sd] = opt.value;
+            }
+
+            const cardHtml = renderStyleJson(sj, MOCK_DIARY, allOptions);
+            html += `<div><div style="font-size:9px;color:#888;margin-bottom:2px;">${opt.value}</div>${cardHtml}</div>`;
+        }
+        html += '</div></div>';
+    }
+
+    resultsDiv.innerHTML = html;
+
+    // Computed style verification
+    log('\n=== COMPUTED STYLE VERIFICATION ===');
+    const cards = document.querySelectorAll('.gallery-card');
+    log(`Total cards rendered: ${cards.length}`);
+
+    // Pick a few key cards to verify
+    const testCases = [
+        { label: 'weight_gradient=bold_heavy', selector: '[data-style-typo-weight-gradient="bold_heavy"]', prop: '--typo-title-weight', expected: '800' },
+        { label: 'weight_gradient=balanced', selector: '[data-style-typo-weight-gradient="balanced"]', prop: '--typo-title-weight', expected: '600' },
+        { label: 'size_scale=headline_impact', selector: '[data-style-typo-size-scale="headline_impact"]', prop: '--typo-title-scale', expected: '1.8' },
+        { label: 'size_scale=petite', selector: '[data-style-typo-size-scale="petite"]', prop: '--typo-title-scale', expected: '1.1' },
+        { label: 'alignment_mode=centered_formal', selector: '[data-style-typo-alignment-mode="centered_formal"]', prop: '--typo-title-align', expected: 'center' },
+        { label: 'font_family=terminal_mono', selector: '[data-style-typo-font-family-title="terminal_mono"]', check: '.card-title', prop: 'font-family', contains: 'mono' },
+    ];
+
+    let passCount = 0, failCount = 0;
+    for (const tc of testCases) {
+        const card = document.querySelector(tc.selector);
+        if (!card) {
+            log(`FAIL: ${tc.label} — card not found`);
+            failCount++;
+            continue;
+        }
+        let el, val;
+        if (tc.check) {
+            el = card.querySelector(tc.check);
+            val = el ? getComputedStyle(el).getPropertyValue(tc.prop).trim() : 'element not found';
+        } else {
+            val = getComputedStyle(card).getPropertyValue(tc.prop).trim();
+        }
+        const ok = tc.contains ? val.toLowerCase().includes(tc.contains) : val === tc.expected;
+        log(`${ok ? 'PASS' : 'FAIL'}: ${tc.label} — ${tc.prop}=${val} (expected: ${tc.expected || tc.contains})`);
+        if (ok) passCount++; else failCount++;
+    }
+
+    log(`\n=== SUMMARY: ${passCount} pass, ${failCount} fail ===`);
+}
+
+init().catch(e => log('Error: ' + e.message));
+</script>
+</body>
+</html>

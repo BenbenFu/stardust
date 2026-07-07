@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Typo Computed Style Test</title>
+</head>
+<body>
+<h2>Typo Computed Style Test</h2>
+<div id="cards"></div>
+<pre id="result" style="font-size:11px;background:#f0f0f0;padding:12px;margin-top:20px;"></pre>
+<script type="module">
+import { injectBaseCss, injectDynamicStyles, renderStyleJson, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260707f';
+
+injectBaseCss();
+
+// Mock typo CSS — same format as DB
+const mockTypo = [
+  { css_template: '.gallery-card[data-style-typo-weight-gradient="balanced"] { --typo-title-weight:600; --typo-date-weight:400; --typo-highlight-weight:400; --typo-capsule-weight:500; }' },
+  { css_template: '.gallery-card[data-style-typo-weight-gradient="bold_heavy"] { --typo-title-weight:800; --typo-date-weight:500; --typo-highlight-weight:500; --typo-capsule-weight:700; }' },
+  { css_template: '.gallery-card[data-style-typo-size-scale="balanced_read"] { --typo-title-scale:1.5; --typo-date-scale:0.85; --typo-highlight-scale:1.0; --typo-capsule-scale:0.9; }' },
+  { css_template: '.gallery-card[data-style-typo-size-scale="compact_dense"] { --typo-title-scale:1.2; --typo-date-scale:0.8; --typo-highlight-scale:0.9; --typo-capsule-scale:0.8; }' },
+  { css_template: '.gallery-card[data-style-typo-alignment-mode="left_flow"] { --typo-title-align:left; --typo-date-align:left; --typo-highlight-align:left; --typo-capsule-align:left; }' },
+  { css_template: '.gallery-card[data-style-typo-alignment-mode="centered_formal"] { --typo-title-align:center; --typo-date-align:center; --typo-highlight-align:center; --typo-capsule-align:center; }' },
+  { css_template: '.gallery-card[data-style-typo-font-family-title="system_sans"] .card-title { font-family: system-ui, sans-serif; }' },
+  { css_template: '.gallery-card[data-style-typo-font-family-title="editorial_serif"] .card-title { font-family: Georgia, "Times New Roman", serif; }' },
+  { css_template: '.gallery-card[data-style-typo-font-family-title="terminal_mono"] .card-title { font-family: "Courier New", monospace; }' },
+  { css_template: '.gallery-card[data-style-typo-font-family-date="system_sans"] .card-date { font-family: system-ui, sans-serif; }' },
+  { css_template: '.gallery-card[data-style-typo-font-family-date="editorial_serif"] .card-date { font-family: Georgia, serif; }' },
+  { css_template: '.gallery-card[data-style-typo-font-family-capsule="system_sans"] .card-capsule { font-family: system-ui, sans-serif; }' },
+  { css_template: '.gallery-card[data-style-typo-font-family-capsule="editorial_serif"] .card-capsule { font-family: Georgia, serif; }' },
+  { css_template: '.gallery-card[data-style-typo-spacing-tightness-title="normal"] .card-title { line-height: 1.4; letter-spacing: 0; }' },
+  { css_template: '.gallery-card[data-style-typo-spacing-tightness-title="dense"] .card-title { line-height: 1.1; letter-spacing: -0.04em; }' },
+  { css_template: '.gallery-card[data-style-typo-spacing-tightness-title="loose"] .card-title { line-height: 1.8; letter-spacing: 0.05em; }' },
+];
+
+injectDynamicStyles({ typo: mockTypo });
+
+const diary = {
+  id: 1, date: '2026/07/08', dateRaw: '2026-07-08',
+  title: 'Debug Title',
+  highlights: ['Highlight 1', 'Highlight 2'],
+  capsuleName: 'Capsule'
+};
+const allOptions = { typo: mockTypo, palette: [], layout: [], border: [], deco: [], effect: [], element: [], container_group: [] };
+
+const tests = [
+  { label: 'Default', sj: { ...DEFAULT_STYLE_JSON } },
+  { label: 'weight=bold_heavy', sj: { ...DEFAULT_STYLE_JSON, typo: { ...DEFAULT_STYLE_JSON.typo, weight_gradient: 'bold_heavy' } } },
+  { label: 'size=compact_dense', sj: { ...DEFAULT_STYLE_JSON, typo: { ...DEFAULT_STYLE_JSON.typo, size_scale: 'compact_dense' } } },
+  { label: 'align=centered', sj: { ...DEFAULT_STYLE_JSON, typo: { ...DEFAULT_STYLE_JSON.typo, alignment_mode: 'centered_formal' } } },
+  { label: 'font=editorial_serif', sj: { ...DEFAULT_STYLE_JSON, typo: { ...DEFAULT_STYLE_JSON.typo, font_family: { title:'editorial_serif', date:'editorial_serif', capsule:'editorial_serif', highlights:'editorial_serif' } } } },
+  { label: 'spacing=dense', sj: { ...DEFAULT_STYLE_JSON, typo: { ...DEFAULT_STYLE_JSON.typo, spacing_tightness: { title:'dense', date:'dense', capsule:'dense', highlights:'dense' } } } },
+];
+
+const container = document.getElementById('cards');
+const result = document.getElementById('result');
+let log = '';
+
+tests.forEach((t, i) => {
+  const cardHtml = renderStyleJson(t.sj, diary, allOptions);
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = 'margin-bottom:16px;';
+  wrapper.innerHTML = '<div style="font-size:11px;color:#666;">' + t.label + '</div>' + cardHtml;
+  container.appendChild(wrapper);
+
+  // Get computed styles after DOM insertion
+  const card = wrapper.querySelector('.gallery-card');
+  const title = wrapper.querySelector('.card-title');
+  if (card && title) {
+    const cs = getComputedStyle(title);
+    const cardCs = getComputedStyle(card);
+    log += t.label + ':\n';
+    log += '  data-attrs: ' + card.getAttribute('data-style-typo-weight-gradient') + ', ' + card.getAttribute('data-style-typo-size-scale') + ', ' + card.getAttribute('data-style-typo-alignment-mode') + '\n';
+    log += '  --typo-title-weight: ' + cardCs.getPropertyValue('--typo-title-weight') + '\n';
+    log += '  --typo-title-scale: ' + cardCs.getPropertyValue('--typo-title-scale') + '\n';
+    log += '  --typo-title-align: ' + cardCs.getPropertyValue('--typo-title-align') + '\n';
+    log += '  title font-weight: ' + cs.fontWeight + '\n';
+    log += '  title font-size: ' + cs.fontSize + '\n';
+    log += '  title text-align: ' + cs.textAlign + '\n';
+    log += '  title font-family: ' + cs.fontFamily.substring(0, 50) + '\n';
+    log += '  title letter-spacing: ' + cs.letterSpacing + '\n';
+    log += '\n';
+  }
+});
+
+result.textContent = log;
+</script>
+</body>
+</html>

@@ -637,19 +637,6 @@ export function injectDynamicStyles(allOptions) {
 
   if (!css) return;
 
-  // 行级去重
-  const lines = css.split('\n');
-  const seen = new Set();
-  const deduped = [];
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed && !seen.has(trimmed)) {
-      seen.add(trimmed);
-      deduped.push(line);
-    }
-  }
-  css = deduped.join('\n');
-
   let styleEl = document.getElementById('card-engine-dynamic-css');
   if (styleEl) {
     styleEl.textContent = css;
