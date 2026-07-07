@@ -20,7 +20,7 @@ const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
 .gallery-card {
   display: grid; position: relative; overflow: hidden;
   break-inside: avoid; margin-bottom: var(--spacing-md, 16px);
-  gap: var(--layout-gap, var(--spacing-sm, 8px));
+  gap: var(--spacing-sm, var(--layout-gap, 8px));
   cursor: pointer; text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
