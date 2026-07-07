@@ -20,7 +20,7 @@ const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
 .gallery-card {
   display: grid; position: relative; overflow: hidden;
   break-inside: avoid; margin-bottom: var(--spacing-md, 16px);
-  gap: var(--layout-gap, 8px);
+  gap: var(--layout-gap, var(--spacing-sm, 8px));
   cursor: pointer; text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
@@ -107,7 +107,7 @@ export const DEFAULT_STYLE_JSON = {
   layout: { grid: 'single', flow: 'horizontal', flow_vertical: [],
     slot_assignment: { a: 'date', b: 'title', c: 'highlights', d: 'capsule' },
     density: 'normal',
-    block_align: 'left', inline_align: 'left', spacing_scale: 'standard' },
+    block_align: 'left', inline_align: 'left', spacing_scale: 'md' },
   typo: {
     font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
     weight_gradient: 'balanced', size_scale: 'balanced_read', alignment_mode: 'left_flow',
