@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Style Editor v2</title>
-<link rel="stylesheet" href="style.css?v=20260707b">
+<link rel="stylesheet" href="style.css?v=20260707c">
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -316,7 +316,7 @@
                 <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
-                <label>点击色块选择配色（当前: <span id="paletteLabel">neutral_grey</span>）</label>
+                <label>点击色块选择配色（当前: <span id="paletteLabel">mono_grey</span>）</label>
                 <div class="palette-grid" id="paletteGrid"></div>
                 <div class="dim-row">
                     <label>Tone Mapping 色调映射</label>
@@ -616,8 +616,8 @@
 </div>
 
 <script type="module">
-import { supabase, checkAuth } from './script.js?v=20260707b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260707b';
+import { supabase, checkAuth } from './script.js?v=20260707c';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260707c';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -761,7 +761,7 @@ const MOCK_DIARY = {
 // ============================================================
 function buildStyleJson() {
     const activeSwatch = document.querySelector('.palette-swatch.active');
-    const harmony = activeSwatch ? activeSwatch.dataset.palette : 'neutral_grey';
+    const harmony = activeSwatch ? activeSwatch.dataset.palette : 'mono_grey';
 
     function v(key, fallback) { return DIMS[key]?.value || fallback; }
     function typoMap(key, fallback) {
@@ -865,7 +865,7 @@ function applyStyleJsonToPanel(sj) {
     updateFlowVerticalVisibility(l.flow);
 
     // palette
-    const palName = (sj.palette && sj.palette.harmony) ? sj.palette.harmony : 'neutral_grey';
+    const palName = (sj.palette && sj.palette.harmony) ? sj.palette.harmony : 'mono_grey';
     document.querySelectorAll('.palette-swatch').forEach(s => {
         s.classList.toggle('active', s.dataset.palette === palName);
     });
@@ -1062,11 +1062,11 @@ function refreshPaletteGrid() {
             dom.paletteLabel.textContent = r.value;
             debouncedUpdate();
         });
-        if (r.value === 'neutral_grey') swatch.classList.add('active');
+        if (r.value === 'mono_grey') swatch.classList.add('active');
         grid.appendChild(swatch);
     });
 
-    // 如果没有 neutral_grey（DB中不存在），自动选中第一个
+    // 默认选中 mono_grey; 若 DB 无此值则选第一个
     if (!grid.querySelector('.palette-swatch.active') && grid.firstChild) {
         grid.firstChild.classList.add('active');
         dom.paletteLabel.textContent = grid.firstChild.dataset.palette;
