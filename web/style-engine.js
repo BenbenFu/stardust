@@ -48,6 +48,8 @@ const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
   text-align: var(--typo-capsule-align, left); }
 .hl-sep { display: inline; }
 .cg-slot { display: block; }
+.card-header-text { font-size: calc(0.7rem * var(--typo-title-scale, 1.5)); color: var(--card-muted, inherit); }
+.card-side-text { font-size: calc(0.7rem * var(--typo-capsule-scale, 0.9)); color: var(--card-muted, inherit); }
 
 @keyframes hardware-blink {
   0%, 100% { opacity: 1; }
@@ -84,6 +86,7 @@ const ATTR_MAP = {
   'deco_tag_style':      { attr: 'data-style-deco-tag' },
   'deco_avatar_style':   { attr: 'data-style-deco-avatar' },
   'deco_box_style':      { attr: 'data-style-deco-box' },
+  'deco_box_target':     { attr: 'data-style-deco-box-target' },
   'deco_action_style':   { attr: 'data-style-deco-action' },
   // element
   'element_header_deco': { attr: 'data-style-element-header' },
@@ -93,21 +96,26 @@ const ATTR_MAP = {
   'element_bg_pattern':  { attr: 'data-style-element-bg' },
   'element_edge_deco':   { attr: 'data-style-element-edge' },
   'element_floating_deco':{ attr: 'data-style-element-float' },
-  // effect (filter_self & filter_backdrop share same attr, backdrop priority)
-  'effect_filter_self':     { attr: 'data-style-effect-filter' },
-  'effect_filter_backdrop': { attr: 'data-style-effect-filter' },
-  'effect_transform':   { attr: 'data-style-effect-transform' },
-  'effect_animation':   { attr: 'data-style-effect-animation' },
+  // effect (filter_self & filter_backdrop share same attr, backdrop priority — now per-element)
+  'effect_filter_self':     { attr: 'data-style-effect-filter', perElement: true,
+    elements: ['title','date','capsule','highlights'] },
+  'effect_filter_backdrop': { attr: 'data-style-effect-filter', perElement: true,
+    elements: ['title','date','capsule','highlights'] },
+  'effect_transform':   { attr: 'data-style-effect-transform', perElement: true,
+    elements: ['title','date','capsule','highlights'] },
+  'effect_animation':   { attr: 'data-style-effect-animation', perElement: true,
+    elements: ['title','date','capsule','highlights'] },
   // typo — per-element sub_dims
   'typo_font_family':       { attr: 'data-style-typo-font-family', perElement: true,
     elements: ['title','date','capsule','highlights'] },
   'typo_weight_gradient':   { attr: 'data-style-typo-weight-gradient' },
   'typo_size_scale':        { attr: 'data-style-typo-size-scale' },
-  'typo_alignment_mode':    { attr: 'data-style-typo-alignment-mode' },
+  'typo_alignment_mode':    { attr: 'data-style-typo-alignment-mode', perElement: true,
+    elements: ['title','date','capsule','highlights'] },
   'typo_spacing_tightness': { attr: 'data-style-typo-spacing-tightness', perElement: true,
     elements: ['title','date','capsule','highlights'] },
   'typo_text_decoration':   { attr: 'data-style-typo-text-decoration', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
+    multiSelect: true, elements: ['title','date','capsule','highlights'] },
 };
 
 // ============================================================
@@ -122,15 +130,23 @@ export const DEFAULT_STYLE_JSON = {
     block_align: 'left', inline_align: 'left', spacing_scale: 'md' },
   typo: {
     font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
-    weight_gradient: 'balanced', size_scale: 'balanced_read', alignment_mode: 'left_flow',
+    weight_gradient: 'balanced', size_scale: 'petite',
+    alignment_mode: { title:'left_flow', date:'left_flow', capsule:'left_flow', highlights:'left_flow' },
     spacing_tightness: { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
-    text_decoration: { title:'none', date:'none', capsule:'none', highlights:'none' }
+    text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
   border: { radius_size:'none', border_width:'none', border_style:'solid', border_shadow:'none' },
-  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', box_style:'none', action_style:'none' },
-  element: { header_deco:'none', side_accent:'none', divider:'none', corner_badge:'none',
+  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', box_style:'none',
+    box_target:'global', action_style:'none' },
+  element: { header_deco:'none', header_text:'',
+    side_accent:'none', side_text:'',
+    divider:'none', corner_badge:'none',
     bg_pattern:'none', edge_deco:'none', floating_deco:'none' },
-  effect: { filter_self:'none', filter_backdrop:'none', transform:'none', animation:'none' },
+  effect: {
+    filter_self: { title:'none', date:'none', capsule:'none', highlights:'none' },
+    filter_backdrop: { title:'none', date:'none', capsule:'none', highlights:'none' },
+    transform: { title:'none', date:'none', capsule:'none', highlights:'none' },
+    animation: { title:'none', date:'none', capsule:'none', highlights:'none' } },
   container_group: 'none'
 };
 
@@ -333,36 +349,81 @@ function buildDataAttrs(styleJson) {
   if (!styleJson) return '';
 
   const attrs = {};
-  const hasBackdrop = styleJson.effect
-    && styleJson.effect.filter_backdrop
-    && styleJson.effect.filter_backdrop !== 'none';
 
   // palette: 生成 data-style-palette="harmony_value" 属性
   if (styleJson.palette && styleJson.palette.harmony) {
     attrs['data-style-palette'] = escapeAttr(styleJson.palette.harmony);
   }
 
+  // --- Per-element backdrop priority for effect filter_self/filter_backdrop ---
+  // Both share data-style-effect-filter attr. Per-element: if element X has backdrop, skip self for X.
+  // Backward compat: if values are strings, normalize to per-element maps.
+  const eff = styleJson.effect || {};
+  const ELEMENTS = ['title','date','capsule','highlights'];
+
+  function normalizePerElement(value) {
+    if (typeof value === 'string') {
+      const map = {};
+      ELEMENTS.forEach(el => { map[el] = value; });
+      return map;
+    }
+    return value || {};
+  }
+
+  const backdropMap = normalizePerElement(eff.filter_backdrop);
+  const selfMap = normalizePerElement(eff.filter_self);
+
+  for (const el of ELEMENTS) {
+    const bVal = backdropMap[el];
+    const sVal = selfMap[el];
+    if (bVal && bVal !== 'none') {
+      attrs['data-style-effect-filter-' + el] = escapeAttr(bVal);
+    } else if (sVal && sVal !== 'none') {
+      attrs['data-style-effect-filter-' + el] = escapeAttr(sVal);
+    }
+  }
+
+  // --- General loop for all other dims ---
   for (const [dim, subDims] of Object.entries(styleJson)) {
     if (dim === 'palette' || dim === 'container_group') continue;
     if (!subDims || typeof subDims !== 'object') continue;
 
     for (const [subDim, value] of Object.entries(subDims)) {
+      // Skip filter_self and filter_backdrop (handled above)
+      if (dim === 'effect' && (subDim === 'filter_self' || subDim === 'filter_backdrop')) continue;
+
+      // Skip header_text and side_text (content fields, not style attrs)
+      if (subDim === 'header_text' || subDim === 'side_text') continue;
+
       if (value == null || value === 'none') continue;
 
       const mapKey = dim + '_' + subDim;
       const mapping = ATTR_MAP[mapKey];
       if (!mapping) continue;
 
-      // filter_self: backdrop 优先，self 仅在不设 backdrop 时生效
-      if (dim === 'effect' && subDim === 'filter_self' && hasBackdrop) continue;
-
-      if (mapping.perElement && typeof value === 'object') {
+      if (mapping.perElement) {
+        // Per-element: normalize string → object (backward compat)
+        const perElVal = (typeof value === 'object' && !Array.isArray(value)) ? value
+          : (() => { const m = {}; mapping.elements.forEach(e => m[e] = value); return m; })();
         for (const el of mapping.elements) {
-          const elVal = value[el];
+          const elVal = perElVal[el];
           if (elVal == null || elVal === 'none') continue;
-          attrs[mapping.attr + '-' + el] = escapeAttr(elVal);
+          if (Array.isArray(elVal)) {
+            if (elVal.length === 0) continue;
+            attrs[mapping.attr + '-' + el] = escapeAttr(elVal.join(' '));
+          } else {
+            attrs[mapping.attr + '-' + el] = escapeAttr(elVal);
+          }
         }
+      } else if (Array.isArray(value)) {
+        // Global multi-select: ['a', 'b']
+        if (value.length === 0) continue;
+        attrs[mapping.attr] = escapeAttr(value.join(' '));
+      } else if (typeof value === 'object' && value !== null && !mapping.perElement) {
+        // Backward compat: value is object but mapping is global — skip (shouldn't normally happen)
+        continue;
       } else {
+        // Global string (backward compat)
         attrs[mapping.attr] = escapeAttr(String(value));
       }
     }
@@ -410,6 +471,22 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
 
   const containerGroup = (styleJson && styleJson.container_group) || 'none';
 
+  // Header text / side text DOM elements
+  const elCfg = (styleJson && styleJson.element) || {};
+  const headerText = elCfg.header_text || '';
+  const headerDeco = elCfg.header_deco || 'none';
+  const sideText = elCfg.side_text || '';
+  const sideAccent = elCfg.side_accent || 'none';
+
+  let headerHtml = '';
+  if (headerDeco !== 'none' && headerText) {
+    headerHtml = '<div class="card-header-text">' + escapeHtml(headerText) + '</div>';
+  }
+  let sideHtml = '';
+  if (sideAccent !== 'none' && sideText) {
+    sideHtml = '<div class="card-side-text">' + escapeHtml(sideText) + '</div>';
+  }
+
   if (containerGroup === 'none') {
     // --- slot skeleton 模式 ---
     const slotAssignment = (styleJson && styleJson.layout && styleJson.layout.slot_assignment)
@@ -440,7 +517,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       + ' href="diary.html?date=' + escapeAttr(dateRaw) + '" target="_blank"'
       + ' title="' + escapeAttr(d.title || '') + '"'
       + ' data-id="' + escapeAttr(String(id)) + '"'
-      + '>' + slotHtml + '</a>';
+      + '>' + headerHtml + slotHtml + sideHtml + '</a>';
     return html;
   }
 
@@ -498,6 +575,8 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     + ' data-id="' + escapeAttr(String(id)) + '"'
     + '>';
 
+  html += headerHtml;
+
   for (const slotId of slotOrder) {
     const deco = slotDecoMap[slotId] || {};
     const slotAttr = Object.entries(deco)
@@ -516,7 +595,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
         + (slotAttr ? ' ' + slotAttr : '') + '>' + content + '</div>';
     }
   }
-  html += '</a>';
+  html += sideHtml + '</a>';
   return html;
 }
 

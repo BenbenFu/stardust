@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Style Editor v2</title>
-<link rel="stylesheet" href="style.css?v=20260707c">
+<link rel="stylesheet" href="style.css?v=20260708a">
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -39,9 +39,9 @@
     .panel-left, .panel-center, .panel-right {
         height: 100%;
     }
-    .panel-left  > *:not(.dim-panel),
+    .panel-left  > *:not(.tab-content),
     .panel-right > *:not(.json-display) { flex-shrink: 0; }
-    .panel-left  .dim-panel   { flex: 1; overflow-y: auto; min-height: 0; }
+    .panel-left  .tab-content  { flex: 1; overflow-y: auto; min-height: 0; }
     .panel-center .preview-area { flex: 1; overflow-y: auto; min-height: 0; }
     .panel-right .json-display { flex: 1; overflow-y: auto; min-height: 0; }
 
@@ -201,6 +201,17 @@
     .modal-field input { width: 100%; padding: 4px 6px; font-size: 11px; font-family: monospace; }
     .modal-actions { display: flex; gap: 6px; justify-content: flex-end; margin-top: 10px; }
     .modal-err { font-size: 9px; color: var(--pixel-alert); min-height: 13px; }
+
+    /* ===== Tab 栏 ===== */
+    .tab-bar { display: flex; gap: 0; flex-shrink: 0; border-bottom: 2px solid var(--pixel-dark); }
+    .tab-btn { flex: 1; border: none; border-bottom: 2px solid transparent; padding: 6px 4px;
+        font-size: 10px; font-weight: bold; font-family: "Courier New", monospace;
+        background: transparent; color: var(--pixel-dim); cursor: pointer; letter-spacing: 1px;
+        margin-bottom: -2px; }
+    .tab-btn:hover { background: rgba(0,0,0,0.07); color: var(--pixel-dark); }
+    .tab-btn.active { border-bottom-color: var(--pixel-alert); color: var(--pixel-dark);
+        background: rgba(0,0,0,0.04); }
+    .tab-content { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 0; }
 </style>
 </head>
 <body>
@@ -230,8 +241,15 @@
         <div id="statusMsg" class="status">正在连接数据库...</div>
     </div>
 
-    <!-- ===== 维度面板 ===== -->
-    <div class="dim-panel" id="dimPanel">
+    <!-- ===== Tab 栏 ===== -->
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="global">[ 全局 ]</button>
+        <button class="tab-btn" data-tab="field">[ 字段级 ]</button>
+        <button class="tab-btn" data-tab="container">[ 容器 ]</button>
+    </div>
+
+    <!-- ===== Tab 1: 全局 ===== -->
+    <div class="tab-content" id="tab-global">
 
         <!-- [粗] Layout 布局骨架 -->
         <div class="dim-group" id="grp-layout">
@@ -329,17 +347,13 @@
             </div>
         </div>
 
-        <!-- [中] Typo 排版 -->
+        <!-- [中] Typo Presets (全局排版预设) -->
         <div class="dim-group" id="grp-typo">
             <div class="dim-group-header" data-grp="typo">
-                <span>[中] TYPO 排版规则 <button class="btn-add-opt" data-grp="typo" title="新增排版选项">+新增</button></span>
+                <span>[中] TYPO PRESETS 全局排版 <button class="btn-add-opt" data-grp="typo" title="新增排版选项">+新增</button></span>
                 <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
-                <div class="dim-row">
-                    <label>Font Family 字体族</label>
-                    <select id="d-font-family"></select>
-                </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
                         <label>Weight Gradient 字重梯度</label>
@@ -349,20 +363,6 @@
                         <label>Size Scale 字号阶梯</label>
                         <select id="d-size-scale"></select>
                     </div>
-                </div>
-                <div class="dim-row-inline">
-                    <div class="dim-row">
-                        <label>Alignment Mode 对齐</label>
-                        <select id="d-alignment-mode"></select>
-                    </div>
-                    <div class="dim-row">
-                        <label>Spacing Tightness 字间距</label>
-                        <select id="d-spacing-tightness"></select>
-                    </div>
-                </div>
-                <div class="dim-row">
-                    <label>Text Decoration 文字装饰</label>
-                    <select id="d-text-decoration"></select>
                 </div>
             </div>
         </div>
@@ -423,6 +423,10 @@
                     </div>
                 </div>
                 <div class="dim-row">
+                    <label>Box Target 应用目标</label>
+                    <select id="d-box-target"></select>
+                </div>
+                <div class="dim-row">
                     <label>Action 操作区</label>
                     <select id="d-action-style"></select>
                 </div>
@@ -448,6 +452,16 @@
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
+                        <label>Header Text 顶栏文字</label>
+                        <input type="text" id="d-header-text" placeholder="输入顶栏文字内容">
+                    </div>
+                    <div class="dim-row">
+                        <label>Side Text 侧边文字</label>
+                        <input type="text" id="d-side-text" placeholder="输入侧边文字内容">
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
                         <label>Divider 分隔线</label>
                         <select id="d-divider"></select>
                     </div>
@@ -469,36 +483,6 @@
                 <div class="dim-row">
                     <label>Floating Deco 浮动</label>
                     <select id="d-floating-deco"></select>
-                </div>
-            </div>
-        </div>
-
-        <!-- [细] Effect 动效 -->
-        <div class="dim-group" id="grp-effect">
-            <div class="dim-group-header" data-grp="effect">
-                <span>[细] EFFECT 动效层 <button class="btn-add-opt" data-grp="effect" title="新增动效选项">+新增</button></span>
-                <span class="toggle-icon">v</span>
-            </div>
-            <div class="dim-group-body">
-                <div class="dim-row-inline">
-                    <div class="dim-row">
-                        <label>Filter Self 自身滤镜</label>
-                        <select id="d-filter-self"></select>
-                    </div>
-                    <div class="dim-row">
-                        <label>Filter Backdrop 背景滤镜</label>
-                        <select id="d-filter-backdrop"></select>
-                    </div>
-                </div>
-                <div class="dim-row-inline">
-                    <div class="dim-row">
-                        <label>Transform 变换</label>
-                        <select id="d-transform"></select>
-                    </div>
-                    <div class="dim-row">
-                        <label>Animation 动画</label>
-                        <select id="d-animation"></select>
-                    </div>
                 </div>
             </div>
         </div>
@@ -534,7 +518,122 @@
             </div>
         </div>
 
-    </div><!-- /dim-panel -->
+    </div><!-- /tab-global -->
+
+    <!-- ===== Tab 2: 字段级 ===== -->
+    <div class="tab-content" id="tab-field" style="display:none;">
+
+        <!-- Field Selector -->
+        <div class="dim-group">
+            <div class="dim-group-header">
+                <span>FIELD SELECTOR 字段选择</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>当前编辑字段</label>
+                    <select id="fieldSelector">
+                        <option value="title">title 标题</option>
+                        <option value="date">date 日期</option>
+                        <option value="highlights">highlights 精华句</option>
+                        <option value="capsule">capsule 胶囊名</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Per-field Typo -->
+        <div class="dim-group">
+            <div class="dim-group-header">
+                <span>PER-FIELD TYPO 字段排版</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>Font Family 字体族</label>
+                    <select id="pf-font-family"></select>
+                </div>
+                <div class="dim-row">
+                    <label>Alignment Mode 对齐</label>
+                    <select id="pf-alignment-mode"></select>
+                </div>
+                <div class="dim-row">
+                    <label>Spacing Tightness 字间距</label>
+                    <select id="pf-spacing-tightness"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Decoration multi-select -->
+        <div class="dim-group">
+            <div class="dim-group-header">
+                <span>TEXT DECORATION 文字装饰</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>Underline 下划线系</label>
+                    <div id="td-group-underline" style="display:flex;flex-wrap:wrap;gap:6px;font-size:10px;"></div>
+                </div>
+                <div class="dim-row">
+                    <label>Prefix 前缀系</label>
+                    <div id="td-group-prefix" style="display:flex;flex-wrap:wrap;gap:6px;font-size:10px;"></div>
+                </div>
+                <div class="dim-row">
+                    <label>Container 容器系</label>
+                    <div id="td-group-container" style="display:flex;flex-wrap:wrap;gap:6px;font-size:10px;"></div>
+                </div>
+                <div class="dim-row">
+                    <label>Transform 变换系</label>
+                    <div id="td-group-transform" style="display:flex;flex-wrap:wrap;gap:6px;font-size:10px;"></div>
+                </div>
+                <div class="dim-row">
+                    <label>Visual 视觉系</label>
+                    <div id="td-group-visual" style="display:flex;flex-wrap:wrap;gap:6px;font-size:10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Per-field Effect -->
+        <div class="dim-group">
+            <div class="dim-group-header">
+                <span>PER-FIELD EFFECT 字段动效</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Filter Self 自身滤镜</label>
+                        <select id="pf-filter-self"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Filter Backdrop 背景滤镜</label>
+                        <select id="pf-filter-backdrop"></select>
+                    </div>
+                </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>Transform 变换</label>
+                        <select id="pf-transform"></select>
+                    </div>
+                    <div class="dim-row">
+                        <label>Animation 动画</label>
+                        <select id="pf-animation"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /tab-field -->
+
+    <!-- ===== Tab 3: 容器 ===== -->
+    <div class="tab-content" id="tab-container" style="display:none;">
+        <div style="text-align:center;padding:40px 20px;color:var(--pixel-dim);font-size:12px;">
+            &gt;&gt;&gt; COMING SOON &lt;&lt;&lt;<br><br>
+            容器组 (container_group) 和高级装饰功能正在开发中。
+        </div>
+    </div><!-- /tab-container -->
+
 </div>
 
 <!-- ========== 中：实时预览 ========== -->
@@ -616,8 +715,8 @@
 </div>
 
 <script type="module">
-import { supabase, checkAuth } from './script.js?v=20260707c';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260707g';
+import { supabase, checkAuth } from './script.js?v=20260708a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260708a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -649,6 +748,7 @@ const DIM_CONFIG = {
     tag_style:    { table: 'style_deco_options', col: 'sub_dim', colVal: 'tag_style',    label: 'Deco / Tag' },
     avatar_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'avatar_style', label: 'Deco / Avatar' },
     box_style:    { table: 'style_deco_options', col: 'sub_dim', colVal: 'box_style',    label: 'Deco / Box' },
+    box_target:   { table: 'style_deco_options', col: 'sub_dim', colVal: 'box_target',  label: 'Deco / Box Target' },
     action_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'action_style', label: 'Deco / Action' },
     // element (style_element_options — 单数!)
     header_deco:   { table: 'style_element_options', col: 'sub_dim', colVal: 'header_deco',   label: 'Element / Header' },
@@ -681,6 +781,55 @@ let dimensionCache  = {};
 let currentAddDim   = null;
 
 // ============================================================
+// Per-field state (字段级编辑状态)
+// ============================================================
+let currentField = 'title';
+
+const PF_FIELDS = ['title', 'date', 'highlights', 'capsule'];
+
+let perFieldState = {
+  font_family:       { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
+  alignment_mode:    { title:'left_flow',   date:'left_flow',   capsule:'left_flow',   highlights:'left_flow' },
+  spacing_tightness: { title:'normal',      date:'normal',      capsule:'normal',      highlights:'normal' },
+  text_decoration:   { title:[],            date:[],            capsule:[],            highlights:[] },
+  filter_self:       { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
+  filter_backdrop:   { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
+  transform:         { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
+  animation:         { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
+};
+
+// Per-field dropdown DOM refs (pf- prefix)
+const PF_DIMS = {};
+['font-family', 'alignment-mode', 'spacing-tightness', 'filter-self', 'filter-backdrop', 'transform', 'animation'].forEach(id => {
+  const key = id.replace(/-/g, '_');
+  PF_DIMS[key] = document.getElementById('pf-' + id);
+});
+
+// Backward compat helpers: normalize old string values to per-element maps
+function normalizePerEl(val, defaultVal) {
+  if (typeof val === 'string') {
+    return { title: val, date: val, capsule: val, highlights: val };
+  }
+  return {
+    title:      (val && val.title)      || defaultVal,
+    date:       (val && val.date)       || defaultVal,
+    capsule:    (val && val.capsule)    || defaultVal,
+    highlights: (val && val.highlights) || defaultVal,
+  };
+}
+
+function normalizePerElArray(val) {
+  const result = {};
+  PF_FIELDS.forEach(el => {
+    const v = val && val[el];
+    if (Array.isArray(v)) result[el] = v;
+    else if (typeof v === 'string' && v !== 'none' && v) result[el] = [v];
+    else result[el] = [];
+  });
+  return result;
+}
+
+// ============================================================
 // DOM 引用
 // ============================================================
 const dom = {
@@ -697,7 +846,6 @@ const dom = {
     btnRevertDb:   document.getElementById('btnRevertDb'),
     paletteGrid:   document.getElementById('paletteGrid'),
     paletteLabel:  document.getElementById('paletteLabel'),
-    dimPanel:      document.getElementById('dimPanel'),
     // 弹窗
     addOptModal:    document.getElementById('addOptModal'),
     modalTitle:     document.getElementById('modalTitle'),
@@ -764,10 +912,6 @@ function buildStyleJson() {
     const harmony = activeSwatch ? activeSwatch.dataset.palette : 'mono_grey';
 
     function v(key, fallback) { return DIMS[key]?.value || fallback; }
-    function typoMap(key, fallback) {
-        const val = v(key, fallback);
-        return { title: val, date: val, capsule: val, highlights: val };
-    }
 
     const sj = {
         palette: { harmony, tone: v('palette_tone', 'light_standard'), slot: v('palette_slot', 'original') },
@@ -788,12 +932,12 @@ function buildStyleJson() {
             spacing_scale: v('spacing_scale', 'md'),
         },
         typo: {
-            font_family: typoMap('font_family', 'system_sans'),
-            weight_gradient: v('weight_gradient', 'balanced'),
-            size_scale: v('size_scale', 'balanced_read'),
-            alignment_mode: v('alignment_mode', 'left_flow'),
-            spacing_tightness: typoMap('spacing_tightness', 'normal'),
-            text_decoration: typoMap('text_decoration', 'none'),
+            font_family:       perFieldState.font_family,
+            weight_gradient:   v('weight_gradient', 'balanced'),
+            size_scale:        v('size_scale', 'petite'),
+            alignment_mode:    perFieldState.alignment_mode,
+            spacing_tightness: perFieldState.spacing_tightness,
+            text_decoration:   perFieldState.text_decoration,
         },
         border: {
             border_style: v('border_style', 'solid'),
@@ -806,11 +950,14 @@ function buildStyleJson() {
             tag_style: v('tag_style', 'none'),
             avatar_style: v('avatar_style', 'none'),
             box_style: v('box_style', 'none'),
+            box_target: v('box_target', 'global'),
             action_style: v('action_style', 'none'),
         },
         element: {
             header_deco: v('header_deco', 'none'),
+            header_text: document.getElementById('d-header-text')?.value || '',
             side_accent: v('side_accent', 'none'),
+            side_text: document.getElementById('d-side-text')?.value || '',
             divider: v('divider', 'none'),
             corner_badge: v('corner_badge', 'none'),
             bg_pattern: v('bg_pattern', 'none'),
@@ -818,10 +965,10 @@ function buildStyleJson() {
             floating_deco: v('floating_deco', 'none'),
         },
         effect: {
-            filter_self: v('filter_self', 'none'),
-            filter_backdrop: v('filter_backdrop', 'none'),
-            transform: v('transform', 'none'),
-            animation: v('animation', 'none'),
+            filter_self:     perFieldState.filter_self,
+            filter_backdrop: perFieldState.filter_backdrop,
+            transform:       perFieldState.transform,
+            animation:       perFieldState.animation,
         },
         container_group: v('containerGroup', 'none'),
     };
@@ -873,13 +1020,15 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.palette_tone, (sj.palette || {}).tone);
     setSelect(DIMS.palette_slot, (sj.palette || {}).slot);
 
-    // typo
-    setSelect(DIMS.font_family,       (ty.font_family || {}).title);
+    // typo — global dims stay as setSelect
     setSelect(DIMS.weight_gradient,   ty.weight_gradient);
     setSelect(DIMS.size_scale,        ty.size_scale);
-    setSelect(DIMS.alignment_mode,    ty.alignment_mode);
-    setSelect(DIMS.spacing_tightness, (ty.spacing_tightness || {}).title);
-    setSelect(DIMS.text_decoration,   (ty.text_decoration || {}).title);
+
+    // typo — per-element dims -> perFieldState
+    perFieldState.font_family       = normalizePerEl(ty.font_family, 'system_sans');
+    perFieldState.alignment_mode    = normalizePerEl(ty.alignment_mode, 'left_flow');
+    perFieldState.spacing_tightness = normalizePerEl(ty.spacing_tightness, 'normal');
+    perFieldState.text_decoration   = normalizePerElArray(ty.text_decoration);
 
     // border
     setSelect(DIMS.border_style,  bo.border_style);
@@ -892,22 +1041,30 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.tag_style,    dc.tag_style);
     setSelect(DIMS.avatar_style, dc.avatar_style);
     setSelect(DIMS.box_style,    dc.box_style);
+    setSelect(DIMS.box_target,   dc.box_target || 'global');
     setSelect(DIMS.action_style, dc.action_style);
 
     // element
     setSelect(DIMS.header_deco,   el.header_deco);
     setSelect(DIMS.side_accent,   el.side_accent);
+    const headerTextInput = document.getElementById('d-header-text');
+    const sideTextInput   = document.getElementById('d-side-text');
+    if (headerTextInput) headerTextInput.value = el.header_text || '';
+    if (sideTextInput)   sideTextInput.value   = el.side_text   || '';
     setSelect(DIMS.divider,       el.divider);
     setSelect(DIMS.corner_badge,  el.corner_badge);
     setSelect(DIMS.bg_pattern,    el.bg_pattern);
     setSelect(DIMS.edge_deco,     el.edge_deco);
     setSelect(DIMS.floating_deco, el.floating_deco);
 
-    // effect
-    setSelect(DIMS.filter_self,     ef.filter_self);
-    setSelect(DIMS.filter_backdrop, ef.filter_backdrop);
-    setSelect(DIMS.transform,       ef.transform);
-    setSelect(DIMS.animation,       ef.animation);
+    // effect — per-element dims -> perFieldState
+    perFieldState.filter_self     = normalizePerEl(ef.filter_self, 'none');
+    perFieldState.filter_backdrop = normalizePerEl(ef.filter_backdrop, 'none');
+    perFieldState.transform       = normalizePerEl(ef.transform, 'none');
+    perFieldState.animation       = normalizePerEl(ef.animation, 'none');
+
+    // Load current field values into UI
+    loadFieldToUI(currentField);
 
     // container_group
     setSelect(DIMS.containerGroup, cg);
@@ -926,6 +1083,116 @@ function updateFlowVerticalVisibility(flowVal) {
     // checkbox 区域始终显示，flow 仅作为预设
     const row = document.getElementById('flowVerticalRow');
     if (row) row.style.display = '';
+}
+
+// ============================================================
+// Per-field UI: load current field values into dropdowns & checkboxes
+// ============================================================
+function loadFieldToUI(field) {
+    setSelect(PF_DIMS.font_family,       perFieldState.font_family[field]);
+    setSelect(PF_DIMS.alignment_mode,    perFieldState.alignment_mode[field]);
+    setSelect(PF_DIMS.spacing_tightness, perFieldState.spacing_tightness[field]);
+    setSelect(PF_DIMS.filter_self,       perFieldState.filter_self[field]);
+    setSelect(PF_DIMS.filter_backdrop,   perFieldState.filter_backdrop[field]);
+    setSelect(PF_DIMS.transform,         perFieldState.transform[field]);
+    setSelect(PF_DIMS.animation,         perFieldState.animation[field]);
+    refreshTextDecorationCheckboxes(field);
+}
+
+// ============================================================
+// Populate a <select> from dimensionCache rows
+// ============================================================
+function populateSelect(el, rows, subDim) {
+    if (!el) return;
+    const filtered = rows.filter(r => r.sub_dim === subDim);
+    el.innerHTML = '<option value="none">--</option>';
+    filtered
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        .forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.option_key || r.value;
+            opt.textContent = r.label || r.option_key || r.value;
+            el.appendChild(opt);
+        });
+}
+
+// ============================================================
+// Text Decoration multi-select: populate 5 groups from DB
+// ============================================================
+function populateTextDecorationGroups() {
+    const rows = (dimensionCache['style_typo_options'] || [])
+        .filter(r => r.sub_dim === 'text_decoration');
+
+    const groups = { underline: [], prefix: [], container: [], transform: [], visual: [] };
+
+    // 显式分组映射（DB 值 → 组名）
+    const GROUP_MAP = {
+        underline_solid: 'underline', underline_wavy: 'underline', underline_dashed: 'underline', strikethrough: 'underline',
+        prefix_dot: 'prefix', prefix_bar: 'prefix', prefix_number: 'prefix',
+        capsule_tag: 'container', capsule_badge: 'container',
+        uppercase: 'transform', italic: 'transform',
+        gradient_text: 'visual', text_stroke: 'visual', text_glow: 'visual', text_3d: 'visual',
+    };
+
+    rows.forEach(r => {
+        const key = r.option_key || r.value;
+        if (key === 'none') return; // none 是重置选项，不显示为可勾选
+        const group = GROUP_MAP[key] || 'visual';
+        groups[group].push(r);
+    });
+
+    Object.entries(groups).forEach(([group, items]) => {
+        const container = document.getElementById('td-group-' + group);
+        if (!container) return;
+        container.innerHTML = '';
+        items.forEach(r => {
+            const key = r.option_key || r.value;
+            const label = document.createElement('label');
+            label.style.cssText = 'display:flex;align-items:center;gap:2px;font-size:10px;text-transform:none;letter-spacing:0;margin:0;';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = key;
+            cb.dataset.group = group;
+            cb.addEventListener('change', () => {
+                const arr = perFieldState.text_decoration[currentField];
+                if (cb.checked) {
+                    if (!arr.includes(key)) arr.push(key);
+                } else {
+                    const idx = arr.indexOf(key);
+                    if (idx >= 0) arr.splice(idx, 1);
+                }
+                debouncedUpdate();
+            });
+            label.appendChild(cb);
+            label.appendChild(document.createTextNode(' ' + (r.label || key)));
+            container.appendChild(label);
+        });
+    });
+}
+
+function refreshTextDecorationCheckboxes(field) {
+    const activeValues = perFieldState.text_decoration[field] || [];
+    document.querySelectorAll('[id^="td-group-"] input[type="checkbox"]').forEach(cb => {
+        cb.checked = activeValues.includes(cb.value);
+    });
+}
+
+// ============================================================
+// Apply per-field dropdown options from dimensionCache
+// ============================================================
+function applyPerFieldOptionsToUI() {
+    const typoRows = dimensionCache['style_typo_options'] || [];
+    const effectRows = dimensionCache['style_effect_options'] || [];
+
+    populateSelect(PF_DIMS.font_family,       typoRows,   'font_family');
+    populateSelect(PF_DIMS.alignment_mode,    typoRows,   'alignment_mode');
+    populateSelect(PF_DIMS.spacing_tightness, typoRows,   'spacing_tightness');
+    populateSelect(PF_DIMS.filter_self,       effectRows, 'filter_self');
+    populateSelect(PF_DIMS.filter_backdrop,   effectRows, 'filter_backdrop');
+    populateSelect(PF_DIMS.transform,         effectRows, 'transform');
+    populateSelect(PF_DIMS.animation,         effectRows, 'animation');
+
+    populateTextDecorationGroups();
 }
 
 // ============================================================
@@ -1274,6 +1541,7 @@ async function saveNewOption() {
 
         await loadDimensionOptions();
         applyDimensionOptionsToUI();
+        applyPerFieldOptionsToUI();
         injectDynamicStyles({
             palette:         dimensionCache['style_palette_options']          || [],
             layout:          dimensionCache['style_layout_options']           || [],
@@ -1403,6 +1671,49 @@ function findFirstDimKeyByGroup(grp) {
 }
 
 // ============================================================
+// Tab 切换逻辑
+// ============================================================
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+        btn.classList.add('active');
+        const target = document.getElementById('tab-' + btn.dataset.tab);
+        if (target) target.style.display = 'block';
+    });
+});
+
+// ============================================================
+// Field selector change handler (字段级 Tab)
+// ============================================================
+const fieldSelectorEl = document.getElementById('fieldSelector');
+if (fieldSelectorEl) {
+    fieldSelectorEl.addEventListener('change', (e) => {
+        currentField = e.target.value;
+        loadFieldToUI(currentField);
+    });
+}
+
+// ============================================================
+// Per-field dropdown change handlers
+// ============================================================
+Object.keys(PF_DIMS).forEach(key => {
+    if (!PF_DIMS[key]) return;
+    PF_DIMS[key].addEventListener('change', () => {
+        perFieldState[key][currentField] = PF_DIMS[key].value || 'none';
+        debouncedUpdate();
+    });
+});
+
+// ============================================================
+// header_text / side_text 文本输入事件
+// ============================================================
+['d-header-text', 'd-side-text'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', debouncedUpdate);
+});
+
+// ============================================================
 // 初始化
 // ============================================================
 async function init() {
@@ -1424,6 +1735,7 @@ async function init() {
         });
 
         applyDimensionOptionsToUI();
+        applyPerFieldOptionsToUI();
         await loadPool();
         applyStyleJsonToPanel(DEFAULT_STYLE_JSON);
         updatePreview();
