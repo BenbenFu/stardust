@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Style Editor v2</title>
-<link rel="stylesheet" href="style.css?v=20260710a">
+<link rel="stylesheet" href="style.css?v=20260710b">
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -617,7 +617,7 @@
 
         <!-- 容器组选择器 -->
         <div class="dim-group" id="grp-container-group">
-            <div class="dim-group-header" data-grp="containerGroup">
+            <div class="dim-group-header" data-grp="container_group">
                 <span>CONTAINER GROUP 容器组</span>
                 <span class="toggle-icon">v</span>
             </div>
@@ -738,8 +738,8 @@
 </div>
 
 <script type="module">
-import { supabase, checkAuth } from './script.js?v=20260710a';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260710a';
+import { supabase, checkAuth } from './script.js?v=20260710b';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260710b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -787,7 +787,7 @@ const DIM_CONFIG = {
     transform:       { table: 'style_effect_options', col: 'sub_dim', colVal: 'transform',       label: 'Effect / Transform' },
     animation:       { table: 'style_effect_options', col: 'sub_dim', colVal: 'animation',       label: 'Effect / Animation' },
     // container_group (style_container_group_options) — 全表，不过滤
-    containerGroup: { table: 'style_container_group_options', isContainerGroup: true, label: 'Container Group' },
+    container_group: { table: 'style_container_group_options', isContainerGroup: true, label: 'Container Group' },
     // palette — harmony 走色板网格（特殊），tone/slot 走普通下拉
     palette:       { table: 'style_palette_options', isPalette: true, label: 'Palette (Harmony)' },
     palette_tone:  { table: 'style_palette_options', col: 'sub_dim', colVal: 'tone_mapping',   label: 'Palette / Tone' },
@@ -997,7 +997,7 @@ function buildStyleJson() {
             transform:       perFieldState.transform,
             animation:       perFieldState.animation,
         },
-        container_group: v('containerGroup', 'none'),
+        container_group: v('container_group', 'none'),
     };
 
     const customCss = DIMS.customCss?.value.trim();
@@ -1094,7 +1094,7 @@ function applyStyleJsonToPanel(sj) {
     loadFieldToUI(currentField);
 
     // container_group
-    setSelect(DIMS.containerGroup, cg);
+    setSelect(DIMS.container_group, cg);
     updateContainerStructure();
 
     DIMS.customCss.value = sj.customCss || '';
@@ -1634,12 +1634,12 @@ Object.values(DIMS).forEach(el => {
 });
 
 // container_group structure preview
-if (DIMS.containerGroup) {
-    DIMS.containerGroup.addEventListener('change', updateContainerStructure);
+if (DIMS.container_group) {
+    DIMS.container_group.addEventListener('change', updateContainerStructure);
 }
 
 function updateContainerStructure() {
-    const cgVal = DIMS.containerGroup?.value || 'none';
+    const cgVal = DIMS.container_group?.value || 'none';
     const descEl = document.getElementById('cg-description');
     const structEl = document.getElementById('cg-structure');
     if (!descEl || !structEl) return;
@@ -1771,7 +1771,7 @@ function findFirstDimKeyByGroup(grp) {
     if (grp === 'palette')          return 'palette';
     if (grp === 'layout')           return 'grid';
     if (grp === 'border')           return 'border_style';
-    if (grp === 'containerGroup')   return 'containerGroup';
+    if (grp === 'container_group')   return 'container_group';
     const tableMap = {
         typo:    'style_typo_options',
         border:  'style_border_options',
