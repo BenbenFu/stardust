@@ -48,8 +48,23 @@ const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
   text-align: var(--typo-capsule-align, left); }
 .hl-sep { display: inline; }
 .cg-slot { display: block; }
-.card-header-text { font-size: calc(0.7rem * var(--typo-title-scale, 1.5)); color: var(--card-muted, inherit); }
-.card-side-text { font-size: calc(0.7rem * var(--typo-capsule-scale, 0.9)); color: var(--card-muted, inherit); }
+.card-header-text {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+  font-size: 0.6rem; line-height: 1.3;
+  color: var(--card-muted, inherit);
+  padding: 2px 8px; pointer-events: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-side-text {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 3;
+  writing-mode: vertical-rl;
+  font-size: 0.55rem; line-height: 1.3;
+  color: var(--card-muted, inherit);
+  padding: 6px 1px; pointer-events: none;
+  letter-spacing: 0.05em;
+  white-space: nowrap; overflow: hidden;
+}
+.gallery-card[data-style-element-side$="_right"] .card-side-text { left: auto; right: 0; }
 
 @keyframes hardware-blink {
   0%, 100% { opacity: 1; }
@@ -512,8 +527,10 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
         + fieldContent[field] + '</div>';
     }
 
+    let cardStyle = paletteStyle;
+    if (headerHtml) cardStyle += ';padding-top:1.1rem';
     let html = '<a class="gallery-card"' + dataAttrs
-      + ' style="' + paletteStyle + '"'
+      + ' style="' + cardStyle + '"'
       + ' href="diary.html?date=' + escapeAttr(dateRaw) + '" target="_blank"'
       + ' title="' + escapeAttr(d.title || '') + '"'
       + ' data-id="' + escapeAttr(String(id)) + '"'
@@ -568,8 +585,10 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     ? Object.keys(layoutSlotMap)
     : Object.keys(slotFields);
 
+  let cardStyle = paletteStyle;
+  if (headerHtml) cardStyle += ';padding-top:1.1rem';
   let html = '<a class="gallery-card"' + dataAttrs
-    + ' style="' + paletteStyle + '"'
+    + ' style="' + cardStyle + '"'
     + ' href="diary.html?date=' + escapeAttr(dateRaw) + '" target="_blank"'
     + ' title="' + escapeAttr(d.title || '') + '"'
     + ' data-id="' + escapeAttr(String(id)) + '"'
