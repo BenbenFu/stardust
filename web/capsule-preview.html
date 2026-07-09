@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capsule Style Editor v2</title>
-<link rel="stylesheet" href="style.css?v=20260709a">
+<link rel="stylesheet" href="style.css?v=20260710a">
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -487,20 +487,6 @@
             </div>
         </div>
 
-        <!-- [细] Container Group 容器组 -->
-        <div class="dim-group" id="grp-container-group">
-            <div class="dim-group-header" data-grp="containerGroup">
-                <span>[细] CONTAINER GROUP 容器组 <button class="btn-add-opt" data-grp="containerGroup" title="新增容器组">+新增</button></span>
-                <span class="toggle-icon">v</span>
-            </div>
-            <div class="dim-group-body">
-                <div class="dim-row">
-                    <label>Container Group</label>
-                    <select id="d-container-group"></select>
-                </div>
-            </div>
-        </div>
-
         <!-- 兜底：自定义 CSS -->
         <div class="dim-group" id="grp-custom">
             <div class="dim-group-header" data-grp="custom">
@@ -628,10 +614,47 @@
 
     <!-- ===== Tab 3: 容器 ===== -->
     <div class="tab-content" id="tab-container" style="display:none;">
-        <div style="text-align:center;padding:40px 20px;color:var(--pixel-dim);font-size:12px;">
-            &gt;&gt;&gt; COMING SOON &lt;&lt;&lt;<br><br>
-            容器组 (container_group) 和高级装饰功能正在开发中。
+
+        <!-- 容器组选择器 -->
+        <div class="dim-group" id="grp-container-group">
+            <div class="dim-group-header" data-grp="containerGroup">
+                <span>CONTAINER GROUP 容器组</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>选择容器组</label>
+                    <select id="d-container-group"></select>
+                </div>
+                <div id="cg-description" style="font-size:9px;color:var(--pixel-dim);line-height:1.5;padding:4px 0;"></div>
+            </div>
         </div>
+
+        <!-- 结构预览 -->
+        <div class="dim-group" id="grp-container-structure">
+            <div class="dim-group-header">
+                <span>STRUCTURE 结构预览</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div id="cg-structure" style="font-size:10px;line-height:1.6;"></div>
+            </div>
+        </div>
+
+        <!-- Mock 数据提示 -->
+        <div class="dim-group" id="grp-container-mock">
+            <div class="dim-group-header">
+                <span>MOCK DATA 预览数据</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div style="font-size:9px;color:var(--pixel-dim);line-height:1.6;">
+                    avatar: BF / like: 12 / share: 3 / comment: 5<br>
+                    highlight_1/2/3 从 highlights 数组按序拆分
+                </div>
+            </div>
+        </div>
+
     </div><!-- /tab-container -->
 
 </div>
@@ -715,8 +738,8 @@
 </div>
 
 <script type="module">
-import { supabase, checkAuth } from './script.js?v=20260709a';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260709a';
+import { supabase, checkAuth } from './script.js?v=20260710a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260710a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -902,6 +925,10 @@ const MOCK_DIARY = {
         '第三条内容，展示更多文字时的排版表现。'
     ],
     capsuleName: '样式预览',
+    avatar: 'BF',
+    like_count: '12',
+    share_count: '3',
+    comment_count: '5',
 };
 
 // ============================================================
@@ -1068,6 +1095,7 @@ function applyStyleJsonToPanel(sj) {
 
     // container_group
     setSelect(DIMS.containerGroup, cg);
+    updateContainerStructure();
 
     DIMS.customCss.value = sj.customCss || '';
 }
@@ -1276,19 +1304,43 @@ function applyDimensionOptionsToUI() {
 
         const currentVal = el.value;
         el.innerHTML = '';
-        const emptyOpt = document.createElement('option');
-        emptyOpt.value = '';
-        emptyOpt.textContent = '--';
-        el.appendChild(emptyOpt);
 
-        filtered
-            .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
-            .forEach(r => {
-                const opt = document.createElement('option');
-                opt.value = r.option_key || r.value;
-                opt.textContent = r.label || r.option_key || r.value;
-                el.appendChild(opt);
+        if (cfg.isContainerGroup) {
+            // container_group: 按 category 分组，使用 group_code/group_name
+            const grouped = {};
+            filtered.forEach(r => {
+                const cat = r.category || 'other';
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(r);
             });
+            for (const [cat, catRows] of Object.entries(grouped)) {
+                const og = document.createElement('optgroup');
+                og.label = cat;
+                catRows.sort((a, b) => (a.sort_order||0) - (b.sort_order||0));
+                catRows.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.group_code;
+                    opt.textContent = r.group_name || r.group_code;
+                    if (r.description) opt.title = r.description;
+                    og.appendChild(opt);
+                });
+                el.appendChild(og);
+            }
+        } else {
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = '--';
+            el.appendChild(emptyOpt);
+
+            filtered
+                .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+                .forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.option_key || r.value;
+                    opt.textContent = r.label || r.option_key || r.value;
+                    el.appendChild(opt);
+                });
+        }
 
         if ([...el.options].some(o => o.value === currentVal)) {
             el.value = currentVal;
@@ -1580,6 +1632,69 @@ Object.values(DIMS).forEach(el => {
     const evt = el.tagName === 'TEXTAREA' ? 'input' : 'change';
     el.addEventListener(evt, debouncedUpdate);
 });
+
+// container_group structure preview
+if (DIMS.containerGroup) {
+    DIMS.containerGroup.addEventListener('change', updateContainerStructure);
+}
+
+function updateContainerStructure() {
+    const cgVal = DIMS.containerGroup?.value || 'none';
+    const descEl = document.getElementById('cg-description');
+    const structEl = document.getElementById('cg-structure');
+    if (!descEl || !structEl) return;
+
+    const rows = dimensionCache['style_container_group_options'] || [];
+    const row = rows.find(r => r.group_code === cgVal);
+
+    if (!row || cgVal === 'none') {
+        descEl.textContent = '标准 grid 模式（无容器组）';
+        structEl.innerHTML = '<span style="color:var(--pixel-dim)">使用 layout grid 的 slot skeleton 渲染。</span>';
+        return;
+    }
+
+    descEl.textContent = row.description || row.group_name || '';
+
+    let fsm = {}, sdm = {}, lsm = {};
+    try {
+        fsm = typeof row.field_slot_map === 'string' ? JSON.parse(row.field_slot_map) : (row.field_slot_map || {});
+        sdm = typeof row.slot_deco_map === 'string' ? JSON.parse(row.slot_deco_map) : (row.slot_deco_map || {});
+        lsm = typeof row.layout_slot_map === 'string' ? JSON.parse(row.layout_slot_map) : (row.layout_slot_map || {});
+    } catch {}
+
+    // Build structure table
+    const slotFields = {};
+    for (const [field, slotId] of Object.entries(fsm)) {
+        if (!slotFields[slotId]) slotFields[slotId] = [];
+        slotFields[slotId].push(field);
+    }
+
+    let html = '<table style="width:100%;border-collapse:collapse;font-size:9px;">';
+    html += '<tr style="color:var(--pixel-dim);"><td colspan="2">Layout: ' + escapeHtmlText(row.layout_ref || '?') + ' / Category: ' + escapeHtmlText(row.category || '?') + '</td></tr>';
+    html += '<tr><td colspan="2" style="height:4px;"></td></tr>';
+
+    const slotOrder = Object.keys(lsm).length
+        ? Object.keys(lsm).sort((a, b) => (lsm[a]||0) - (lsm[b]||0))
+        : Object.keys(slotFields);
+
+    for (const slotId of slotOrder) {
+        const fields = slotFields[slotId] || [];
+        const deco = sdm[slotId] || 'none';
+        const colIdx = lsm[slotId];
+        html += '<tr><td style="vertical-align:top;color:var(--pixel-accent,#6cf);padding-right:6px;">'
+            + escapeHtmlText(slotId) + (colIdx !== undefined ? ' [col ' + colIdx + ']' : '')
+            + '</td><td style="vertical-align:top;">'
+            + (fields.length ? 'fields: ' + escapeHtmlText(fields.join(', ')) : '<span style="color:var(--pixel-dim)">(no fields)</span>')
+            + '<br><span style="color:var(--pixel-dim)">deco: ' + escapeHtmlText(deco) + '</span>'
+            + '</td></tr>';
+    }
+    html += '</table>';
+    structEl.innerHTML = html;
+}
+
+function escapeHtmlText(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 // flow 预设联动 checkbox
 if (DIMS.flow) {

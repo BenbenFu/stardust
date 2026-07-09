@@ -47,7 +47,8 @@ const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
   font-size: calc(0.8rem * var(--typo-capsule-scale, 0.9));
   text-align: var(--typo-capsule-align, left); }
 .hl-sep { display: inline; }
-.cg-slot { display: block; }
+.container-group { display: grid; gap: 6px; padding: 4px; }
+.container-group > div { min-width: 0; }
 .card-header-text {
   position: absolute; top: 0; left: 0; right: 0; z-index: 3;
   font-size: 0.6rem; line-height: 1.3;
@@ -540,9 +541,8 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
 
   // --- container_group 嵌套 slot 模式 ---
   const cgOptions = (allOptions && allOptions.container_group) || [];
-  const cgRow = cgOptions.find(r => r.option_key === containerGroup);
+  const cgRow = cgOptions.find(r => r.group_code === containerGroup);
   if (!cgRow) {
-    // 回退标准模式
     return buildCardHtml(
       { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions, verticalFields
     );
@@ -576,16 +576,56 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       case 'title': return title ? '<div class="card-title">' + title + '</div>' : '';
       case 'highlights': return buildHighlightsHtml(highlights);
       case 'capsule': return capsule ? '<div class="card-capsule">' + capsule + '</div>' : '';
-      default: return '';
+      case 'avatar': return '<div class="cg-avatar-text">' + escapeHtml(d.avatar || 'BF') + '</div>';
+      case 'like_count': return '<span class="cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>';
+      case 'share_count': return '<span class="cg-share">' + escapeHtml(String(d.share_count || '0')) + ' \u8f6c</span>';
+      case 'comment_count': return '<span class="cg-comment">' + escapeHtml(String(d.comment_count || '0')) + ' \u8bc4</span>';
+      default:
+        if (field.startsWith('highlight_')) {
+          const idx = parseInt(field.slice(-1)) - 1;
+          return highlights[idx] ? '<div class="card-highlights">' + escapeHtml(highlights[idx]) + '</div>' : '';
+        }
+        return '';
     }
   };
 
+  // layout_ref → CSS
+  const CG_LAYOUT_CSS = {
+    single: 'display:flex;flex-direction:column',
+    '2col_left_narrow': 'display:grid;grid-template-columns:auto 1fr',
+    '2col_right_narrow': 'display:grid;grid-template-columns:1fr auto',
+    '2col_equal': 'display:grid;grid-template-columns:1fr 1fr',
+    '3col_equal': 'display:grid;grid-template-columns:1fr 1fr 1fr',
+  };
+  const cgLayoutCss = CG_LAYOUT_CSS[cgRow.layout_ref] || CG_LAYOUT_CSS.single;
+
+  // slot_deco_map "deco:sub_dim.value" 解析
+  const DECO_SUBDIM_ATTR = {
+    bubble_style: 'data-style-deco-bubble',
+    tag_style: 'data-style-deco-tag',
+    avatar_style: 'data-style-deco-avatar',
+    box_style: 'data-style-deco-box',
+    action_style: 'data-style-deco-action',
+  };
+  function parseSlotDeco(decoVal) {
+    if (!decoVal || decoVal === 'none') return '';
+    if (decoVal.startsWith('deco:')) {
+      const parts = decoVal.slice(5).split('.');
+      const subDim = parts[0], val = parts.slice(1).join('.');
+      const attr = DECO_SUBDIM_ATTR[subDim];
+      return attr ? attr + '="' + escapeAttr(val) + '"' : '';
+    }
+    // "group:cg_xxx" — 嵌套引用，首版不展开
+    return '';
+  }
+
   // slot 排序
   const slotOrder = Object.keys(layoutSlotMap).length
-    ? Object.keys(layoutSlotMap)
+    ? Object.keys(layoutSlotMap).sort((a, b) => (layoutSlotMap[a] || 0) - (layoutSlotMap[b] || 0))
     : Object.keys(slotFields);
 
-  let cardStyle = paletteStyle;
+  // gallery-card 在容器模式下覆盖为 block
+  let cardStyle = 'display:block;' + paletteStyle;
   if (headerHtml) cardStyle += ';padding-top:1.1rem';
   let html = '<a class="gallery-card"' + dataAttrs
     + ' style="' + cardStyle + '"'
@@ -596,24 +636,35 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
 
   html += headerHtml;
 
+  // container-group 包裹层
+  html += '<div class="container-group ' + escapeAttr(cgRow.group_code) + '" style="' + cgLayoutCss + '">';
+
   for (const slotId of slotOrder) {
-    const deco = slotDecoMap[slotId] || {};
-    const slotAttr = Object.entries(deco)
-      .map(([k, v]) => 'data-style-deco-' + k + '="' + escapeAttr(v) + '"')
-      .join(' ');
-    const area = layoutSlotMap[slotId] || slotId;
+    const decoVal = slotDecoMap[slotId] || 'none';
+    const slotAttr = parseSlotDeco(decoVal);
+    const colIdx = layoutSlotMap[slotId];
     const content = (slotFields[slotId] || []).map(fieldHtml).filter(Boolean).join('');
 
-    if (content) {
+    // 有内容或有嵌套引用时渲染 slot
+    if (content || decoVal.startsWith('group:')) {
       const fieldsInSlot = slotFields[slotId] || [];
       const hasVertical = verticalFields && verticalFields.length
         && fieldsInSlot.some(f => verticalFields.includes(f));
-      let slotStyle = 'grid-area:' + area;
-      if (hasVertical) slotStyle += ';writing-mode:vertical-rl';
-      html += '<div class="cg-slot" style="' + slotStyle + '"'
-        + (slotAttr ? ' ' + slotAttr : '') + '>' + content + '</div>';
+      let slotStyle = '';
+      if (cgRow.layout_ref === 'single') {
+        slotStyle = hasVertical ? 'writing-mode:vertical-rl' : '';
+      } else if (colIdx !== undefined) {
+        slotStyle = 'grid-column:' + (colIdx + 1);
+        if (hasVertical) slotStyle += ';writing-mode:vertical-rl';
+      }
+      html += '<div class="' + escapeAttr(slotId.replace(/_/g, '-')) + '"'
+        + (slotStyle ? ' style="' + slotStyle + '"' : '')
+        + (slotAttr ? ' ' + slotAttr : '') + '>'
+        + (content || '') + '</div>';
     }
   }
+
+  html += '</div>'; // /container-group
   html += sideHtml + '</a>';
   return html;
 }
@@ -713,8 +764,10 @@ export function injectDynamicStyles(allOptions) {
   const collect = (rows) => {
     if (!Array.isArray(rows)) return;
     rows.forEach(r => {
-      if (r && r.css_template && r.css_template.trim()) {
-        css += r.css_template.trim() + '\n';
+      if (!r) return;
+      const cssText = r.css_template || r.extra_css;
+      if (cssText && cssText.trim()) {
+        css += cssText.trim() + '\n';
       }
     });
   };
