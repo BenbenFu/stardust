@@ -241,13 +241,6 @@ function hslToHex(h, s, l) {
   return '#' + f(0) + f(8) + f(4);
 }
 
-// 从背景色推导一个对比色（同色相、明暗反转），用于色板退化兜底
-function contrastHex(hex) {
-  const { h, s, l } = hexToHSL(hex);
-  const targetL = l < 50 ? 90 : 12;        // 暗底取亮色，亮底取暗色
-  return hslToHex(h, s, targetL);
-}
-
 function generateAntScale(seedHex) {
   const { h, s, l } = hexToHSL(seedHex);
   // 相对偏移曲线：index 4 (step 5) 的偏移=0, 系数=100% → 恒等于种子原色
@@ -287,20 +280,7 @@ function resolvePaletteColors(paletteConfig, paletteOptions) {
   // 2. 对 harmony_palette 的每个颜色列各自生成10阶色阶（支持多色相）
   const scaleBg     = generateAntScale(harmonyRow.bg         || '#3b82f6');
   const scaleText   = generateAntScale(harmonyRow.text_color || harmonyRow.bg || '#1a1a1a');
-  // accent 退化兜底（2026-07-10）：
-  // 大多数色板的 accent 种子被误填成 == bg（analogous/comp/mono 家族），
-  // 导致装饰色(--card-accent)与背景同阶→装饰条/侧栏隐形。
-  // 兜底：accent==bg 时改用 text 列（对比色）；若连 text 也==bg（mono 全退化），
-  // 则从 bg 推导一个明暗反转的对比色，保证装饰始终可见。
-  const bgSeed = (harmonyRow.bg || '#3b82f6').toLowerCase();
-  let accentSeed = harmonyRow.accent || harmonyRow.bg || '#3b82f6';
-  if (accentSeed.toLowerCase() === bgSeed) {
-    const textSeed = (harmonyRow.text_color || '').toLowerCase();
-    accentSeed = (textSeed && textSeed !== bgSeed)
-      ? harmonyRow.text_color
-      : contrastHex(harmonyRow.bg || '#000000');
-  }
-  const scaleAccent = generateAntScale(accentSeed);
+  const scaleAccent = generateAntScale(harmonyRow.accent     || harmonyRow.bg || '#3b82f6');
   const scaleMuted  = generateAntScale(harmonyRow.muted      || harmonyRow.bg || '#e5e5e5');
 
   // 3. 找 tone_mapping 行，根据索引值从各自色阶取色
