@@ -24,6 +24,11 @@ const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
   cursor: pointer; text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
+  background: var(--card-bg, transparent);
+  color: var(--card-text, inherit);
+  border-width: var(--border-width, 0);
+  border-style: var(--border-style, none);
+  border-color: var(--card-accent, transparent);
 }
 .card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
 .card-slot-b { grid-area: slot-b; writing-mode: var(--wm-b, horizontal-tb); }
@@ -55,13 +60,14 @@ const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
   color: var(--card-muted, inherit);
   padding: 2px 8px; pointer-events: none;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  letter-spacing: 0.08em;
 }
 .card-side-text {
   position: absolute; top: 0; bottom: 0; left: 0; z-index: 3;
   writing-mode: vertical-rl;
   font-size: 0.55rem; line-height: 1.3;
   color: var(--card-muted, inherit);
-  padding: 6px 1px; pointer-events: none;
+  padding: 1.2rem 1px 6px; pointer-events: none;
   letter-spacing: 0.05em;
   white-space: nowrap; overflow: hidden;
 }
@@ -688,9 +694,6 @@ export function renderStyleJson(styleJson, diary, allOptions) {
 
   // 2. 构建 inline 样式（CSS变量 + 直接属性，确保无css_template时也能显示）
   const paletteCssVars = [
-    'background:' + colors.bg,
-    'color:' + colors.text,
-    'border-color:' + colors.accent,
     '--card-bg:'     + colors.bg,
     '--card-text:'   + colors.text,
     '--card-accent:' + colors.accent,
