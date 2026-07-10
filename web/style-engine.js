@@ -496,16 +496,18 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   // Header text / side text DOM elements
   const elCfg = (styleJson && styleJson.element) || {};
   const headerText = elCfg.header_text || '';
-  const headerDeco = elCfg.header_deco || 'none';
   const sideText = elCfg.side_text || '';
-  const sideAccent = elCfg.side_accent || 'none';
 
+  // 顶栏/侧栏与自定义文字彻底解绑（2026-07-10）
+  // - 装饰条(header_deco / side_accent)由 data-style-element-* 属性 + DB css_template 驱动，
+  //   与是否填写自定义文字无关，始终独立显示
+  // - 自定义文字(header_text / side_text)仅在用户填写时渲染，与装饰条无关
   let headerHtml = '';
-  if (headerDeco !== 'none' && headerText) {
+  if (headerText) {
     headerHtml = '<div class="card-header-text">' + escapeHtml(headerText) + '</div>';
   }
   let sideHtml = '';
-  if (sideAccent !== 'none' && sideText) {
+  if (sideText) {
     sideHtml = '<div class="card-side-text">' + escapeHtml(sideText) + '</div>';
   }
 
