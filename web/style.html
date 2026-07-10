@@ -975,7 +975,7 @@
         <div class="modal-body">
             <form id="add-form">
                 <div class="mb-4">
-                    <label class="form-label-wide">分类</label>
+                    <label class="form-label-wide" for="style-category">分类</label>
                     <select id="style-category" class="form-input-wide" required>
                         <option value="">-- 选择分类 --</option>
                         <option value="code">代码编程</option>
@@ -992,11 +992,11 @@
                     </select>
                 </div>
                 <div class="mb-4">
-                    <label class="form-label-wide">风格名称</label>
+                    <label class="form-label-wide" for="style-name">风格名称</label>
                     <input type="text" id="style-name" class="form-input-wide" placeholder="例如：Shell命令行" required>
                 </div>
                 <div class="mb-6">
-                    <label class="form-label-wide">约束描述（AI能理解的指令）</label>
+                    <label class="form-label-wide" for="style-desc">约束描述（AI能理解的指令）</label>
                     <textarea id="style-desc" rows="4" class="form-input-wide" placeholder="例如：请用Linux Shell命令行的格式写日记..." required></textarea>
                 </div>
                 <div class="modal-footer">

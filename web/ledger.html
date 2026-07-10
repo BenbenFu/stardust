@@ -168,22 +168,22 @@
         <!-- 收支录入表单 -->
         <div class="entry-form" id="entryForm">
             <div class="form-group">
-                <label class="form-label">备注 (REMARK)</label>
+                <label class="form-label" for="remarkInput">备注 (REMARK)</label>
                 <input type="text" class="form-input" id="remarkInput" placeholder="输入收支说明..." required>
             </div>
             <div class="form-group">
-                <label class="form-label">类型 (TYPE)</label>
+                <label class="form-label" for="typeSelect">类型 (TYPE)</label>
                 <select class="form-select" id="typeSelect">
                     <option value="income">+ 收入</option>
                     <option value="expense">- 支出</option>
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label">金额 (AMOUNT)</label>
+                <label class="form-label" for="amountInput">金额 (AMOUNT)</label>
                 <input type="number" class="form-input" id="amountInput" min="0.01" step="0.01" placeholder="0.00" required>
             </div>
             <div class="form-group">
-                <label class="form-label">分类 (CATEGORY)</label>
+                <label class="form-label" for="categorySelect">分类 (CATEGORY)</label>
                 <select class="form-select" id="categorySelect">
                     <!-- JS 根据 typeSelect 动态填充 -->
                 </select>

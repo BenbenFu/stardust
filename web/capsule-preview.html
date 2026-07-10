@@ -226,7 +226,7 @@
     <div class="capsule-selector">
         <div class="capsule-row">
             <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
-                <label>Category 筛选</label>
+                <label for="catFilter">Category 筛选</label>
                 <select id="catFilter">
                     <option value="">-- 全部 --</option>
                 </select>
@@ -234,7 +234,7 @@
         </div>
         <div class="capsule-row">
             <div style="display:flex;flex-direction:column;gap:3px;flex:1;">
-                <label>Capsule (STYLE_POOL.name)</label>
+                <label for="capsuleSelect">Capsule (STYLE_POOL.name)</label>
                 <select id="capsuleSelect">
                     <option value="">-- 加载中... --</option>
                 </select>
@@ -261,37 +261,37 @@
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>Grid 网格模板</label>
+                    <label for="d-grid">Grid 网格模板</label>
                     <select id="d-grid"></select>
                 </div>
                 <div class="dim-row" id="slotAssignmentRow">
                     <label>Slot Assignment 槽位分配 (A/B/C/D → 字段)</label>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
                         <div style="display:flex;flex-direction:column;gap:1px;">
-                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot A</label>
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;" for="sa-a">Slot A</label>
                             <select id="sa-a" class="slot-select" style="font-size:10px;"><option value="date" selected>date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:1px;">
-                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot B</label>
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;" for="sa-b">Slot B</label>
                             <select id="sa-b" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title" selected>title</option><option value="highlights">highlights</option><option value="capsule">capsule</option></select>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:1px;">
-                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot C</label>
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;" for="sa-c">Slot C</label>
                             <select id="sa-c" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights" selected>highlights</option><option value="capsule">capsule</option></select>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:1px;">
-                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;">Slot D</label>
+                            <label style="font-size:9px;text-transform:none;letter-spacing:0;margin:0;" for="sa-d">Slot D</label>
                             <select id="sa-d" class="slot-select" style="font-size:10px;"><option value="date">date</option><option value="title">title</option><option value="highlights">highlights</option><option value="capsule" selected>capsule</option></select>
                         </div>
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Density 密度</label>
+                        <label for="d-density">Density 密度</label>
                         <select id="d-density"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Flow 流向 (预设)</label>
+                        <label for="d-flow">Flow 流向 (预设)</label>
                         <select id="d-flow"></select>
                     </div>
                 </div>
@@ -314,16 +314,16 @@
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Block Align 块对齐</label>
+                        <label for="d-block-align">Block Align 块对齐</label>
                         <select id="d-block-align"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Inline Align 行内对齐</label>
+                        <label for="d-inline-align">Inline Align 行内对齐</label>
                         <select id="d-inline-align"></select>
                     </div>
                 </div>
                 <div class="dim-row">
-                    <label>Spacing Scale 间距</label>
+                    <label for="d-spacing-scale">Spacing Scale 间距</label>
                     <select id="d-spacing-scale"></select>
                 </div>
             </div>
@@ -339,11 +339,11 @@
                 <label>点击色块选择配色（当前: <span id="paletteLabel">mono_grey</span>）</label>
                 <div class="palette-grid" id="paletteGrid"></div>
                 <div class="dim-row">
-                    <label>Tone Mapping 色调映射</label>
+                    <label for="d-palette-tone">Tone Mapping 色调映射</label>
                     <select id="d-palette-tone"></select>
                 </div>
                 <div class="dim-row">
-                    <label>Slot Assignment 槽位分配</label>
+                    <label for="d-palette-slot">Slot Assignment 槽位分配</label>
                     <select id="d-palette-slot"></select>
                 </div>
             </div>
@@ -358,11 +358,11 @@
             <div class="dim-group-body">
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Weight Gradient 字重梯度</label>
+                        <label for="d-weight-gradient">Weight Gradient 字重梯度</label>
                         <select id="d-weight-gradient"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Size Scale 字号阶梯</label>
+                        <label for="d-size-scale">Size Scale 字号阶梯</label>
                         <select id="d-size-scale"></select>
                     </div>
                 </div>
@@ -377,21 +377,21 @@
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>Border Style 边框样式</label>
+                    <label for="d-border-style">Border Style 边框样式</label>
                     <select id="d-border-style"></select>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Radius Size 圆角</label>
+                        <label for="d-radius-size">Radius Size 圆角</label>
                         <select id="d-radius-size"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Border Width 宽度</label>
+                        <label for="d-border-width">Border Width 宽度</label>
                         <select id="d-border-width"></select>
                     </div>
                 </div>
                 <div class="dim-row">
-                    <label>Border Shadow 阴影</label>
+                    <label for="d-border-shadow">Border Shadow 阴影</label>
                     <select id="d-border-shadow"></select>
                 </div>
             </div>
@@ -406,30 +406,30 @@
             <div class="dim-group-body">
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Bubble 气泡</label>
+                        <label for="d-bubble-style">Bubble 气泡</label>
                         <select id="d-bubble-style"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Tag 标签 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
+                        <label for="d-tag-style">Tag 标签 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
                         <select id="d-tag-style"></select>
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Avatar 头像 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
+                        <label for="d-avatar-style">Avatar 头像 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
                         <select id="d-avatar-style"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Box 内容块</label>
+                        <label for="d-box-style">Box 内容块</label>
                         <select id="d-box-style"></select>
                     </div>
                 </div>
                 <div class="dim-row">
-                    <label>Box Target 应用目标</label>
+                    <label for="d-box-target">Box Target 应用目标</label>
                     <select id="d-box-target"></select>
                 </div>
                 <div class="dim-row">
-                    <label>Action 操作区 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
+                    <label for="d-action-style">Action 操作区 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
                     <select id="d-action-style"></select>
                 </div>
             </div>
@@ -444,46 +444,46 @@
             <div class="dim-group-body">
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Header Deco 顶栏</label>
+                        <label for="d-header-deco">Header Deco 顶栏</label>
                         <select id="d-header-deco"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Side Accent 侧边</label>
+                        <label for="d-side-accent">Side Accent 侧边</label>
                         <select id="d-side-accent"></select>
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Header Text 顶栏文字</label>
+                        <label for="d-header-text">Header Text 顶栏文字</label>
                         <input type="text" id="d-header-text" placeholder="输入顶栏文字内容">
                     </div>
                     <div class="dim-row">
-                        <label>Side Text 侧边文字</label>
+                        <label for="d-side-text">Side Text 侧边文字</label>
                         <input type="text" id="d-side-text" placeholder="输入侧边文字内容">
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Divider 分隔线</label>
+                        <label for="d-divider">Divider 分隔线</label>
                         <select id="d-divider"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Corner Badge 角标</label>
+                        <label for="d-corner-badge">Corner Badge 角标</label>
                         <select id="d-corner-badge"></select>
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>BG Pattern 背景纹</label>
+                        <label for="d-bg-pattern">BG Pattern 背景纹</label>
                         <select id="d-bg-pattern"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Edge Deco 边缘</label>
+                        <label for="d-edge-deco">Edge Deco 边缘</label>
                         <select id="d-edge-deco"></select>
                     </div>
                 </div>
                 <div class="dim-row">
-                    <label>Floating Deco 浮动</label>
+                    <label for="d-floating-deco">Floating Deco 浮动</label>
                     <select id="d-floating-deco"></select>
                 </div>
             </div>
@@ -496,7 +496,7 @@
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>customCss（作用域: .gallery-card 内）</label>
+                    <label for="d-custom-css">customCss（作用域: .gallery-card 内）</label>
                     <textarea id="d-custom-css" rows="5" placeholder=".card-title { color: red; }&#10;.card-date { font-size: 12px; }"></textarea>
                 </div>
                 <div style="font-size:9px;color:var(--pixel-dim);line-height:1.4;">
@@ -519,7 +519,7 @@
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>当前编辑字段</label>
+                    <label for="fieldSelector">当前编辑字段</label>
                     <select id="fieldSelector">
                         <option value="title">title 标题</option>
                         <option value="date">date 日期</option>
@@ -538,15 +538,15 @@
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>Font Family 字体族</label>
+                    <label for="pf-font-family">Font Family 字体族</label>
                     <select id="pf-font-family"></select>
                 </div>
                 <div class="dim-row">
-                    <label>Alignment Mode 对齐</label>
+                    <label for="pf-alignment-mode">Alignment Mode 对齐</label>
                     <select id="pf-alignment-mode"></select>
                 </div>
                 <div class="dim-row">
-                    <label>Spacing Tightness 字间距</label>
+                    <label for="pf-spacing-tightness">Spacing Tightness 字间距</label>
                     <select id="pf-spacing-tightness"></select>
                 </div>
             </div>
@@ -591,21 +591,21 @@
             <div class="dim-group-body">
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Filter Self 自身滤镜</label>
+                        <label for="pf-filter-self">Filter Self 自身滤镜</label>
                         <select id="pf-filter-self"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Filter Backdrop 背景滤镜</label>
+                        <label for="pf-filter-backdrop">Filter Backdrop 背景滤镜</label>
                         <select id="pf-filter-backdrop"></select>
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Transform 变换</label>
+                        <label for="pf-transform">Transform 变换</label>
                         <select id="pf-transform"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Animation 动画</label>
+                        <label for="pf-animation">Animation 动画</label>
                         <select id="pf-animation"></select>
                     </div>
                 </div>
@@ -625,7 +625,7 @@
             </div>
             <div class="dim-group-body">
                 <div class="dim-row">
-                    <label>选择容器组</label>
+                    <label for="d-container-group">选择容器组</label>
                     <select id="d-container-group"></select>
                 </div>
                 <div id="cg-description" style="font-size:9px;color:var(--pixel-dim);line-height:1.5;padding:4px 0;"></div>
@@ -694,19 +694,19 @@
 <div class="modal-box">
     <h3 id="modalTitle">新增维度选项</h3>
     <div class="modal-field">
-        <label id="labelValue">option_key（存储值，英文小写）</label>
+        <label id="labelValue" for="modalValue">option_key（存储值，英文小写）</label>
         <input type="text" id="modalValue" placeholder="e.g. my_new_option" />
     </div>
     <div class="modal-field">
-        <label id="labelLabel">label（显示名，中文）</label>
+        <label id="labelLabel" for="modalLabel">label（显示名，中文）</label>
         <input type="text" id="modalLabel" placeholder="e.g. 我的新选项" />
     </div>
     <div class="modal-field" id="modalFieldDesc">
-        <label>description（可选）</label>
+        <label for="modalDesc">description（可选）</label>
         <input type="text" id="modalDesc" placeholder="e.g. 说明文字" />
     </div>
     <div class="modal-field" id="modalFieldCssTpl" style="display:none;">
-        <label>css_template（CSS 规则）</label>
+        <label for="modalCssTemplate">css_template（CSS 规则）</label>
         <textarea id="modalCssTemplate" rows="4" style="width:100%; font-family:monospace; font-size:11px;" placeholder="[data-style-xxx=&quot;value&quot;] { /* CSS rules */ }"></textarea>
         <div style="font-size:9px; color:var(--pixel-dim); margin-top:2px;">
             填写该选项对应的 CSS 规则。选择器用双引号。多条规则用换行分隔。
@@ -715,19 +715,19 @@
     <!-- palette 专用字段 -->
     <div id="modalPaletteFields" style="display:none;">
         <div class="modal-field">
-            <label>bg（背景色）</label>
+            <label for="modalBg">bg（背景色）</label>
             <input type="text" id="modalBg" placeholder="#cadbb7 或 transparent" />
         </div>
         <div class="modal-field">
-            <label>text_color（主文字色）</label>
+            <label for="modalTextColor">text_color（主文字色）</label>
             <input type="text" id="modalTextColor" placeholder="#1e2622" />
         </div>
         <div class="modal-field">
-            <label>accent（强调色）</label>
+            <label for="modalAccent">accent（强调色）</label>
             <input type="text" id="modalAccent" placeholder="#3a7d44" />
         </div>
         <div class="modal-field">
-            <label>muted（次要文字色）</label>
+            <label for="modalMuted">muted（次要文字色）</label>
             <input type="text" id="modalMuted" placeholder="#707a65" />
         </div>
     </div>
