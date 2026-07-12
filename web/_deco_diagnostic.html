@@ -1,807 +1,109 @@
-<!DOCTYPE html><html lang=zh><head><meta charset=utf-8><title>装饰条诊断页</title><style>body{font-family:sans-serif;background:#222;color:#eee;padding:20px}.case{margin:24px 0}.case h3{font-size:14px;color:#9f9}.case .note{font-size:12px;color:#aaa;margin:4px 0 12px}.stage{display:flex;gap:24px;flex-wrap:wrap}.card-wrap{width:220px}.card-wrap .cap{font-size:11px;color:#888;margin-bottom:6px}.preview-area{background:#333;padding:16px;border-radius:8px}</style></head><body><h2>装饰条（顶栏/侧栏）诊断页</h2><p style=font-size:12px;color:#bbb>真实 style-engine.js（已内联）+ 真实 DB css_template。三张卡片为同一 mock 日记，仅装饰配置不同。请用浏览器打开本文件验证。</p><div id=out></div><script>/**
- * style-engine.js — v2.0 DB驱动渲染器
- *
- * 九张表驱动架构：palette/layout/typo/border/deco/element/effect/container_group
- * 完全由 DB 选项表中的 css_template 驱动样式，零硬编码
- *
- * 对外接口：
- *   renderStyleJson(styleJson, diary, allOptions) → HTML string
- *   injectBaseCss() → 注入最小化基础样式
- *   injectDynamicStyles(allOptions) → 注入 DB css_template
- *   DEFAULT_STYLE_JSON → 全默认 style_json
- */
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>装饰条诊断页 (live)</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", "Microsoft YaHei", monospace; background:#11131a; color:#e8e8ee; margin:0; padding:24px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:#9aa0b0; font-size:12px; margin-bottom:20px; }
+  #status { padding:12px 16px; border-radius:8px; font-size:14px; margin-bottom:20px; line-height:1.6; }
+  .ok  { background:#13351f; color:#7ef0a8; border:1px solid #2e7d4f; }
+  .bad { background:#3a1414; color:#ff9a9a; border:1px solid #a33; }
+  .pending { background:#2a2a12; color:#ffe08a; border:1px solid #88823a; }
+  .cards { display:flex; gap:24px; flex-wrap:wrap; }
+  .scenario { background:#1a1d27; border:1px solid #2c3140; border-radius:10px; padding:16px; width:280px; }
+  .scenario h3 { font-size:13px; margin:0 0 10px; color:#cdd3e0; }
+  .scenario pre { font-size:10px; color:#7f8696; background:#11131a; padding:8px; border-radius:6px; overflow:auto; max-height:120px; white-space:pre-wrap; margin-top:10px; }
+  .card-wrap { background:#fff; border-radius:8px; padding:8px; }
+  code { color:#ffd479; }
+</style>
+</head>
+<body>
+  <h1>装饰条实时诊断页</h1>
+  <div class="sub">本页直接 import 线上同款 style-engine.js，并实时从 Supabase 拉取 style_element_options，渲染 3 个样例卡片。用于隔离“数据库拉取失败”与“引擎/CSS 失效”两类问题。</div>
 
-// ============================================================
-// Section 1: BASE_CSS — 最小化基础结构样式
-// 所有视觉效果由 DB css_template 的 data-attr 选择器提供
-// ============================================================
+  <div id="status" class="pending">⏳ 正在从 Supabase 拉取 style_element_options ...</div>
 
-const BASE_CSS = `/* style-engine v2.1 — slot skeleton base CSS */
-.gallery-card {
-  display: grid; position: relative; overflow: hidden;
-  break-inside: avoid; margin-bottom: var(--spacing-md, 16px);
-  gap: var(--spacing-sm, var(--layout-gap, 8px));
-  cursor: pointer; text-decoration: none;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
-  background: var(--card-bg, transparent);
-  color: var(--card-text, inherit);
-  border-width: var(--border-width, 0);
-  border-style: var(--border-style, none);
-  border-color: var(--card-accent, transparent);
-}
-.card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
-.card-slot-b { grid-area: slot-b; writing-mode: var(--wm-b, horizontal-tb); }
-.card-slot-c { grid-area: slot-c; writing-mode: var(--wm-c, horizontal-tb); }
-.card-slot-d { grid-area: slot-d; writing-mode: var(--wm-d, horizontal-tb); }
-.card-date   { color: var(--card-muted, inherit);
-  font-weight: var(--typo-date-weight, 400);
-  font-size: calc(0.8rem * var(--typo-date-scale, 0.85));
-  text-align: var(--typo-date-align, left); }
-.card-title  { word-break: break-word; overflow-wrap: break-word;
-  font-weight: var(--typo-title-weight, 600);
-  font-size: calc(1rem * var(--typo-title-scale, 1.5));
-  text-align: var(--typo-title-align, left); }
-.card-highlights { overflow-wrap: break-word; word-break: break-word;
-  font-weight: var(--typo-highlight-weight, 400);
-  font-size: calc(0.85rem * var(--typo-highlight-scale, 1.0));
-  text-align: var(--typo-highlight-align, left); }
-.card-highlight-item { display: block; }
-.card-capsule { color: var(--card-accent, inherit);
-  font-weight: var(--typo-capsule-weight, 500);
-  font-size: calc(0.8rem * var(--typo-capsule-scale, 0.9));
-  text-align: var(--typo-capsule-align, left); }
-.hl-sep { display: inline; }
-.container-group { display: grid; gap: 6px; padding: 4px; }
-.container-group > div { min-width: 0; }
-.card-header-text {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 3;
-  font-size: 0.6rem; line-height: 1.3;
-  color: var(--card-muted, inherit);
-  padding: 2px 8px; pointer-events: none;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  letter-spacing: 0.08em;
-}
-.card-side-text {
-  position: absolute; top: 0; bottom: 0; left: 0; z-index: 3;
-  writing-mode: vertical-rl;
-  font-size: 0.55rem; line-height: 1.3;
-  color: var(--card-muted, inherit);
-  padding: 1.2rem 1px 6px; pointer-events: none;
-  letter-spacing: 0.05em;
-  white-space: nowrap; overflow: hidden;
-}
-.gallery-card[data-style-element-side$="_right"] .card-side-text { left: auto; right: 0; }
+  <div class="cards">
+    <div class="scenario">
+      <h3>场景 A：顶部细线 (header_deco)</h3>
+      <div class="card-wrap" id="card-a"></div>
+      <pre id="raw-a"></pre>
+    </div>
+    <div class="scenario">
+      <h3>场景 B：右侧竖条 (side_accent)</h3>
+      <div class="card-wrap" id="card-b"></div>
+      <pre id="raw-b"></pre>
+    </div>
+    <div class="scenario">
+      <h3>场景 C：点阵背景 (bg_pattern)</h3>
+      <div class="card-wrap" id="card-c"></div>
+      <pre id="raw-c"></pre>
+    </div>
+  </div>
 
-@keyframes hardware-blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-@keyframes scanline-jitter {
-  0%, 100% { transform: translateY(0); }
-  10% { transform: translateY(-1px); }
-  20% { transform: translateY(1px); }
-  30% { transform: translateY(0); }
-}
-.gallery-card:hover { transform: translateY(-2px); }`;
+  <p class="sub" style="margin-top:24px">
+    判定：若上方状态为 <code>✅ 已加载</code> 且卡片出现了顶部线/右侧竖条/点阵背景 → 引擎与数据库均正常，原编辑器页面问题多为浏览器/CDN 缓存，请 Ctrl+Shift+R 硬刷新。<br>
+    若状态为 <code>❌ 加载失败</code> → 你的浏览器/网络无法访问 Supabase（CORS / 拦截插件 / 离线），请按 F12 控制台查看红色报错并截图。
+  </p>
 
-// ============================================================
-// Section 2: ATTR_MAP — data-attr 映射配置
-// 格式: dim_subdim → { attr, perElement?, elements? }
-// ============================================================
+<script type="module">
+  import { renderStyleJson, injectDynamicStyles, injectBaseCss } from './style-engine.js?v=20260712a';
 
-const ATTR_MAP = {
-  // layout
-  'layout_grid':         { attr: 'data-style-layout-grid' },
-  'layout_flow':         { attr: 'data-style-layout-flow' },
-  'layout_density':      { attr: 'data-style-layout-density' },
-  'layout_block_align':  { attr: 'data-style-layout-block-align' },
-  'layout_inline_align': { attr: 'data-style-layout-inline-align' },
-  'layout_spacing_scale':{ attr: 'data-style-layout-spacing-scale' },
-  // border
-  'border_radius_size':  { attr: 'data-border-radius' },
-  'border_border_width': { attr: 'data-border-width' },
-  'border_border_style': { attr: 'data-border-style' },
-  'border_border_shadow':{ attr: 'data-border-shadow' },
-  // deco
-  'deco_bubble_style':   { attr: 'data-style-deco-bubble' },
-  'deco_tag_style':      { attr: 'data-style-deco-tag' },
-  'deco_avatar_style':   { attr: 'data-style-deco-avatar' },
-  'deco_box_style':      { attr: 'data-style-deco-box' },
-  'deco_box_target':     { attr: 'data-style-deco-box-target' },
-  'deco_action_style':   { attr: 'data-style-deco-action' },
-  // element
-  'element_header_deco': { attr: 'data-style-element-header' },
-  'element_side_accent': { attr: 'data-style-element-side' },
-  'element_divider':     { attr: 'data-style-element-divider' },
-  'element_corner_badge':{ attr: 'data-style-element-corner' },
-  'element_bg_pattern':  { attr: 'data-style-element-bg' },
-  'element_edge_deco':   { attr: 'data-style-element-edge' },
-  'element_floating_deco':{ attr: 'data-style-element-float' },
-  // effect (filter_self & filter_backdrop share same attr, backdrop priority — now per-element)
-  'effect_filter_self':     { attr: 'data-style-effect-filter', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
-  'effect_filter_backdrop': { attr: 'data-style-effect-filter', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
-  'effect_transform':   { attr: 'data-style-effect-transform', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
-  'effect_animation':   { attr: 'data-style-effect-animation', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
-  // typo — per-element sub_dims
-  'typo_font_family':       { attr: 'data-style-typo-font-family', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
-  'typo_weight_gradient':   { attr: 'data-style-typo-weight-gradient' },
-  'typo_size_scale':        { attr: 'data-style-typo-size-scale' },
-  'typo_alignment_mode':    { attr: 'data-style-typo-alignment-mode', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
-  'typo_spacing_tightness': { attr: 'data-style-typo-spacing-tightness', perElement: true,
-    elements: ['title','date','capsule','highlights'] },
-  'typo_text_decoration':   { attr: 'data-style-typo-text-decoration', perElement: true,
-    multiSelect: true, elements: ['title','date','capsule','highlights'] },
-};
+  const SB = 'https://opyeahbzibuupmkmjpkr.supabase.co';
+  const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9weWVhaGJ6aWJ1dXBta21qcGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjk3MDcsImV4cCI6MjA5MzYwNTcwN30.7kCHwI7lKy1jH5BjI4gOKqw2vEUxpsjRJar_94j4Srk';
 
-// ============================================================
-// Section 3: DEFAULT_STYLE_JSON — 全默认值
-// ============================================================
+  const statusEl = document.getElementById('status');
 
-const DEFAULT_STYLE_JSON = {
-  palette: { harmony: 'mono_grey', tone: 'light_standard', slot: 'original' },
-  layout: { grid: 'single', flow: 'horizontal', flow_vertical: [],
-    slot_assignment: { a: 'date', b: 'title', c: 'highlights', d: 'capsule' },
-    density: 'normal',
-    block_align: 'left', inline_align: 'left', spacing_scale: 'md' },
-  typo: {
-    font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
-    weight_gradient: 'balanced', size_scale: 'petite',
-    alignment_mode: { title:'left_flow', date:'left_flow', capsule:'left_flow', highlights:'left_flow' },
-    spacing_tightness: { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
-    text_decoration: { title:[], date:[], capsule:[], highlights:[] }
-  },
-  border: { radius_size:'none', border_width:'none', border_style:'solid', border_shadow:'none' },
-  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', box_style:'none',
-    box_target:'global', action_style:'none' },
-  element: { header_deco:'none', header_text:'',
-    side_accent:'none', side_text:'',
-    divider:'none', corner_badge:'none',
-    bg_pattern:'none', edge_deco:'none', floating_deco:'none' },
-  effect: {
-    filter_self: { title:'none', date:'none', capsule:'none', highlights:'none' },
-    filter_backdrop: { title:'none', date:'none', capsule:'none', highlights:'none' },
-    transform: { title:'none', date:'none', capsule:'none', highlights:'none' },
-    animation: { title:'none', date:'none', capsule:'none', highlights:'none' } },
-  container_group: 'none'
-};
+  injectBaseCss();
 
-// ============================================================
-// Section 4: 工具函数
-// ============================================================
+  const diary = { id:'x', title:'示例标题', date:'2026/07/12', highlights:['要点一','要点二'], capsuleName:'样例' };
 
-function escapeHtml(s) {
-  if (s == null) return '';
-  return String(s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-function escapeAttr(s) {
-  return String(s).replace(/"/g, '&quot;');
-}
-
-function hexToRgb(hex) {
-  hex = hex.replace('#', '');
-  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-  const r = parseInt(hex.substring(0,2), 16);
-  const g = parseInt(hex.substring(2,4), 16);
-  const b = parseInt(hex.substring(4,6), 16);
-  if (isNaN(r) || isNaN(g) || isNaN(b)) return '128,128,128';
-  return r + ',' + g + ',' + b;
-}
-
-// ============================================================
-// Ant Design 色阶算法（用于 tone/slot 变换）
-// ============================================================
-
-function hexToHSL(hex) {
-  hex = hex.replace('#', '');
-  if (hex.length === 3) {
-    hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-  }
-  const r = parseInt(hex.substring(0, 2), 16) / 255;
-  const g = parseInt(hex.substring(2, 4), 16) / 255;
-  const b = parseInt(hex.substring(4, 6), 16) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  let h = 0, s = 0, l = (max + min) / 2;
-  if (max !== min) {
-    const d = max - min;
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-      case g: h = ((b - r) / d + 2) / 6; break;
-      case b: h = ((r - g) / d + 4) / 6; break;
-    }
-  }
-  return {
-    h: Math.round(h * 360),
-    s: Math.round(s * 100),
-    l: Math.round(l * 100)
-  };
-}
-
-function hslToHex(h, s, l) {
-  h = ((h % 360) + 360) % 360;
-  s = Math.max(0, Math.min(100, s)) / 100;
-  l = Math.max(0, Math.min(100, l)) / 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color).toString(16).padStart(2, '0');
-  };
-  return '#' + f(0) + f(8) + f(4);
-}
-
-function generateAntScale(seedHex) {
-  const { h, s, l } = hexToHSL(seedHex);
-  // 相对偏移曲线：index 4 (step 5) 的偏移=0, 系数=100% → 恒等于种子原色
-  const lOffsets = [40, 30, 20, 10,   0, -10, -20, -30, -40, -50];
-  const sFactors = [20, 30, 45, 60, 100, 110, 120, 130, 140, 150];
-  return lOffsets.map((offset, i) => {
-    const targetL = Math.max(2, Math.min(98, l + offset));
-    const sat     = Math.min(100, Math.max(6, Math.round(s * sFactors[i] / 100)));
-    return hslToHex(h, sat, targetL);
-  });
-}
-
-function defaultColors() {
-  return {
-    bg: '#ffffff', text: '#1a1a1a', accent: '#3b82f6', muted: '#e5e5e5',
-    extra_colors: {}, accentRgb: '59,130,246', bgRgb: '255,255,255'
-  };
-}
-
-// ============================================================
-// Section 5: resolvePaletteColors — 从 DB 静态色板解析颜色
-// ============================================================
-
-function resolvePaletteColors(paletteConfig, paletteOptions) {
-  if (!paletteConfig || !paletteOptions || !paletteOptions.length) return defaultColors();
-
-  const { harmony, tone, slot } = paletteConfig;
-  if (!harmony) return defaultColors();
-
-  // 1. 找 harmony_palette 行 → 取种子色
-  const harmonyRow = paletteOptions.find(r => r.value === harmony && r.sub_dim === 'harmony_palette');
-  if (!harmonyRow) {
-    console.warn('[resolvePaletteColors] harmony_palette not found:', harmony);
-    return defaultColors();
+  function renderScenario(targetId, rawId, elementCfg, label) {
+    const sj = {
+      palette: { harmony: 'mono_grey' },
+      element: Object.assign({ header_deco:'none', header_text:'', side_accent:'none', side_text:'', divider:'none', corner_badge:'none', bg_pattern:'none', edge_deco:'none', floating_deco:'none' }, elementCfg)
+    };
+    const html = renderStyleJson(sj, diary, {});
+    const box = document.getElementById(targetId);
+    box.innerHTML = html;
+    // 让卡片在白底上可见
+    box.querySelectorAll('.gallery-card').forEach(c => { c.style.maxWidth='260px'; c.style.margin='0 auto'; });
+    document.getElementById(rawId).textContent = 'data attrs:\n' + (html.match(/data-style-element[^" ]*"="[^"]*"/g) || ['（无 element 属性）']).join('\n');
   }
 
-  // 2. 对 harmony_palette 的每个颜色列各自生成10阶色阶（支持多色相）
-  const scaleBg     = generateAntScale(harmonyRow.bg         || '#3b82f6');
-  const scaleText   = generateAntScale(harmonyRow.text_color || harmonyRow.bg || '#1a1a1a');
-  const scaleAccent = generateAntScale(harmonyRow.accent     || harmonyRow.bg || '#3b82f6');
-  const scaleMuted  = generateAntScale(harmonyRow.muted      || harmonyRow.bg || '#e5e5e5');
-
-  // 3. 找 tone_mapping 行，根据索引值从各自色阶取色
-  const toneValue = tone || 'light_standard';
-  const toneRow = paletteOptions.find(r => r.value === toneValue && r.sub_dim === 'tone_mapping');
-  if (!toneRow) {
-    console.warn('[resolvePaletteColors] tone_mapping not found:', toneValue, '- using default scale indices');
-  }
-
-  const getIdx = (row, col, fallback) => {
-    const v = row ? parseInt(row[col]) : fallback;
-    return Math.max(0, Math.min(9, isNaN(v) ? fallback : v));
-  };
-
-  const bgIdx     = getIdx(toneRow, 'bg',         3);
-  const textIdx   = getIdx(toneRow, 'text_color', 8);
-  const accentIdx = getIdx(toneRow, 'accent',    5);
-  const mutedIdx  = getIdx(toneRow, 'muted',     4);
-
-  let colors = [
-    scaleBg[bgIdx],
-    scaleText[textIdx],
-    scaleAccent[accentIdx],
-    scaleMuted[mutedIdx]
-  ];
-
-  // 4. 找 slot_assignment 行，重新排列4个颜色
-  const slotValue = slot || 'original';
-  const slotRow = paletteOptions.find(r => r.value === slotValue && r.sub_dim === 'slot_assignment');
-  if (slotRow) {
-    const slotBgIdx     = getIdx(slotRow, 'bg',         1) - 1;
-    const slotTextIdx   = getIdx(slotRow, 'text_color', 2) - 1;
-    const slotAccentIdx = getIdx(slotRow, 'accent',    3) - 1;
-    const slotMutedIdx  = getIdx(slotRow, 'muted',     4) - 1;
-    colors = [
-      colors[Math.max(0, Math.min(3, slotBgIdx))],
-      colors[Math.max(0, Math.min(3, slotTextIdx))],
-      colors[Math.max(0, Math.min(3, slotAccentIdx))],
-      colors[Math.max(0, Math.min(3, slotMutedIdx))]
-    ];
-  }
-
-  const [bg, text, accent, muted] = colors;
-
-  // 5. 处理 extra_colors
-  // 新格式：harmony 行的 extra_colors 存目标原色（如 "#93C5FD"），直接使用
-  // 兼容旧格式：tone 行的 extra_colors 存索引数字，从对应色阶取色
-  let extra = {};
-  const ecSource = (harmonyRow.extra_colors && harmonyRow.extra_colors !== null)
-    ? harmonyRow.extra_colors
-    : (toneRow && toneRow.extra_colors ? toneRow.extra_colors : null);
-  if (ecSource) {
+  async function main() {
+    let rows = [];
     try {
-      const ec = typeof ecSource === 'string' ? JSON.parse(ecSource) : ecSource;
-      for (const [k, v] of Object.entries(ec)) {
-        if (typeof v === 'string' && v.startsWith('#')) {
-          // 新格式：直接是目标原色，生成色阶后取 index 4（种子色本身）
-          extra[k] = generateAntScale(v)[4];
-        } else {
-          // 旧格式兼容：数字索引，从对应色阶取色
-          const idx = Math.max(0, Math.min(9, typeof v === 'number' ? v : parseInt(v)));
-          const lk = k.toLowerCase();
-          const scale = lk.includes('text')   ? scaleText
-                      : lk.includes('accent') ? scaleAccent
-                      : lk.includes('muted')  ? scaleMuted
-                      : scaleBg;
-          extra[k] = scale[idx];
-        }
-      }
+      const res = await fetch(`${SB}/rest/v1/style_element_options?select=*&order=sort_order.asc`, {
+        headers: { apikey: KEY, Authorization: `Bearer ${KEY}` }
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      rows = await res.json();
     } catch (e) {
-      console.warn('[resolvePaletteColors] extra_colors parse error:', e);
-    }
-  }
-
-  return {
-    bg, text, accent, muted,
-    extra_colors: extra,
-    accentRgb: hexToRgb(accent),
-    bgRgb: hexToRgb(bg)
-  };
-}
-
-// ============================================================
-// Section 6: buildDataAttrs — 从 styleJson 构建 data-* 属性串
-// ============================================================
-
-function buildDataAttrs(styleJson) {
-  if (!styleJson) return '';
-
-  const attrs = {};
-
-  // palette: 生成 data-style-palette="harmony_value" 属性
-  if (styleJson.palette && styleJson.palette.harmony) {
-    attrs['data-style-palette'] = escapeAttr(styleJson.palette.harmony);
-  }
-
-  // --- Per-element backdrop priority for effect filter_self/filter_backdrop ---
-  // Both share data-style-effect-filter attr. Per-element: if element X has backdrop, skip self for X.
-  // Backward compat: if values are strings, normalize to per-element maps.
-  const eff = styleJson.effect || {};
-  const ELEMENTS = ['title','date','capsule','highlights'];
-
-  function normalizePerElement(value) {
-    if (typeof value === 'string') {
-      const map = {};
-      ELEMENTS.forEach(el => { map[el] = value; });
-      return map;
-    }
-    return value || {};
-  }
-
-  const backdropMap = normalizePerElement(eff.filter_backdrop);
-  const selfMap = normalizePerElement(eff.filter_self);
-
-  for (const el of ELEMENTS) {
-    const bVal = backdropMap[el];
-    const sVal = selfMap[el];
-    if (bVal && bVal !== 'none') {
-      attrs['data-style-effect-filter-' + el] = escapeAttr(bVal);
-    } else if (sVal && sVal !== 'none') {
-      attrs['data-style-effect-filter-' + el] = escapeAttr(sVal);
-    }
-  }
-
-  // --- General loop for all other dims ---
-  for (const [dim, subDims] of Object.entries(styleJson)) {
-    if (dim === 'palette' || dim === 'container_group') continue;
-    if (!subDims || typeof subDims !== 'object') continue;
-
-    for (const [subDim, value] of Object.entries(subDims)) {
-      // Skip filter_self and filter_backdrop (handled above)
-      if (dim === 'effect' && (subDim === 'filter_self' || subDim === 'filter_backdrop')) continue;
-
-      // Skip header_text and side_text (content fields, not style attrs)
-      if (subDim === 'header_text' || subDim === 'side_text') continue;
-
-      if (value == null || value === 'none') continue;
-
-      const mapKey = dim + '_' + subDim;
-      const mapping = ATTR_MAP[mapKey];
-      if (!mapping) continue;
-
-      if (mapping.perElement) {
-        // Per-element: normalize string → object (backward compat)
-        const perElVal = (typeof value === 'object' && !Array.isArray(value)) ? value
-          : (() => { const m = {}; mapping.elements.forEach(e => m[e] = value); return m; })();
-        for (const el of mapping.elements) {
-          const elVal = perElVal[el];
-          if (elVal == null || elVal === 'none') continue;
-          if (Array.isArray(elVal)) {
-            if (elVal.length === 0) continue;
-            attrs[mapping.attr + '-' + el] = escapeAttr(elVal.join(' '));
-          } else {
-            attrs[mapping.attr + '-' + el] = escapeAttr(elVal);
-          }
-        }
-      } else if (Array.isArray(value)) {
-        // Global multi-select: ['a', 'b']
-        if (value.length === 0) continue;
-        attrs[mapping.attr] = escapeAttr(value.join(' '));
-      } else if (typeof value === 'object' && value !== null && !mapping.perElement) {
-        // Backward compat: value is object but mapping is global — skip (shouldn't normally happen)
-        continue;
-      } else {
-        // Global string (backward compat)
-        attrs[mapping.attr] = escapeAttr(String(value));
-      }
-    }
-  }
-
-  const parts = Object.entries(attrs).map(([k, v]) => k + '="' + v + '"');
-  return parts.length ? ' ' + parts.join(' ') : '';
-}
-
-// ============================================================
-// Section 7: buildHighlightsInner — 渲染 highlights 列表内容(无外层div)
-// ============================================================
-
-function buildHighlightsInner(highlights) {
-  if (!highlights || !highlights.length) return '';
-  let h = '';
-  for (let i = 0; i < highlights.length; i++) {
-    h += '<div class="card-highlight-item">' + escapeHtml(highlights[i]);
-    if (i < highlights.length - 1) {
-      h += '<span class="hl-sep" data-sep="pipe"></span>';
-    }
-    h += '</div>';
-  }
-  return h;
-}
-
-function buildHighlightsHtml(highlights) {
-  if (!highlights || !highlights.length) return '';
-  return '<div class="card-highlights">' + buildHighlightsInner(highlights) + '</div>';
-}
-
-// ============================================================
-// Section 8: buildCardHtml — 构建卡片 HTML
-// 两种模式：container_group="none" 标准grid / 其他值嵌套slot
-// ============================================================
-
-function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, verticalFields) {
-  const d = diary || {};
-  const date = escapeHtml(d.date || '----/--/--');
-  const title = escapeHtml(d.title || '');
-  const capsule = escapeHtml(d.capsuleName || '');
-  const highlights = d.highlights || [];
-  const dateRaw = d.dateRaw || '';
-  const id = d.id || '';
-
-  const containerGroup = (styleJson && styleJson.container_group) || 'none';
-
-  // Header text / side text DOM elements
-  const elCfg = (styleJson && styleJson.element) || {};
-  const headerText = elCfg.header_text || '';
-  const headerDeco = elCfg.header_deco || 'none';
-  const sideText = elCfg.side_text || '';
-  const sideAccent = elCfg.side_accent || 'none';
-
-  // 顶栏/侧栏装饰条由卡片上的 data-style-element-* 属性驱动（border-top/border-left 等），
-  // 与自定义文字完全解耦：无论是否填写文字，装饰条都按 element.header_deco/side_accent 独立渲染。
-  // 自定义文字仅在填写时才出现，不再作为装饰条显示的前提条件。
-  const headerHtml = headerText
-    ? '<div class="card-header-text">' + escapeHtml(headerText) + '</div>'
-    : '';
-  const sideHtml = sideText
-    ? '<div class="card-side-text">' + escapeHtml(sideText) + '</div>'
-    : '';
-
-  if (containerGroup === 'none') {
-    // --- slot skeleton 模式 ---
-    const slotAssignment = (styleJson && styleJson.layout && styleJson.layout.slot_assignment)
-      || { a: 'date', b: 'title', c: 'highlights', d: 'capsule' };
-
-    // 字段内容 (不含外层 div)
-    const fieldContent = {
-      date: date || '',
-      title: title || '',
-      highlights: highlights.length ? buildHighlightsInner(highlights) : '',
-      capsule: capsule || ''
-    };
-    const fieldClass = {
-      date: 'card-date', title: 'card-title',
-      highlights: 'card-highlights', capsule: 'card-capsule'
-    };
-
-    let slotHtml = '';
-    for (const slot of ['a', 'b', 'c', 'd']) {
-      const field = slotAssignment[slot];
-      if (!field || !fieldContent[field]) continue;
-      slotHtml += '<div class="card-slot-' + slot + ' ' + fieldClass[field] + '">'
-        + fieldContent[field] + '</div>';
+      statusEl.className = 'bad';
+      statusEl.innerHTML = '❌ <b>加载失败</b>：无法从 Supabase 获取 style_element_options。<br>错误：<code>' + (e && e.message) + '</code><br>这是浏览器/网络问题（CORS、拦截插件或离线），与代码无关。请按 F12 看控制台红色报错。';
+      // 仍渲染（无动态 CSS，仅验证属性生成）
+      renderScenario('card-a', 'raw-a', { header_deco:'thin_accent_bar' });
+      renderScenario('card-b', 'raw-b', { side_accent:'solid_side_bar_right' });
+      renderScenario('card-c', 'raw-c', { bg_pattern:'dot_grid' });
+      return;
     }
 
-    let cardStyle = paletteStyle;
-    if (headerHtml) cardStyle += ';padding-top:1.1rem';
-    let html = '<a class="gallery-card"' + dataAttrs
-      + ' style="' + cardStyle + '"'
-      + ' href="diary.html?date=' + escapeAttr(dateRaw) + '" target="_blank"'
-      + ' title="' + escapeAttr(d.title || '') + '"'
-      + ' data-id="' + escapeAttr(String(id)) + '"'
-      + '>' + headerHtml + slotHtml + sideHtml + '</a>';
-    return html;
+    const withTpl = rows.filter(r => r.css_template).length;
+    statusEl.className = 'ok';
+    statusEl.innerHTML = '✅ <b>已加载 ' + rows.length + ' 条</b> style_element_options（其中 ' + withTpl + ' 条含 css_template）。<br>下方卡片若出现了顶部线 / 右侧竖条 / 点阵背景，则引擎与数据库均正常。';
+
+    injectDynamicStyles({ element: rows });
+
+    renderScenario('card-a', 'raw-a', { header_deco:'thin_accent_bar' });
+    renderScenario('card-b', 'raw-b', { side_accent:'solid_side_bar_right' });
+    renderScenario('card-c', 'raw-c', { bg_pattern:'dot_grid' });
   }
 
-  // --- container_group 嵌套 slot 模式 ---
-  const cgOptions = (allOptions && allOptions.container_group) || [];
-  const cgRow = cgOptions.find(r => r.group_code === containerGroup);
-  if (!cgRow) {
-    return buildCardHtml(
-      { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions, verticalFields
-    );
-  }
-
-  // 解析 slot 映射
-  let fieldSlotMap = {}, slotDecoMap = {}, layoutSlotMap = {};
-  try {
-    fieldSlotMap  = typeof cgRow.field_slot_map  === 'string' ? JSON.parse(cgRow.field_slot_map)  : (cgRow.field_slot_map  || {});
-    slotDecoMap   = typeof cgRow.slot_deco_map   === 'string' ? JSON.parse(cgRow.slot_deco_map)   : (cgRow.slot_deco_map   || {});
-    layoutSlotMap = typeof cgRow.layout_slot_map === 'string' ? JSON.parse(cgRow.layout_slot_map) : (cgRow.layout_slot_map || {});
-  } catch { /* 回退 */ }
-
-  if (!Object.keys(fieldSlotMap).length) {
-    return buildCardHtml(
-      { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions, verticalFields
-    );
-  }
-
-  // 分组字段到 slot
-  const slotFields = {};
-  for (const [field, slotId] of Object.entries(fieldSlotMap)) {
-    if (!slotFields[slotId]) slotFields[slotId] = [];
-    slotFields[slotId].push(field);
-  }
-
-  // 单字段 HTML
-  const fieldHtml = (field) => {
-    switch (field) {
-      case 'date': return date ? '<div class="card-date">' + date + '</div>' : '';
-      case 'title': return title ? '<div class="card-title">' + title + '</div>' : '';
-      case 'highlights': return buildHighlightsHtml(highlights);
-      case 'capsule': return capsule ? '<div class="card-capsule">' + capsule + '</div>' : '';
-      case 'avatar': return '<div class="cg-avatar-text">' + escapeHtml(d.avatar || 'BF') + '</div>';
-      case 'like_count': return '<span class="cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>';
-      case 'share_count': return '<span class="cg-share">' + escapeHtml(String(d.share_count || '0')) + ' \u8f6c</span>';
-      case 'comment_count': return '<span class="cg-comment">' + escapeHtml(String(d.comment_count || '0')) + ' \u8bc4</span>';
-      default:
-        if (field.startsWith('highlight_')) {
-          const idx = parseInt(field.slice(-1)) - 1;
-          return highlights[idx] ? '<div class="card-highlights">' + escapeHtml(highlights[idx]) + '</div>' : '';
-        }
-        return '';
-    }
-  };
-
-  // layout_ref → CSS
-  const CG_LAYOUT_CSS = {
-    single: 'display:flex;flex-direction:column',
-    '2col_left_narrow': 'display:grid;grid-template-columns:auto 1fr',
-    '2col_right_narrow': 'display:grid;grid-template-columns:1fr auto',
-    '2col_equal': 'display:grid;grid-template-columns:1fr 1fr',
-    '3col_equal': 'display:grid;grid-template-columns:1fr 1fr 1fr',
-  };
-  const cgLayoutCss = CG_LAYOUT_CSS[cgRow.layout_ref] || CG_LAYOUT_CSS.single;
-
-  // slot_deco_map "deco:sub_dim.value" 解析
-  const DECO_SUBDIM_ATTR = {
-    bubble_style: 'data-style-deco-bubble',
-    tag_style: 'data-style-deco-tag',
-    avatar_style: 'data-style-deco-avatar',
-    box_style: 'data-style-deco-box',
-    action_style: 'data-style-deco-action',
-  };
-  function parseSlotDeco(decoVal) {
-    if (!decoVal || decoVal === 'none') return '';
-    if (decoVal.startsWith('deco:')) {
-      const parts = decoVal.slice(5).split('.');
-      const subDim = parts[0], val = parts.slice(1).join('.');
-      const attr = DECO_SUBDIM_ATTR[subDim];
-      return attr ? attr + '="' + escapeAttr(val) + '"' : '';
-    }
-    // "group:cg_xxx" — 嵌套引用，首版不展开
-    return '';
-  }
-
-  // slot 排序
-  const slotOrder = Object.keys(layoutSlotMap).length
-    ? Object.keys(layoutSlotMap).sort((a, b) => (layoutSlotMap[a] || 0) - (layoutSlotMap[b] || 0))
-    : Object.keys(slotFields);
-
-  // gallery-card 在容器模式下覆盖为 block
-  let cardStyle = 'display:block;' + paletteStyle;
-  if (headerHtml) cardStyle += ';padding-top:1.1rem';
-  let html = '<a class="gallery-card"' + dataAttrs
-    + ' style="' + cardStyle + '"'
-    + ' href="diary.html?date=' + escapeAttr(dateRaw) + '" target="_blank"'
-    + ' title="' + escapeAttr(d.title || '') + '"'
-    + ' data-id="' + escapeAttr(String(id)) + '"'
-    + '>';
-
-  html += headerHtml;
-
-  // container-group 包裹层
-  html += '<div class="container-group ' + escapeAttr(cgRow.group_code) + '" style="' + cgLayoutCss + '">';
-
-  for (const slotId of slotOrder) {
-    const decoVal = slotDecoMap[slotId] || 'none';
-    const slotAttr = parseSlotDeco(decoVal);
-    const colIdx = layoutSlotMap[slotId];
-    const content = (slotFields[slotId] || []).map(fieldHtml).filter(Boolean).join('');
-
-    // 有内容或有嵌套引用时渲染 slot
-    if (content || decoVal.startsWith('group:')) {
-      const fieldsInSlot = slotFields[slotId] || [];
-      const hasVertical = verticalFields && verticalFields.length
-        && fieldsInSlot.some(f => verticalFields.includes(f));
-      let slotStyle = '';
-      if (cgRow.layout_ref === 'single') {
-        slotStyle = hasVertical ? 'writing-mode:vertical-rl' : '';
-      } else if (colIdx !== undefined) {
-        slotStyle = 'grid-column:' + (colIdx + 1);
-        if (hasVertical) slotStyle += ';writing-mode:vertical-rl';
-      }
-      html += '<div class="' + escapeAttr(slotId.replace(/_/g, '-')) + '"'
-        + (slotStyle ? ' style="' + slotStyle + '"' : '')
-        + (slotAttr ? ' ' + slotAttr : '') + '>'
-        + (content || '') + '</div>';
-    }
-  }
-
-  html += '</div>'; // /container-group
-  html += sideHtml + '</a>';
-  return html;
-}
-
-// ============================================================
-// Section 9: renderStyleJson — 主渲染入口
-// ============================================================
-
-/**
- * @param {Object} styleJson — 七维度样式配置
- * @param {Object} diary — { id, title, date, dateRaw, highlights, capsuleName }
- * @param {Object} allOptions — { palette, layout, typo, border, deco, effect, element, container_group }
- * @returns {string} 完整 <a class="gallery-card">...</a> HTML
- */
-function renderStyleJson(styleJson, diary, allOptions) {
-  const sj = styleJson || DEFAULT_STYLE_JSON;
-
-  // 1. 解析色板颜色
-  const paletteOptions = (allOptions && allOptions.palette) || [];
-  const colors = resolvePaletteColors(sj.palette, paletteOptions);
-
-  // 2. 构建 inline 样式（CSS变量 + 直接属性，确保无css_template时也能显示）
-  const paletteCssVars = [
-    '--card-bg:'     + colors.bg,
-    '--card-text:'   + colors.text,
-    '--card-accent:' + colors.accent,
-    '--card-muted:'  + colors.muted
-  ];
-  // extra_colors
-  if (colors.extra_colors) {
-    for (const [k, v] of Object.entries(colors.extra_colors)) {
-      paletteCssVars.push('--card-' + k + ':' + v);
-    }
-  }
-  paletteCssVars.push('--card-accent-rgb:' + colors.accentRgb,
-    '--card-bg-rgb:' + colors.bgRgb);
-
-  // 3. 计算 per-slot writing-mode (从 flow_vertical + slot_assignment)
-  const layout = sj.layout || {};
-  const slotAssignment = layout.slot_assignment
-    || { a: 'date', b: 'title', c: 'highlights', d: 'capsule' };
-  const verticalFields = Array.isArray(layout.flow_vertical) ? layout.flow_vertical : [];
-
-  for (const slot of ['a', 'b', 'c', 'd']) {
-    const field = slotAssignment[slot];
-    if (field && verticalFields.includes(field)) {
-      paletteCssVars.push('--wm-' + slot + ':vertical-rl');
-    }
-  }
-  // 全部竖排时，容器加 writing-mode:vertical-rl 转置 grid
-  if (verticalFields.length >= 4) {
-    paletteCssVars.push('writing-mode:vertical-rl', 'max-height:400px', 'overflow:hidden');
-  }
-  const fullStyle = paletteCssVars.join(';');
-
-  // 4. 构建 data-* 属性
-  const dataAttrs = buildDataAttrs(sj);
-
-  // 5. 构建 HTML
-  return buildCardHtml(sj, diary, dataAttrs, fullStyle, allOptions, verticalFields);
-}
-
-// ============================================================
-// Section 10: injectBaseCss — 注入 BASE_CSS
-// ============================================================
-
-/**
- * 将 BASE_CSS 注入 <head>，id="card-engine-css"
- * 幂等：已注入则跳过
- */
-function injectBaseCss() {
-  if (typeof document === 'undefined') return;
-  if (document.getElementById('card-engine-css')) return;
-  const styleEl = document.createElement('style');
-  styleEl.id = 'card-engine-css';
-  styleEl.textContent = BASE_CSS;
-  document.head.appendChild(styleEl);
-}
-
-// ============================================================
-// Section 11: injectDynamicStyles — 注入 DB css_template
-// ============================================================
-
-/**
- * 从 DB 维度选项表的 css_template 字段收集 CSS 并注入
- * @param {Object} allOptions — 各维度表行数组，含 container_group.extra_css
- */
-function injectDynamicStyles(allOptions) {
-  if (typeof document === 'undefined') return;
-  if (!allOptions) return;
-
-  let css = '';
-
-  const collect = (rows) => {
-    if (!Array.isArray(rows)) return;
-    rows.forEach(r => {
-      if (!r) return;
-      const cssText = r.css_template || r.extra_css;
-      if (cssText && cssText.trim()) {
-        css += cssText.trim() + '\n';
-      }
-    });
-  };
-
-  // 七张核心表
-  collect(allOptions.palette);
-  collect(allOptions.layout);
-  collect(allOptions.typo);
-  collect(allOptions.border);
-  collect(allOptions.deco);
-  collect(allOptions.effect);
-  collect(allOptions.element);
-
-  // container_group
-  if (allOptions.container_group) {
-    collect(allOptions.container_group);
-  }
-
-  if (!css) return;
-
-  let styleEl = document.getElementById('card-engine-dynamic-css');
-  if (styleEl) {
-    styleEl.textContent = css;
-  } else {
-    styleEl = document.createElement('style');
-    styleEl.id = 'card-engine-dynamic-css';
-    document.head.appendChild(styleEl);
-    styleEl.textContent = css;
-  }
-}
-
-const elementRows=[{"sub_dim":"bg_pattern","value":"terminal_scanlines","css_template":".gallery-card[data-style-element-bg=\"terminal_scanlines\"] {\r\n  position: relative;\r\n}\r\n.gallery-card[data-style-element-bg=\"terminal_scanlines\"]::before {\r\n  content: \"\";\r\n  position: absolute;\r\n  inset: 0;\r\n  background: repeating-linear-gradient(\r\n    to bottom,\r\n    transparent,\r\n    transparent 2px,\r\n    rgba(0,0,0,0.06) 2px,\r\n    rgba(0,0,0,0.06) 4px\r\n  );\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}"},{"sub_dim":"bg_pattern","value":"gradient_overlay","css_template":".gallery-card[data-style-element-bg=\"gradient_overlay\"] {\r\n  background-image: linear-gradient(\r\n    to bottom,\r\n    transparent 60%,\r\n    color-mix(in srgb, var(--card-bg, #fff) 70%, var(--card-muted, #ccc) 30%) 100%\r\n  ) !important;\r\n}"},{"sub_dim":"bg_pattern","value":"none","css_template":null},{"sub_dim":"bg_pattern","value":"dot_grid","css_template":".gallery-card[data-style-element-bg=\"dot_grid\"] {\r\n  background-image: radial-gradient(circle, var(--card-muted, #ccc) 1px, transparent 1px) !important;\r\n  background-size: 16px 16px !important;\r\n  background-position: 0 0 !important;\r\n}"},{"sub_dim":"bg_pattern","value":"fine_grid","css_template":".gallery-card[data-style-element-bg=\"fine_grid\"] {\r\n  position: relative;\r\n}\r\n.gallery-card[data-style-element-bg=\"fine_grid\"]::before {\r\n  content: \"\";\r\n  position: absolute;\r\n  inset: 0;\r\n  background-image:\r\n    linear-gradient(var(--card-muted, #ccc) 1px, transparent 1px),\r\n    linear-gradient(90deg, var(--card-muted, #ccc) 1px, transparent 1px);\r\n  background-size: 20px 20px;\r\n  opacity: 0.12;\r\n  pointer-events: none;\r\n  z-index: 0;\r\n}"},{"sub_dim":"bg_pattern","value":"horizontal_lines","css_template":".gallery-card[data-style-element-bg=\"horizontal_lines\"] {\r\n  background-image: repeating-linear-gradient(\r\n    to bottom,\r\n    transparent,\r\n    transparent calc(1.5em - 1px),\r\n    var(--card-muted, #ccc) calc(1.5em - 1px),\r\n    var(--card-muted, #ccc) 1.5em\r\n  ) !important;\r\n  background-size: 100% 1.5em !important;\r\n}"},{"sub_dim":"corner_badge","value":"corner_ribbon","css_template":".gallery-card[data-style-element-corner=\"corner_ribbon\"] {\r\n  position: relative;\r\n  overflow: hidden;\r\n}\r\n.gallery-card[data-style-element-corner=\"corner_ribbon\"]::after {\r\n  content: attr(data-ribbon-text);\r\n  position: absolute;\r\n  top: 10px; right: -12px;\r\n  background: var(--card-accent, #ccc);\r\n  color: var(--card-bg, #fff);\r\n  font-size: 9px;\r\n  font-weight: 700;\r\n  letter-spacing: 0.05em;\r\n  padding: 2px 16px;\r\n  transform: rotate(45deg);\r\n  transform-origin: center;\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}"},{"sub_dim":"corner_badge","value":"circle_stamp","css_template":".gallery-card[data-style-element-corner=\"circle_stamp\"]::after {\r\n  content: \"\";\r\n  position: absolute;\r\n  top: 8px; right: 8px;\r\n  width: 12px; height: 12px;\r\n  border-radius: 50%;\r\n  background: var(--card-accent, #ccc);\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}"},{"sub_dim":"corner_badge","value":"none","css_template":null},{"sub_dim":"corner_badge","value":"dot_status","css_template":".gallery-card[data-style-element-corner=\"dot_status\"]::after {\r\n  content: \"\";\r\n  position: absolute;\r\n  top: 6px; right: 6px;\r\n  width: 8px; height: 8px;\r\n  border-radius: 50%;\r\n  background: var(--card-accent, #ccc);\r\n  box-shadow: 0 0 0 2px var(--card-bg, #fff);\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}"},{"sub_dim":"corner_badge","value":"page_fold","css_template":".gallery-card[data-style-element-corner=\"page_fold\"] {\r\n  position: relative;\r\n  overflow: hidden;\r\n}\r\n.gallery-card[data-style-element-corner=\"page_fold\"]::after {\r\n  content: \"\";\r\n  position: absolute;\r\n  top: 0; right: 0;\r\n  width: 0; height: 0;\r\n  border-style: solid;\r\n  border-width: 0 16px 16px 0;\r\n  border-color: transparent var(--card-bg, #fff) transparent transparent;\r\n  filter: drop-shadow(-2px 2px 1px var(--card-muted, #ccc));\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}"},{"sub_dim":"divider","value":"gradient_line","css_template":".gallery-card[data-style-element-divider=\"gradient_line\"] .hl-sep {\r\n  display: block;\r\n  height: 1px;\r\n  border: none;\r\n  background: linear-gradient(to right, var(--card-accent, #ccc), transparent);\r\n  margin: 8px 0;\r\n  opacity: 0.6;\r\n}"},{"sub_dim":"divider","value":"none","css_template":null},{"sub_dim":"divider","value":"thin_solid","css_template":".gallery-card[data-style-element-divider=\"thin_solid\"] .hl-sep {\r\n  display: block;\r\n  height: 1px;\r\n  background: var(--card-muted, #ccc);\r\n  border: none;\r\n  margin: 6px 0;\r\n  opacity: 0.4;\r\n}"},{"sub_dim":"divider","value":"double_line","css_template":".gallery-card[data-style-element-divider=\"double_line\"] .hl-sep {\r\n  display: block;\r\n  height: 3px;\r\n  border: none;\r\n  border-top: 1px solid var(--card-muted, #ccc);\r\n  border-bottom: 1px solid var(--card-muted, #ccc);\r\n  background: transparent;\r\n  margin: 6px 0;\r\n  opacity: 0.5;\r\n}"},{"sub_dim":"divider","value":"dotted_line","css_template":".gallery-card[data-style-element-divider=\"dotted_line\"] .hl-sep {\r\n  display: block;\r\n  height: 0;\r\n  border-top: 1px dotted var(--card-muted, #ccc);\r\n  margin: 6px 0;\r\n  opacity: 0.5;\r\n}"},{"sub_dim":"divider","value":"char_asterisk","css_template":".gallery-card[data-style-element-divider=\"char_asterisk\"] .hl-sep {\r\n  display: block;\r\n  text-align: center;\r\n  margin: 5px 0;\r\n  font-family: monospace;\r\n  font-size: 10px;\r\n  opacity: 0.35;\r\n  color: var(--card-muted, #999);\r\n  user-select: none;\r\n}\r\n.gallery-card[data-style-element-divider=\"char_asterisk\"] .hl-sep::after {\r\n  content: \"*  *  *\";\r\n}"},{"sub_dim":"edge_deco","value":"none","css_template":null},{"sub_dim":"edge_deco","value":"stamp_perforation","css_template":".gallery-card[data-style-element-edge=\"stamp_perforation\"] {\r\n  border-radius: 0;\r\n  outline: 6px dashed var(--card-bg, #fff);\r\n  box-shadow: 0 0 0 8px var(--card-muted, #ccc);\r\n}"},{"sub_dim":"edge_deco","value":"bracket_frame","css_template":".gallery-card[data-style-element-edge=\"bracket_frame\"] {\r\n  position: relative;\r\n}\r\n.gallery-card[data-style-element-edge=\"bracket_frame\"]::before,\r\n.gallery-card[data-style-element-edge=\"bracket_frame\"]::after {\r\n  content: \"\";\r\n  position: absolute;\r\n  width: 12px; height: 12px;\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}\r\n.gallery-card[data-style-element-edge=\"bracket_frame\"]::before {\r\n  top: 4px; left: 4px;\r\n  border-top: 2px solid var(--card-accent, #ccc);\r\n  border-left: 2px solid var(--card-accent, #ccc);\r\n}\r\n.gallery-card[data-style-element-edge=\"bracket_frame\"]::after {\r\n  bottom: 4px; right: 4px;\r\n  border-bottom: 2px solid var(--card-accent, #ccc);\r\n  border-right: 2px solid var(--card-accent, #ccc);\r\n}"},{"sub_dim":"edge_deco","value":"notched_corner","css_template":".gallery-card[data-style-element-edge=\"notched_corner\"] {\r\n  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);\r\n}"},{"sub_dim":"edge_deco","value":"tape_stripe","css_template":".gallery-card[data-style-element-edge=\"tape_stripe\"] {\r\n  background-image: repeating-linear-gradient(\r\n    45deg,\r\n    transparent,\r\n    transparent 8px,\r\n    color-mix(in srgb, var(--card-muted, #ccc) 30%, transparent) 8px,\r\n    color-mix(in srgb, var(--card-muted, #ccc) 30%, transparent) 10px\r\n  ) !important;\r\n}"},{"sub_dim":"floating_deco","value":"tamagotchi_label","css_template":".gallery-card[data-style-element-float=\"tamagotchi_label\"]::before {\r\n  content: \"TAMAGOTCHI\";\r\n  position: absolute;\r\n  top: 5px; left: 50%;\r\n  transform: translateX(-50%);\r\n  font-size: 10px;\r\n  letter-spacing: 1px;\r\n  color: var(--card-accent, #ccc);\r\n  pointer-events: none;\r\n  font-family: monospace;\r\n  z-index: 2;\r\n}"},{"sub_dim":"floating_deco","value":"none","css_template":null},{"sub_dim":"floating_deco","value":"floating_circle","css_template":".gallery-card[data-style-element-float=\"floating_circle\"] {\r\n  position: relative;\r\n  overflow: hidden;\r\n}\r\n.gallery-card[data-style-element-float=\"floating_circle\"]::after {\r\n  content: \"\";\r\n  position: absolute;\r\n  bottom: -20px; right: -20px;\r\n  width: 80px; height: 80px;\r\n  border-radius: 50%;\r\n  background: var(--card-accent, #ccc);\r\n  opacity: 0.08;\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}"},{"sub_dim":"floating_deco","value":"scatter_dots","css_template":".gallery-card[data-style-element-float=\"scatter_dots\"] {\r\n  position: relative;\r\n  overflow: hidden;\r\n}\r\n.gallery-card[data-style-element-float=\"scatter_dots\"]::before {\r\n  content: \"· · ·  · · ·   · · ·\";\r\n  position: absolute;\r\n  top: 6px; right: 8px;\r\n  font-size: 8px;\r\n  letter-spacing: 4px;\r\n  color: var(--card-accent, #ccc);\r\n  opacity: 0.3;\r\n  pointer-events: none;\r\n  line-height: 1.8;\r\n  text-align: right;\r\n  white-space: nowrap;\r\n  z-index: 2;\r\n}"},{"sub_dim":"floating_deco","value":"art_deco_diamond","css_template":".gallery-card[data-style-element-float=\"art_deco_diamond\"]::before {\r\n  content: \"◆ ◇ ◆ ◇ ◆\";\r\n  display: block;\r\n  text-align: center;\r\n  font-size: 8px;\r\n  letter-spacing: 4px;\r\n  color: var(--card-accent, #ccc);\r\n  padding: 4px 0;\r\n  border-top: 1px solid var(--card-accent, #ccc);\r\n  border-bottom: 1px solid var(--card-accent, #ccc);\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}\r\n.gallery-card[data-style-element-float=\"art_deco_diamond\"]::after {\r\n  content: \"◆ ◇ ◆ ◇ ◆\";\r\n  display: block;\r\n  text-align: center;\r\n  font-size: 8px;\r\n  letter-spacing: 4px;\r\n  color: var(--card-accent, #ccc);\r\n  padding: 4px 0;\r\n  border-top: 1px solid var(--card-accent, #ccc);\r\n  pointer-events: none;\r\n  z-index: 2;\r\n}"},{"sub_dim":"header_deco","value":"thick_ribbon","css_template":".gallery-card[data-style-element-header=\"thick_ribbon\"] {\r\n  border-top: 6px solid var(--card-accent, #ccc);\r\n}"},{"sub_dim":"header_deco","value":"none","css_template":null},{"sub_dim":"header_deco","value":"thin_accent_bar","css_template":".gallery-card[data-style-element-header=\"thin_accent_bar\"] {\r\n  border-top: 2px solid var(--card-accent, #ccc);\r\n}"},{"sub_dim":"header_deco","value":"blink_cursor_bar","css_template":".gallery-card[data-style-element-header=\"blink_cursor_bar\"] {\r\n  border-top: 3px solid var(--card-accent, #ccc);\r\n}\r\n.gallery-card[data-style-element-header=\"blink_cursor_bar\"][data-anim=\"blink\"] {\r\n  animation: header-blink 1s infinite steps(2);\r\n}\r\n@keyframes header-blink {\r\n  0%, 100% { border-top-color: var(--card-accent, #ccc); }\r\n  50% { border-top-color: transparent; }\r\n}"},{"sub_dim":"header_deco","value":"gradient_strip","css_template":".gallery-card[data-style-element-header=\"gradient_strip\"] {\r\n  border-top: 4px solid transparent;\r\n  border-image: linear-gradient(to right, var(--card-accent, #ccc), var(--card-muted, #999)) 1;\r\n}"},{"sub_dim":"side_accent","value":"line_number_column","css_template":".gallery-card[data-style-element-side=\"line_number_column\"] {\r\n  counter-reset: line-no;\r\n  padding-left: 40px;\r\n  position: relative;\r\n}\r\n.gallery-card[data-style-element-side=\"line_number_column\"]::before {\r\n  content: \"\";\r\n  position: absolute;\r\n  left: 0; top: 0; bottom: 0;\r\n  width: 36px;\r\n  background: color-mix(in srgb, var(--card-bg, #fff) 90%, var(--card-text, #000) 10%);\r\n  border-right: 1px solid var(--card-muted, #bbb);\r\n}\r\n.gallery-card[data-style-element-side=\"line_number_column\"] .card-highlight-item {\r\n  counter-increment: line-no;\r\n  position: relative;\r\n}\r\n.gallery-card[data-style-element-side=\"line_number_column\"] .card-highlight-item::before {\r\n  content: counter(line-no);\r\n  position: absolute;\r\n  left: -38px;\r\n  width: 28px;\r\n  text-align: right;\r\n  color: var(--card-muted, #999);\r\n  font-size: 0.75em;\r\n  font-family: monospace;\r\n  user-select: none;\r\n}"},{"sub_dim":"side_accent","value":"solid_side_bar","css_template":".gallery-card[data-style-element-side=\"solid_side_bar\"] {\r\n  border-left: 3px solid var(--card-accent, #ccc);\r\n  padding-left: 10px;\r\n}"},{"sub_dim":"side_accent","value":"gradient_side_bar","css_template":".gallery-card[data-style-element-side=\"gradient_side_bar\"] {\r\n  position: relative;\r\n  padding-left: 12px;\r\n}\r\n.gallery-card[data-style-element-side=\"gradient_side_bar\"]::before {\r\n  content: \"\";\r\n  position: absolute;\r\n  left: 0; top: 0; bottom: 0;\r\n  width: 3px;\r\n  background: linear-gradient(to bottom, var(--card-accent, #ccc), transparent);\r\n}"},{"sub_dim":"side_accent","value":"gradient_side_bar_right","css_template":".gallery-card[data-style-element-side=\"gradient_side_bar_right\"] {\r\n        position: relative;\r\n        padding-right: 12px;\r\n    }\r\n    .gallery-card[data-style-element-side=\"gradient_side_bar_right\"]::after {\r\n        content: \"\";\r\n        position: absolute;\r\n        right: 0; top: 0; bottom: 0;\r\n        width: 3px;\r\n        background: linear-gradient(to bottom, var(--card-accent, #ccc), transparent);\r\n    }"},{"sub_dim":"side_accent","value":"solid_side_bar_right","css_template":".gallery-card[data-style-element-side=\"solid_side_bar_right\"] {\r\n        border-right: 3px solid var(--card-accent, #ccc);\r\n        padding-right: 10px;\r\n    }"},{"sub_dim":"side_accent","value":"none","css_template":null},{"sub_dim":"side_accent","value":"notebook_binding","css_template":".gallery-card[data-style-element-side=\"notebook_binding\"] {\r\n  padding-left: 28px;\r\n  position: relative;\r\n}\r\n.gallery-card[data-style-element-side=\"notebook_binding\"]::before {\r\n  content: \"○ ○ ○ ○ ○\";\r\n  position: absolute;\r\n  left: 2px; top: 0; bottom: 0;\r\n  writing-mode: vertical-rl;\r\n  font-size: 10px;\r\n  letter-spacing: 6px;\r\n  color: var(--card-muted, #bbb);\r\n  pointer-events: none;\r\n}"}];
-injectBaseCss();injectDynamicStyles({palette:[],layout:[],typo:[],border:[],deco:[],effect:[],element:elementRows,container_group:[]});const diary={date:/2026/07/12/,title:/今日星屑/,capsuleName:/星屑/,highlights:[/写了一行代码/,/喝了一杯茶/]};function renderCase(t,n,sj,cap){const s=JSON.parse(JSON.stringify(DEFAULT_STYLE_JSON));Object.assign(s.element,sj);const h=renderStyleJson(s,diary,{element:elementRows});const d=document.createElement("div");d.className="case";d.innerHTML="<h3>"+t+"</h3><div class=note>"+n+"</div><div class=stage><div class=preview-area><div class=card-wrap><div class=cap>"+cap+"</div>"+h+"</div></div></div>";document.getElementById("out").appendChild(d);}renderCase("场景A：仅装饰条（无自定义文字）","header_deco=thin_accent_bar, side_accent=solid_side_bar。解绑后应看到顶栏2px横条+左侧竖条，不依赖文字。",{header_deco:/thin_accent_bar/,side_accent:/solid_side_bar/},/顶栏横条+左侧竖条/);renderCase("场景B：装饰条+自定义文字","在A上加 header_text/side_text。文字与装饰条应各自独立显示。",{header_deco:/thin_accent_bar/,side_accent:/solid_side_bar/,header_text:/我的日记/,side_text:/侧栏/},/装饰条+文字/);renderCase("场景C：对照（无装饰）","全部 none。应看不到任何顶栏/侧栏装饰条。",{header_deco:/none/,side_accent:/none/},/无装饰/);</script></body></html>
+  main();
+</script>
+</body>
+</html>
