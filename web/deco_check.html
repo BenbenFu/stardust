@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DECO CHECK — 装饰条运行时诊断</title>
+<style>
+  body { background:#111; color:#e8e8e8; font-family:monospace; padding:20px; line-height:1.6; }
+  h1 { color:#7fd; font-size:16px; }
+  .box { border:1px solid #444; border-radius:8px; padding:14px; margin:12px 0; }
+  .ok { color:#7f7; } .bad { color:#f77; } .warn { color:#fd7; }
+  pre { background:#000; padding:10px; border-radius:6px; overflow:auto; font-size:12px; }
+  .card-slot { margin:16px 0; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  td,th { border:1px solid #333; padding:6px 8px; text-align:left; }
+  th { background:#222; }
+  code { color:#9df; }
+</style>
+</head>
+<body>
+<h1>DECO CHECK — 装饰条运行时诊断 (v20260712a)</h1>
+<div class="box">
+  <div id="status">⏳ 正在从 Supabase 拉取 style_element_options ...</div>
+</div>
+<div class="box">
+  <div id="report">—</div>
+</div>
+<div class="box">
+  <div>样例卡片（顶栏 thin_accent_bar / 侧栏 solid_side_bar / 背景 dot_grid）：</div>
+  <div id="preview" style="margin-top:12px;"></div>
+</div>
+
+<script type="module">
+const SUPABASE_URL = 'https://opyeahbzibuupmkmjpkr.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9weWVhaGJ6aWJ1dXBta21qcGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjk3MDcsImV4cCI6MjA5MzYwNTcwN30.7kCHwI7lKy1jH5BjI4gOKqw2vEUxpsjRJar_94j4Srk';
+
+const statusEl = document.getElementById('status');
+const reportEl = document.getElementById('report');
+const previewEl = document.getElementById('preview');
+
+let elementRows = [];
+
+function log(html) { reportEl.insertAdjacentHTML('beforeend', html + '<br>'); }
+
+async function fetchElements() {
+  const url = SUPABASE_URL + '/rest/v1/style_element_options?select=*&order=sort_order.asc';
+  const r = await fetch(url, {
+    headers: { 'apikey': SUPABASE_ANON, 'Authorization': 'Bearer ' + SUPABASE_ANON }
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (!Array.isArray(d)) throw new Error('返回非数组: ' + JSON.stringify(d).slice(0,200));
+  return d;
+}
+
+try {
+  elementRows = await fetchElements();
+  const cnt = elementRows.length;
+  const headerRows = elementRows.filter(r => r.sub_dim === 'header_deco' && r.value !== 'none');
+  statusEl.innerHTML = '<span class="ok">✅ 已加载 ' + cnt + ' 条 style_element_options</span>'
+    + '（其中 header_deco 可选项 ' + headerRows.length + ' 条）';
+} catch (e) {
+  statusEl.innerHTML = '<span class="bad">❌ 加载失败: ' + e.message + '</span>'
+    + '<br><span class="warn">这说明你的浏览器/网络无法访问 Supabase → 装饰条因数据缺失而全哑火。</span>';
+  log('<span class="bad">fetch 失败：' + e.message + '</span>');
+}
+
+// 无论如何都尝试渲染（即便数据为空也能看引擎是否报错）
+import('./style-engine.js?v=20260712a').then(async (engine) => {
+  log('<span class="ok">引擎已加载：</span> injectDynamicStyles='
+    + (typeof engine.injectDynamicStyles) + ', renderStyleJson=' + (typeof engine.renderStyleJson));
+
+  // 注入动态样式
+  engine.injectDynamicStyles({ element: elementRows });
+
+  // 构造一个带装饰的 styleJson
+  const sj = {
+    palette: { harmony: 'mono_grey', tone: 'light_standard', slot: 'original' },
+    layout: { _base:'grid_area_mapping', grid:'single', slot_assignment:{a:'date',b:'title',c:'highlights',d:'capsule'}, density:'normal', flow:'horizontal', flow_vertical:[], block_align:'start', inline_align:'start', spacing_scale:'md' },
+    typo: {}, border: {}, deco: {},
+    element: {
+      header_deco: 'thin_accent_bar',
+      header_text: '',
+      side_accent: 'solid_side_bar',
+      side_text: '',
+      divider: 'none',
+      corner_badge: 'none',
+      bg_pattern: 'dot_grid',
+      edge_deco: 'none',
+      floating_deco: 'none',
+    },
+    effect: {},
+    container_group: 'none',
+  };
+
+  const diary = { capsuleName:'DEMO', date:'2026-07-12', title:'诊断样例卡片', highlights:['要点一','要点二'], capsule:'#TEST' };
+  const html = engine.renderStyleJson(sj, diary, { element: elementRows });
+  previewEl.innerHTML = html;
+
+  // 读取计算样式
+  const card = previewEl.querySelector('.gallery-card');
+  if (!card) {
+    log('<span class="bad">⚠ 未找到 .gallery-card，渲染失败</span>');
+  } else {
+    const cs = getComputedStyle(card);
+    const attrHeader = card.getAttribute('data-style-element-header');
+    const attrSide = card.getAttribute('data-style-element-side');
+    const attrBg = card.getAttribute('data-style-element-bg');
+    log('<b>渲染结果判定：</b>');
+    log('  data-style-element-header = <code>' + (attrHeader||'(无)') + '</code> ' + (attrHeader ? '<span class="ok">✓</span>' : '<span class="bad">✗ 缺失</span>'));
+    log('  data-style-element-side   = <code>' + (attrSide||'(无)') + '</code> ' + (attrSide ? '<span class="ok">✓</span>' : '<span class="bad">✗ 缺失</span>'));
+    log('  data-style-element-bg     = <code>' + (attrBg||'(无)') + '</code> ' + (attrBg ? '<span class="ok">✓</span>' : '<span class="bad">✗ 缺失</span>'));
+    log('  <b>计算样式 border-top:</b> width=<code>' + cs.borderTopWidth + '</code>, style=<code>' + cs.borderTopStyle + '</code>, color=<code>' + cs.borderTopColor + '</code>');
+    log('  <b>计算样式 border-left:</b> width=<code>' + cs.borderLeftWidth + '</code>, style=<code>' + cs.borderLeftStyle + '</code>, color=<code>' + cs.borderLeftColor + '</code>');
+    log('  <b>计算样式 background-image:</b> <code>' + (cs.backgroundImage||'').slice(0,60) + (cs.backgroundImage && cs.backgroundImage!=='none' ? '…' : '') + '</code>');
+
+    const topOk = (parseFloat(cs.borderTopWidth) > 0);
+    const leftOk = (parseFloat(cs.borderLeftWidth) > 0);
+    const bgOk = (cs.backgroundImage && cs.backgroundImage !== 'none' && cs.backgroundImage !== 'rgba(0, 0, 0, 0)');
+    reportEl.insertAdjacentHTML('beforeend',
+      '<div class="box"><b>最终结论：</b><br>'
+      + '顶栏边框(2px): ' + (topOk ? '<span class="ok">✅ 显示</span>' : '<span class="bad">❌ 未显示 (width=0)</span>') + '<br>'
+      + '侧栏边框(3px): ' + (leftOk ? '<span class="ok">✅ 显示</span>' : '<span class="bad">❌ 未显示 (width=0)</span>') + '<br>'
+      + '背景纹理: ' + (bgOk ? '<span class="ok">✅ 显示</span>' : '<span class="bad">❌ 未显示</span>') + '</div>');
+
+    if (!topOk && !leftOk && !bgOk) {
+      log('<span class="bad">=== 装饰条全部未显示！请按 F12 把上面 data-style-element-* 与 getComputedStyle 数值截图发我，我据此定位引擎/CSS 问题。</span>');
+    } else if (topOk || leftOk || bgOk) {
+      log('<span class="ok">=== 引擎/数据正常，装饰条能显示。那说明编辑器页面本身的数据加载或交互有问题，而非引擎。请把本页结论截图，并检查编辑器页面是否也用了 ?v=20260712a 的 style-engine.js。</span>');
+    }
+  }
+}).catch(e => {
+  log('<span class="bad">引擎加载/执行异常: ' + e.message + '</span>');
+});
+</script>
+</body>
+</html>
