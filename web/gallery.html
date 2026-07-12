@@ -206,7 +206,7 @@
 <script type="module">
     import { supabase, checkAuth } from './script.js?v=20260710a';
     import { renderCard } from './gallery-cards.js?v=20260710c';
-    import { injectDynamicStyles } from './style-engine.js?v=20260710c';
+    import { injectDynamicStyles } from './style-engine.js?v=20260712a';
 
     const galleryGrid = document.getElementById('galleryGrid');
     const galleryCount = document.getElementById('galleryCount');
@@ -273,7 +273,7 @@
     // 加载所有维度选项（供 injectDynamicStyles 注入 css_template）
     async function loadDimensionOptions() {
         const tables = ['style_palette_options','style_layout_options','style_typo_options',
-            'style_border_options','style_deco_options','style_effect_options','style_elements_options',
+            'style_border_options','style_deco_options','style_effect_options','style_element_options',
             'style_container_group_options'];
         const cache = {};
         for (const t of tables) {
@@ -309,7 +309,7 @@
             border:   loadedDimCache['style_border_options'] || [],
             deco:     loadedDimCache['style_deco_options'] || [],
             effect:   loadedDimCache['style_effect_options'] || [],
-            element:  loadedDimCache['style_elements_options'] || [],
+            element:  loadedDimCache['style_element_options'] || [],
             container_group: loadedDimCache['style_container_group_options'] || [],
         });
 
@@ -359,7 +359,7 @@
             border:   dimCache['style_border_options'] || [],
             deco:     dimCache['style_deco_options'] || [],
             effect:   dimCache['style_effect_options'] || [],
-            element:  dimCache['style_elements_options'] || [],
+            element:  dimCache['style_element_options'] || [],
             container_group: dimCache['style_container_group_options'] || [],
         } : {};
         galleryGrid.innerHTML = '';

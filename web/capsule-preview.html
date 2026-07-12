@@ -741,7 +741,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260710b';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260712a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1242,6 +1242,10 @@ function updatePreview() {
         container_group: dimensionCache['style_container_group_options']  || [],
     };
 
+    // 每次重渲染都重新注入 DB css_template（幂等）。
+    // 避免 init() 单次注入时 element 数据未就绪 / 单表静默失败导致装饰 CSS 永久缺失。
+    injectDynamicStyles(allOptions);
+
     // customCss 作用域
     let styleEl = document.getElementById('preview-custom-css');
     if (styleEl) styleEl.remove();
@@ -1284,8 +1288,14 @@ async function loadDimensionOptions() {
                 .from(t)
                 .select('*')
                 .order('sort_order');
-            if (!error) dimensionCache[t] = data || [];
-        } catch (e) { /* 单表不存在则跳过 */ }
+            if (!error) {
+                dimensionCache[t] = data || [];
+            } else {
+                console.warn('[loadDimensionOptions] 表 ' + t + ' 加载失败:', error.message);
+            }
+        } catch (e) {
+            console.warn('[loadDimensionOptions] 表 ' + t + ' 异常:', e && e.message);
+        }
     }
 }
 
