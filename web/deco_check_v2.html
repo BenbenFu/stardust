@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>DECO CHECK v2 — 增强可视诊断</title>
+<style>
+  body{background:#111;color:#ccc;font-family:'Courier New',monospace;font-size:12px;padding:16px}
+  h1{font-size:14px;color:#fff;margin-bottom:12px}
+  .pass{color:#4f4}.fail{color:#f44}.warn{color:#fa0}
+  pre{background:#1a1a1a;padding:10px;border-radius:6px;overflow-x:auto;font-size:11px;line-height:1.5;border:1px solid #333}
+  .section{margin:16px 0;padding:12px;border:1px solid #444;border-radius:8px;background:#161616}
+  /* 强制让装饰条极其明显 */
+  .debug-force-deco .gallery-card[data-style-element-header] {
+    outline: 3px dashed #0f0 !important;
+    outline-offset: -3px;
+  }
+  .debug-force-deco .gallery-card[data-style-element-side] {
+    box-shadow: inset 4px 0 0 0 #f0f !important;
+  }
+</style>
+</head>
+<body>
+
+<h1>🔍 DECO CHECK v2 — 增强可视诊断（?v=20260713a）</h1>
+
+<div id="status">⏳ 正在加载...</div>
+
+<div class="section">
+  <b>━━ 引擎加载 ━━</b>
+  <pre id="engineInfo"></pre>
+</div>
+
+<div class="section">
+  <b>━━ 数据库加载 ━━</b>
+  <pre id="dbInfo"></pre>
+</div>
+
+<div class="section">
+  <b>━━ 渲染结果判定 ━━</b>
+  <pre id="renderInfo"></pre>
+</div>
+
+<!-- ===== 场景 A：原始渲染（用 DB css_template） ===== -->
+<div class="section">
+  <b>━━ 场景 A：原始 DB 渲染（thin_accent_bar / solid_side_bar / dot_grid）━━</b>
+  <p style="font-size:11px;color:#999">这是引擎的正常输出，应看到：<br>① 白/灰底卡片 ② 顶部蓝色细线(2px) ③ 左侧蓝色竖线(2px) ④ 点阵背景纹理</p>
+  <div id="sceneA" style="padding:20px;background:#222;border-radius:8px;"></div>
+  <pre id="sceneAComputed"></pre>
+</div>
+
+<!-- ===== 场景 B：增强可视化（超粗亮色） ===== -->
+<div class="section">
+  <b>━━ 场景 B：增强可视化（8px 红色顶栏 / 8px 品红侧栏 / 强制覆盖）━━</b>
+  <p style="font-size:11px;color:#999">同一样式 JSON，但注入<strong>强制覆盖样式</strong>让装饰条变成 8px 红色/品红。<br>如果此场景能看到明显装饰条而场景 A 不能 → 说明 DB css_template 的 2px 蓝色在当前背景下太弱。</p>
+  <div id="sceneB" style="padding:20px;background:#222;border-radius:8px;position:relative"></div>
+  <pre id="sceneBComputed"></pre>
+</div>
+
+<!-- ===== 场景 C：仅 BASE_CSS（无任何装饰注入） ===== -->
+<div class="section">
+  <b>━━ 场景 C：无装饰对照（element 全部 none）━━</b>
+  <p style="font-size:11px;color:#999">纯底色卡片，无任何装饰条。用于对比 A/B 的差异。</p>
+  <div id="sceneC" style="padding:20px;background:#222;border-radius:8px;"></div>
+  <pre id="sceneCComputed"></pre>
+</div>
+
+<div class="section" style="border-color:#0a0">
+  <b style="color:#4f4">━━ 最终结论 ━━</b>
+  <pre id="finalConclusion"></pre>
+</div>
+
+<script type="module">
+  import * as engine from './style-engine.js?v=20260712a';
+
+  const $ = id => document.getElementById(id);
+  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9weWVhaGJ6aWJ1dXBta21qcGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjk3MDcsImV4cCI6MjA5MzYwNTcwN30.7kCHwI7lKy1jH5BjI4gOKqw2vEUxpsjRJar_94j4Srk';
+  const API='https://opyeahbzibuupmkmjpkr.supabase.co/rest/v1/style_element_options';
+
+  // ---- 工具函数 ----
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function dumpComputed(el){
+    if(!el) return '(元素不存在)';
+    const s=getComputedStyle(el);
+    return [
+      `display:${s.display} position:${s.position}`,
+      `w:${s.width} h:${s.height}`,
+      `bg:${s.backgroundColor}`,
+      `pad:${s.paddingTop}/${s.paddingRight}/${s.paddingBottom}/${s.paddingLeft}`,
+      `border:${s.borderWidth} ${s.borderStyle} ${s.borderColor}`,
+      `border-top-w:${s.borderTopWidth} stl:${s.borderTopStyle} clr:${s.borderTopColor}`,
+      `border-left-w:${s.borderLeftWidth} stl:${s.borderLeftStyle} clr:${s.borderLeftColor}`,
+      `outline:${s.outlineWidth} ${s.outlineStyle} ${s.outlineColor}`,
+      `box-shadow:${s.boxShadow}`,
+      `overflow:${s.overflow}`,
+      `data-header=${el.getAttribute('data-style-element-header')||'(缺失)'}`,
+      `data-side=${el.getAttribute('data-style-element-side')||'(缺失)'}`,
+      `data-bg=${el.getAttribute('data-style-element-bg')||'(缺失)'}`,
+      `inline-style=${esc(el.getAttribute('style')||'(空)')}`
+    ].join('\n');
+  }
+
+  // ---- 1. 引擎检查 ----
+  $('engineInfo').innerHTML = 
+    '<span class="pass">✅ 引擎已加载</span>\n' +
+    'injectDynamicStyles: ' + (typeof engine.injectDynamicStyles === 'function' ? '✅function' : '❌missing') + '\n' +
+    'renderStyleJson: '   + (typeof engine.renderStyleJson === 'function' ? '✅function' : '❌missing') + '\n' +
+    'injectBaseCss: '     + (typeof engine.injectBaseCss === 'function' ? '✅function' : '❌missing') + '\n' +
+    'DEFAULT_STYLE_JSON: '+ (engine.DEFAULT_STYLE_JSON ? '✅exists keys='+Object.keys(engine.DEFAULT_STYLE_JSON).join(',') : '❌missing');
+
+  // 注入基础CSS
+  engine.injectBaseCss(document);
+
+  // ---- 2. 拉数据库 ----
+  let dbData=[];
+  try{
+    const r=await fetch(API+'?select=*&order=sort_order.asc&limit=100',{
+      headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}
+    });
+    dbData=await r.json();
+    if(!Array.isArray(dbData)) throw new Error('非数组响应');
+    $('dbInfo').innerHTML='<span class="pass">✅ 已加载 '+dbData.length+' 条 style_element_options</span>\n'+
+      '含 css_template: '+dbData.filter(r=>r.css_template).length+'\n'+
+      'sub_dim 分布:\n'+[...new Set(dbData.map(r=>r.sub_dim))].map(k=>{
+        const n=dbData.filter(r=>r.sub_dim===k).length;
+        return '  '+k+': '+n;
+      }).join('\n')+
+      '\n\nheader_deco 选项:\n'+dbData.filter(r=>r.sub_dim==='header_deco').map(r=>`  value=${r.value} label=${r.label} template=${(r.css_template||'').substring(0,80)}`).join('\n');
+
+    // 注入动态样式
+    engine.injectDynamicStyles({ element: dbData });
+  }catch(e){
+    $('dbInfo').innerHTML='<span class="fail">❌ 加载失败: '+e.message+'</span>';
+  }
+
+  // ---- 3. 构造测试数据 ----
+  const dummyDiary={date:'2024-07-12',title:'星屑日记',highlights:['要点一','要点二'],capsule:['胶囊']};
+
+  const sjWithDeco={
+    layout:{grid_mode:'vertical'},
+    palette:{harmony:'neutral_grey',tone_mapping:'default_light'},
+    typo:{font_family:'serif_zh'},
+    effect:{hover_effect:'subtle_lift'},
+    border:{radius_style:'rounded_12',width_variant:'thin_1px'},
+    element:{
+      header_deco:'thin_accent_bar',
+      side_accent:'solid_side_bar',
+      bg_pattern:'dot_grid',
+      divider:'none',
+      corner_badge:'none',
+      edge_deco:'none',
+      floating_deco:'none'
+    },
+    header_text:'',
+    side_text:''
+  };
+
+  const sjNone={
+    ...sjWithDeco,
+    element:{header_deco:'none',side_accent:'none',bg_pattern:'none',divider:'none',corner_badge:'none',edge_deco:'none',floating_deco:'none'}
+  };
+
+  // ---- 渲染三个场景 ----
+  const htmlA=engine.renderStyleJson(sjWithDeco,dummyDiary,{});
+  const htmlB=htmlA; // 同一HTML，但容器加强制样式
+  const htmlC=engine.renderStyleJson(sjNone,dummyDiary,{});
+
+  // 场景 A：原始
+  $('sceneA').innerHTML=htmlA;
+  
+  // 场景 B：同一HTML + 强制覆盖样式
+  $('sceneB').innerHTML='<div class="debug-force-deco">'+htmlB+'</div>';
+  // 注入超粗强制样式
+  const forceStyle=document.createElement('style');
+  forceStyle.textContent=`
+    .debug-force-deco .gallery-card[data-style-element-header="thin_accent_bar"] {
+      border-top: 8px solid #ff3333 !important;
+    }
+    .debug-force-deco .gallery-card[data-style-element-side="solid_side_bar"] {
+      border-left: 8px solid #ff33ff !important;
+    }
+    .debug-force-deco .gallery-card { outline: 2px solid #0f0; }
+  `;
+  document.head.appendChild(forceStyle);
+
+  // 场景 C：无装饰
+  $('sceneC').innerHTML=htmlC;
+
+  // ---- 收集计算样式 ----
+  await new Promise(r=>setTimeout(r,100)); // 等 layout
+
+  const cardA=$('sceneA').querySelector('.gallery-card');
+  const cardB=$('sceneB').querySelector('.gallery-card');
+  const cardC=$('sceneC').querySelector('.gallery-card');
+
+  $('sceneAComputed').textContent=dumpComputed(cardA);
+  $('sceneBComputed').textContent=dumpComputed(cardB);
+  $('sceneCComputed').textContent=dumpComputed(cardC);
+
+  // ---- 渲染结果判定 ----
+  let renderLines=[
+    'data 属性:',
+    '  data-style-element-header = '+(cardA?.getAttribute('data-style-element-header')||'❌ 缺失'),
+    '  data-style-element-side  = '+(cardA?.getAttribute('data-style-element-side')||'❌ 缺失'),
+    '  data-style-element-bg    = '+(cardA?.getAttribute('data-style-element-bg')||'❌ 缺失'),
+    '',
+    '场景A 计算样式 (原始DB):',
+    '  border-top: '+getComputedStyle(cardA)?.borderTopWidth+' '+getComputedStyle(cardA)?.borderTopStyle+' '+getComputedStyle(cardA)?.borderTopColor,
+    '  border-left:'+getComputedStyle(cardA)?.borderLeftWidth+' '+getComputedStyle(cardA)?.borderLeftStyle+' '+getComputedStyle(cardA)?.borderLeftColor,
+    '  background:  '+getComputedStyle(cardA)?.backgroundColor,
+    '  padding:     '+getComputedStyle(cardA)?.paddingTop,
+    '',
+    '场景B 计算样式 (强制覆盖):',
+    '  border-top: '+getComputedStyle(cardB)?.borderTopWidth+' '+getComputedStyle(cardB)?.borderTopStyle+' '+getComputedStyle(cardB)?.borderTopColor,
+    '  border-left:'+getComputedStyle(cardB)?.borderLeftWidth+' '+getComputedStyle(cardB)?.borderLeftStyle+' '+getComputedStyle(cardB)?.borderLeftColor,
+    '',
+    '场景C 对照 (无装饰):',
+    '  border-top: '+getComputedStyle(cardC)?.borderTopWidth+' '+getComputedStyle(cardC)?.borderTopStyle,
+    '  border-left:'+getComputedStyle(cardC)?.borderLeftWidth+' '+getComputedStyle(cardC)?.borderLeftStyle,
+  ];
+  $('renderInfo').textContent=renderLines.join('\n');
+
+  // ---- 最终结论 ----
+  const btA=getComputedStyle(cardA)?.borderTopWidth;
+  const btB=getComputedStyle(cardB)?.borderTopWidth;
+  const blA=getComputedStyle(cardA)?.borderLeftWidth;
+  const bgA=getComputedStyle(cardA)?.backgroundColor;
+
+  let conclusions=[];
+  
+  conclusions.push('=== 可视化对比结论 ===\n');
+  
+  // 场景 B 判定
+  if(btB==='8px'){
+    conclusions.push('[强制覆盖] 8px 红/品红边框 ✅ 能看到吗？');
+    conclusions.push('  如果能看到明显的红顶栏+品红左栏:');
+    conclusions.push('    → 引擎/css_template/变量 全部正常');
+    conclusions.push('    → 原始 2px 蓝色太弱或与背景融合');
+    conclusions.push('    → 解决方案：增大 css_template 中 border 粗细或提高对比度\n');
+  } else {
+    conclusions.push('[强制覆盖] border-top-width='+btB+' (预期 8px)');
+    conclusions.push('  ❌ 即使 !important 强制 8px 也没生效！');
+    conclusions.push('  → 存在更高优先级规则覆盖，或选择器未命中\n');
+  }
+
+  // 场景 A vs C 对比
+  if(btA!==getComputedStyle(cardC)?.borderTopWidth || blA!==getComputedStyle(cardC)?.borderLeftWidth){
+    conclusions.push('[原始DB vs 无装饰] 边框值不同 ✅');
+    conclusions.push('  场景A border-top='+btA+' left='+blA);
+    conclusions.push('  场景C border-top='+getComputedStyle(cardC)?.borderTopWidth+' left='+getComputedStyle(cardC)?.borderLeftWidth);
+    conclusions.push('  → DB css_template 确实在起作用\n');
+  } else {
+    conclusions.push('[原始DB vs 无装饰] 边框值相同 ⚠️');
+    conclusions.push('  → css_template 可能未命中（值相同说明装饰规则没生效）\n');
+  }
+
+  // 背景色
+  if(bgA && !bgA.startsWith('rgba(0,0,0,0)')){
+    conclusions.push('[背景色] '+bgA+' → 有可见背景 ✅\n');
+  } else {
+    conclusions.push('[背景色] '+bgA+' → 透明！卡片无可见背景 ❌\n');
+  }
+
+  conclusions.push('=== 你需要确认的问题 ===\n');
+  conclusions.push('1. 场景B的红顶栏(8px)和品红左栏(8px)是否清晰可见？');
+  conclusions.push('2. 场景A的蓝色2px顶栏/侧栏是否能看到（哪怕很细）？');
+  conclusions.push('3. 场景C（无装饰）和场景A之间是否有肉眼可辨的差异？');
+  conclusions.push('4. 三个场景卡片的背景色是否都是非透明的？');
+  conclusions.push('');
+  conclusions.push('请把以上4个问题的答案发回，即可精确定位根因。');
+
+  $('finalConclusion').textContent=conclusions.join('\n');
+  $('status').innerHTML='<span class="pass">✅ 诊断完成 — 请查看下方三个场景并回答最终结论中的问题</span>';
+
+</script>
+</body>
+</html>
