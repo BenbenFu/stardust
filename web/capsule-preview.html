@@ -1228,6 +1228,36 @@ function applyPerFieldOptionsToUI() {
 // ============================================================
 // 更新预览 + JSON 展示
 // ============================================================
+// 保险: 把当前选中的 element 选项对应的 css_template 单独注入一个随卡片刷新的 <style>。
+// 不依赖全局 card-engine-dynamic-css 是否成功注入，彻底消除部署环境里“选了选项卡片没反应”的隐患。
+function injectActiveElementCss(sj, allOptions) {
+    const elRows = (allOptions && allOptions.element) || [];
+    const active = (sj && sj.element) || {};
+    const SUB = [
+        ['header_deco',   'data-style-element-header'],
+        ['side_accent',   'data-style-element-side'],
+        ['divider',       'data-style-element-divider'],
+        ['corner_badge',  'data-style-element-corner'],
+        ['bg_pattern',    'data-style-element-bg'],
+        ['edge_deco',     'data-style-element-edge'],
+        ['floating_deco', 'data-style-element-float'],
+    ];
+    let css = '';
+    for (const [subDim] of SUB) {
+        const val = active[subDim];
+        if (!val || val === 'none') continue;
+        const row = elRows.find(r => r.sub_dim === subDim && (r.value === val || r.option_key === val));
+        if (row && row.css_template && row.css_template.trim()) css += row.css_template.trim() + '\n';
+    }
+    let st = document.getElementById('preview-active-element-css');
+    if (!st) {
+        st = document.createElement('style');
+        st.id = 'preview-active-element-css';
+        document.head.appendChild(st);
+    }
+    st.textContent = css;
+}
+
 function updatePreview() {
     const sj = buildStyleJson();
 
@@ -1245,6 +1275,10 @@ function updatePreview() {
     // 每次重渲染都重新注入 DB css_template（幂等）。
     // 避免 init() 单次注入时 element 数据未就绪 / 单表静默失败导致装饰 CSS 永久缺失。
     injectDynamicStyles(allOptions);
+
+    // 保险: 把当前选中的 element 选项 css_template 单独注入(随卡片刷新),
+    // 即使全局 card-engine-dynamic-css 因故缺失, 选中项也一定生效。
+    injectActiveElementCss(sj, allOptions);
 
     // 诊断：若元素维度表未加载，装饰条（顶栏/侧栏/bg_pattern/角标…）将全部缺失。
     // 用可见横幅直接暴露该失败，避免“静默不显示”难以排查。
