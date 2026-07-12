@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>DECO 侧栏/顶栏 全选项可视化 Demo</title>
+<style>
+  body{background:#0e0e0e;color:#cfcfcf;font-family:-apple-system,'Segoe UI',sans-serif;font-size:13px;padding:20px;line-height:1.5}
+  h1{font-size:16px;color:#fff;margin:0 0 4px}
+  .sub{color:#888;font-size:12px;margin-bottom:18px}
+  .sec-title{font-size:14px;color:#6cf;margin:26px 0 10px;border-bottom:1px solid #333;padding-bottom:6px}
+  .grid{display:flex;flex-wrap:wrap;gap:18px}
+  .cell{width:280px;background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px}
+  .cell .cap{font-size:11px;color:#9cf;margin-bottom:8px;font-family:monospace}
+  .cell .cap b{color:#fff}
+  .cell .note{font-size:10px;color:#888;margin-top:6px;min-height:28px}
+  .wide{color:#6f6}
+  .thin{color:#fa6}
+  .hint{background:#1d2733;border:1px solid #2a4a66;color:#bcd;padding:10px 14px;border-radius:8px;font-size:12px;margin:10px 0}
+  .toggle{margin:14px 0;font-size:13px;color:#fff}
+  .gallery-card{box-sizing:border-box}
+</style>
+</head>
+<body>
+
+<h1>DECO 侧栏 / 顶栏 · 全选项可视化 Demo</h1>
+<div class="sub">每张卡片宽 280px（与 capsule-preview 预览区同宽），使用部署版 style-engine.js?v=20260712a + 真实 DB css_template。逐项对比"宽/细"与"是否推开内容"。</div>
+
+<div id="status">加载中...</div>
+
+<div class="hint">
+  <b>结论速览：</b><br>
+  · <span class="thin">细线型</span>（不推开 / 仅 3px 边）：solid_side_bar、gradient_side_bar、solid_side_bar_right、gradient_side_bar_right、thin_accent_bar、thick_ribbon、gradient_strip、blink_cursor_bar<br>
+  · <span class="wide">宽栏型</span>（推开内容）：<b>line_number_column（36px 行号栏）</b>、notebook_binding（28px 活页孔）<br>
+  · <b>当前 bug：</b>line_number_column 的 gutter 背景是 90% 白 + 10% 黑 ≈ 极浅灰，在白底卡片上几乎看不见 → 勾选下方"修复对比"可看增强后的效果。
+</div>
+
+<div class="toggle">
+  <label><input type="checkbox" id="fixToggle"> 修复对比：line_number_column gutter 改用更明显的强调色背景</label>
+</div>
+
+<div class="sec-title">side_accent（侧栏）全 7 项</div>
+<div class="grid" id="sideGrid"></div>
+
+<div class="sec-title">header_deco（顶栏）全 5 项</div>
+<div class="grid" id="headerGrid"></div>
+
+<div class="sec-title">对照：side_accent = none（capsule-preview 默认，无任何装饰）</div>
+<div class="grid" id="noneGrid"></div>
+
+<script type="module">
+  import * as engine from './style-engine.js?v=20260712a';
+
+  const KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9weWVhaGJ6aWJ1dXBta21qcGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjk3MDcsImV4cCI6MjA5MzYwNTcwN30.7kCHwI7lKy1jH5BjI4gOKqw2vEUxpsjRJar_94j4Srk';
+  const API='https://opyeahbzibuupmkmjpkr.supabase.co/rest/v1/style_element_options';
+
+  const MOCK={date:'2026/06/19',title:'预览示例 · 调试日记',highlights:['第一条精华句，用于预览卡片样式效果。','第二条精华句，测试多句分隔符样式。','第三条内容，展示更多文字时的排版表现。'],capsuleName:'样式预览'};
+
+  function baseSj(){return {
+    layout:{grid_mode:'vertical'},
+    palette:{harmony:'neutral_grey',tone_mapping:'default_light'},
+    typo:{font_family:'serif_zh'},
+    effect:{hover_effect:'subtle_lift'},
+    border:{radius_style:'rounded_12',width_variant:'thin_1px'},
+    element:{header_deco:'none',side_accent:'none',bg_pattern:'none',divider:'none',corner_badge:'none',edge_deco:'none',floating_deco:'none'},
+    header_text:'',side_text:''
+  };}
+
+  const FIX_CSS=`
+    .gallery-card[data-style-element-side="line_number_column"]::before{
+      background: color-mix(in srgb, var(--card-accent,#3b82f6) 18%, var(--card-bg,#fff) 82%) !important;
+      border-right: 1px solid var(--card-accent,#3b82f6) !important;
+    }`;
+
+  let dbData=[];
+  async function main(){
+    engine.injectBaseCss(document);
+    try{
+      const r=await fetch(API+'?select=*&order=sort_order.asc',{headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}});
+      dbData=await r.json();
+      engine.injectDynamicStyles({element:dbData});
+      $('status').textContent='✅ 已加载 '+dbData.length+' 条；引擎/DB 正常。';
+    }catch(e){
+      $('status').textContent='❌ DB 加载失败: '+e.message;
+      return;
+    }
+
+    const sides=dbData.filter(r=>r.sub_dim==='side_accent' && r.value!=='none');
+    const headers=dbData.filter(r=>r.sub_dim==='header_deco' && r.value!=='none');
+
+    sides.forEach(opt=>{
+      const sj=baseSj(); sj.element.side_accent=opt.value;
+      addCell('sideGrid', opt, engine.renderStyleJson(sj,MOCK,{}),
+        (opt.value==='line_number_column'||opt.value==='notebook_binding')
+          ? '<span class="wide">宽栏型：推开内容 '+ (opt.value==='line_number_column'?'40px':'28px') +'</span>'
+          : '<span class="thin">细线型：仅 3px 边，不推开内容</span>');
+    });
+
+    headers.forEach(opt=>{
+      const sj=baseSj(); sj.element.header_deco=opt.value;
+      addCell('headerGrid', opt, engine.renderStyleJson(sj,MOCK,{}),
+        '<span class="thin">顶栏细线/色带（边框顶部），不推开内容</span>');
+    });
+
+    const sjNone=baseSj();
+    addCell('noneGrid', {value:'none',label:'无侧边装饰'}, engine.renderStyleJson(sjNone,MOCK,{}),
+      '默认状态：无任何装饰条。必须在下拉框选一个选项才会显示。');
+
+    // 修复对比开关
+    const ts=document.createElement('style'); ts.id='fix-style'; document.head.appendChild(ts);
+    document.getElementById('fixToggle').addEventListener('change',e=>{
+      ts.textContent = e.target.checked ? FIX_CSS : '';
+    });
+  }
+
+  function addCell(gridId, opt, html, note){
+    const cell=document.createElement('div'); cell.className='cell';
+    const cap=document.createElement('div'); cap.className='cap';
+    cap.innerHTML='<b>'+opt.value+'</b> · '+opt.label;
+    const wrap=document.createElement('div');
+    wrap.innerHTML=html;
+    const noteEl=document.createElement('div'); noteEl.className='note'; noteEl.innerHTML=note;
+    cell.appendChild(cap); cell.appendChild(wrap); cell.appendChild(noteEl);
+    $(gridId).appendChild(cell);
+  }
+  function $(id){return document.getElementById(id);}
+  main();
+</script>
+</body>
+</html>
