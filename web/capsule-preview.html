@@ -1246,6 +1246,10 @@ function updatePreview() {
     // 避免 init() 单次注入时 element 数据未就绪 / 单表静默失败导致装饰 CSS 永久缺失。
     injectDynamicStyles(allOptions);
 
+    // 诊断：若元素维度表未加载，装饰条（顶栏/侧栏/bg_pattern/角标…）将全部缺失。
+    // 用可见横幅直接暴露该失败，避免“静默不显示”难以排查。
+    const elCount = (allOptions.element || []).length;
+
     // customCss 作用域
     let styleEl = document.getElementById('preview-custom-css');
     if (styleEl) styleEl.remove();
@@ -1267,6 +1271,26 @@ function updatePreview() {
     dom.previewArea.insertAdjacentHTML('beforeend', cardHtml);
 
     dom.jsonDisplay.textContent = JSON.stringify(sj, null, 2);
+
+    // 元素维度表为空 → 装饰 CSS 未注入，显示可见告警（见 showDecoWarn）
+    showDecoWarn(elCount === 0);
+}
+
+// 元素维度表未加载时的可见告警横幅（避免“装饰条静默不显示”难以排查）
+function showDecoWarn(show) {
+    let el = document.getElementById('deco-warn-banner');
+    if (!show) { if (el) el.remove(); return; }
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'deco-warn-banner';
+        el.style.cssText = 'background:#5a1d1d;color:#ffb4b4;border:1px solid #a33;'
+            + 'padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:12px;line-height:1.5;';
+    }
+    el.innerHTML = '⚠ <b>元素维度数据未加载</b>（style_element_options）。'
+        + '顶栏/侧栏/背景纹理/角标等装饰条将<b>无法显示</b>。'
+        + '请按 F12 打开控制台，查看是否有 <code>[loadDimensionOptions] 表 style_element_options 加载失败</code> 警告，'
+        + '并确认数据库网络连通。';
+    if (dom && dom.previewArea) dom.previewArea.insertBefore(el, dom.previewArea.firstChild);
 }
 
 function scopeCustomCss(css) {
