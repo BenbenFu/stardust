@@ -1,67 +1,28 @@
 -- ============================================================================
--- style_element_bands_refactor_20260713.sql
--- 装饰条架构重构：从「border 伪装装饰条」改为「真实 band 元素」
+-- style_element_options_refactor_20260713.sql  (聚焦版：仅 style_element_options)
+-- 顶/侧栏装饰条「维度表」迁移：外观名与宽度解耦
+--
+-- 本文件 = 原 style_element_bands_refactor_20260713.sql 的 Part B + Part C。
+-- 明确【不包含】：
+--   - Part A: style_layout_options 重定向（layout 维度，独立表，按需另跑）
+--   - Part D: STYLE_POOL.style_json 数据迁移（按需求本次不修改 STYLE_POOL）
 --
 -- 背景：
---   旧引擎把 header/side 装饰条用 .gallery-card 的 border-top/border-left 伪装，
---   且外观名里硬编了宽度（thin_accent_bar=2px, thick_ribbon=6px, blink_cursor_bar=20px），
---   侧栏左右还分成了 solid_side_bar / solid_side_bar_right 两套。
---   新引擎（style-engine.js v2.2）改用真实 DOM 元素：
---     .card-header-band  （顶栏）
---     .card-side-band    （侧栏，左/右由 element.side_position 决定）
---   装饰条「外观」与「宽度」彻底解耦：
---     - 外观由 DB css_template 命中 .card-header-band / .card-side-band 决定
---     - 宽度由 element.header_width / side_width 写入 CSS 变量
---       --header-band-size / --side-band-size 决定
---   因此旧 option 名必须全量重命名为纯外观名。
+--   旧引擎把 header/side 装饰条用 .gallery-card 的 border 伪装，且外观名里硬编了
+--   宽度（thin_accent_bar=2px / thick_ribbon=6px / blink_cursor_bar=20px），侧栏还分了
+--   _right 变体。新引擎（style-engine.js v2.2）改为真实 DOM 元素 .card-header-band /
+--   .card-side-band，宽度由 element.header_width / side_width 控制、侧栏左右由
+--   element.side_position 控制，故 option 名须改为纯外观名。
 --
--- 本脚本分四部分：
---   A. 重定向 layout 维度模板（grid / block_align / inline_align / density）
---      选择器从 .gallery-card 改到 .card-content--slots / .card-content
---      （因为 .gallery-card 现在是 flex column 容器，slot grid 移到了 .card-content--slots）
---   B. header_deco 选项重命名 + 新增纯外观名
---   C. side_accent 选项重命名 + 新增纯外观名（保留 line_number_column / notebook_binding，改写为 band）
---   D. 迁移 STYLE_POOL.style_json（旧值映射 + 补 header_width / side_width / side_position）
+-- 运行后效果：
+--   - style_element_options 的 header_deco / side_accent 选项重命名为 solid / gradient /
+--     blink / diagonal / breathing / scanline，并保留功能型 line_number_column /
+--     notebook_binding（改写为 band 选择器）。
+--   - 现有 STYLE_POOL 卡片若仍引用旧名（thin_accent_bar 等），本次【不改其数据】，
+--     这些卡片不会显色；在 capsule-preview 重新选择顶/侧栏样式即可恢复。
 --
--- 执行顺序：A → B → C → D（C 中先删 right 变体再改名，避免唯一约束冲突）
--- 幂等性：可重复执行；已迁移过的行 CASE 会落到 ELSE 分支保持原值。
+-- 幂等性：UPDATE/DELETE 命中旧值才生效；INSERT 用 WHERE NOT EXISTS 包裹，可重复执行。
 -- ============================================================================
-
--- ----------------------------------------------------------------------------
--- Part A: 重定向 layout 维度模板选择器到 band / content 容器
--- ----------------------------------------------------------------------------
-
--- grid：slot 网格现在在 .card-content--slots 上
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-grid="([^"]+)"\]',
-  '.gallery-card[data-style-layout-grid="\1"] .card-content--slots', 'g')
-WHERE sub_dim = 'grid' AND css_template IS NOT NULL;
-
--- block_align：slot 在网格内的垂直对齐 → 作用到 .card-content--slots
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-block-align="([^"]+)"\]',
-  '.gallery-card[data-style-layout-block-align="\1"] .card-content--slots', 'g')
-WHERE sub_dim = 'block_align' AND css_template IS NOT NULL;
-
--- inline_align：slot 内水平对齐 → 作用到 .card-content--slots
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-inline-align="([^"]+)"\]',
-  '.gallery-card[data-style-layout-inline-align="\1"] .card-content--slots', 'g')
-WHERE sub_dim = 'inline_align' AND css_template IS NOT NULL;
-
--- density：padding / --layout-gap 改到 .card-content（让 header/side 装饰条满边出血，内容内缩）
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-density="([^"]+)"\]',
-  '.gallery-card[data-style-layout-density="\1"] .card-content', 'g')
-WHERE sub_dim = 'density' AND css_template IS NOT NULL;
 
 -- ----------------------------------------------------------------------------
 -- Part B: header_deco 重命名 + 新增纯外观名
@@ -73,7 +34,7 @@ SET value = 'solid', sort_order = 2,
     css_template = '.gallery-card[data-style-element-header="solid"] .card-header-band { background: var(--card-accent, #ccc); }'
 WHERE sub_dim = 'header_deco' AND value = 'thin_accent_bar';
 
--- thick_ribbon 合并进 solid（旧 6px 宽度由 STYLE_POOL 迁移补 header_width=6 保留）
+-- thick_ribbon 合并进 solid（旧 6px 宽度由 STYLE_POOL 后续迁移补 header_width=6 保留）
 DELETE FROM style_element_options WHERE sub_dim = 'header_deco' AND value = 'thick_ribbon';
 
 -- gradient_strip → gradient
@@ -82,14 +43,13 @@ SET value = 'gradient', sort_order = 3,
     css_template = '.gallery-card[data-style-element-header="gradient"] .card-header-band { background: linear-gradient(to right, var(--card-accent, #ccc), var(--card-muted, #999)); }'
 WHERE sub_dim = 'header_deco' AND value = 'gradient_strip';
 
--- blink_cursor_bar → blink（旧 20px 高度由 STYLE_POOL 迁移补 header_width=20 保留）
+-- blink_cursor_bar → blink（旧 20px 高度由 STYLE_POOL 后续迁移补 header_width=20 保留）
 UPDATE style_element_options
 SET value = 'blink', sort_order = 4,
     css_template = '.gallery-card[data-style-element-header="blink"] .card-header-band { background: var(--card-accent, #ccc); animation: band-blink 1s infinite step-end; }'
 WHERE sub_dim = 'header_deco' AND value = 'blink_cursor_bar';
 
 -- 新增：diagonal / breathing / scanline（纯外观，宽度仍由 header_width 决定）
--- 用 WHERE NOT EXISTS 包裹，可重复执行（与聚焦版 style_element_options_refactor_20260713.sql 不冲突）
 INSERT INTO style_element_options (sub_dim, value, label, mount_anchor, layout_mode, css_template, sort_order, is_enabled)
 SELECT 'header_deco', 'diagonal',  'Diagonal 斜纹',   'top', 'placeholder', '.gallery-card[data-style-element-header="diagonal"] .card-header-band { background: repeating-linear-gradient(45deg, var(--card-accent, #ccc) 0 6px, transparent 6px 12px); }', 5, true
 WHERE NOT EXISTS (SELECT 1 FROM style_element_options WHERE sub_dim = 'header_deco' AND value = 'diagonal');
@@ -134,7 +94,6 @@ SET sort_order = 5,
 WHERE sub_dim = 'side_accent' AND value = 'notebook_binding';
 
 -- 新增：diagonal / breathing / scanline（纯外观，宽度仍由 side_width 决定）
--- 用 WHERE NOT EXISTS 包裹，可重复执行（与聚焦版 style_element_options_refactor_20260713.sql 不冲突）
 INSERT INTO style_element_options (sub_dim, value, label, mount_anchor, layout_mode, css_template, sort_order, is_enabled)
 SELECT 'side_accent', 'diagonal',  'Diagonal 斜纹',   'left', 'placeholder', '.gallery-card[data-style-element-side="diagonal"] .card-side-band { background: repeating-linear-gradient(45deg, var(--card-accent, #ccc) 0 6px, transparent 6px 12px); }', 6, true
 WHERE NOT EXISTS (SELECT 1 FROM style_element_options WHERE sub_dim = 'side_accent' AND value = 'diagonal');
@@ -148,81 +107,9 @@ SELECT 'side_accent', 'scanline',  'Scanline 扫描',  'left', 'placeholder', '.
 WHERE NOT EXISTS (SELECT 1 FROM style_element_options WHERE sub_dim = 'side_accent' AND value = 'scanline');
 
 -- ----------------------------------------------------------------------------
--- Part D: 迁移 STYLE_POOL.style_json
---   - 旧 header_deco / side_accent 值映射到新纯外观名
---   - 补 header_width / side_width（按旧宽度尽量保留视觉）/ side_position
--- ----------------------------------------------------------------------------
-
-UPDATE "STYLE_POOL"
-SET style_json = jsonb_set(
-  jsonb_set(
-    jsonb_set(
-      jsonb_set(
-        jsonb_set(style_json,
-          '{element,header_deco}',
-          CASE (style_json->'element'->>'header_deco')
-            WHEN 'thin_accent_bar'  THEN '"solid"'::jsonb
-            WHEN 'thick_ribbon'    THEN '"solid"'::jsonb
-            WHEN 'gradient_strip'   THEN '"gradient"'::jsonb
-            WHEN 'blink_cursor_bar' THEN '"blink"'::jsonb
-            ELSE COALESCE(style_json->'element'->'header_deco', '"none"'::jsonb)
-          END),
-        '{element,header_width}',
-        CASE (style_json->'element'->>'header_deco')
-          WHEN 'thin_accent_bar'  THEN '2'::jsonb
-          WHEN 'thick_ribbon'    THEN '6'::jsonb
-          WHEN 'gradient_strip'   THEN '4'::jsonb
-          WHEN 'blink_cursor_bar' THEN '20'::jsonb
-          ELSE COALESCE(style_json->'element'->'header_width', '6'::jsonb)
-        END),
-      '{element,side_accent}',
-      CASE (style_json->'element'->>'side_accent')
-        WHEN 'solid_side_bar'        THEN '"solid"'::jsonb
-        WHEN 'gradient_side_bar'     THEN '"gradient"'::jsonb
-        WHEN 'solid_side_bar_right'  THEN '"solid"'::jsonb
-        WHEN 'gradient_side_bar_right' THEN '"gradient"'::jsonb
-        WHEN 'line_number_column'    THEN '"line_number_column"'::jsonb
-        WHEN 'notebook_binding'      THEN '"notebook_binding"'::jsonb
-        ELSE COALESCE(style_json->'element'->'side_accent', '"none"'::jsonb)
-      END),
-    '{element,side_width}',
-    CASE (style_json->'element'->>'side_accent')
-      WHEN 'solid_side_bar'         THEN '3'::jsonb
-      WHEN 'gradient_side_bar'      THEN '3'::jsonb
-      WHEN 'solid_side_bar_right'   THEN '3'::jsonb
-      WHEN 'gradient_side_bar_right' THEN '3'::jsonb
-      WHEN 'line_number_column'     THEN '36'::jsonb
-      WHEN 'notebook_binding'       THEN '28'::jsonb
-      ELSE COALESCE(style_json->'element'->'side_width', '8'::jsonb)
-    END),
-  '{element,side_position}',
-  CASE (style_json->'element'->>'side_accent')
-    WHEN 'solid_side_bar_right'   THEN '"right"'::jsonb
-    WHEN 'gradient_side_bar_right' THEN '"right"'::jsonb
-    ELSE COALESCE(style_json->'element'->'side_position', '"left"'::jsonb)
-  END)
-WHERE style_json->'element' IS NOT NULL
-  AND (
-    style_json->'element'->>'header_deco' IN ('thin_accent_bar','thick_ribbon','gradient_strip','blink_cursor_bar')
-    OR style_json->'element'->>'side_accent' IN ('solid_side_bar','gradient_side_bar','solid_side_bar_right','gradient_side_bar_right','line_number_column','notebook_binding')
-    OR style_json->'element'->>'header_width' IS NULL
-    OR style_json->'element'->>'side_width'  IS NULL
-    OR style_json->'element'->>'side_position' IS NULL
-  );
-
--- ----------------------------------------------------------------------------
 -- 验证（取消注释查看结果）
 -- ----------------------------------------------------------------------------
--- SELECT id, name,
---        style_json->'element'->>'header_deco'   AS header_deco,
---        style_json->'element'->>'header_width'  AS header_width,
---        style_json->'element'->>'side_accent'   AS side_accent,
---        style_json->'element'->>'side_width'    AS side_width,
---        style_json->'element'->>'side_position' AS side_position
--- FROM "STYLE_POOL"
--- WHERE style_json->'element' IS NOT NULL
--- ORDER BY id LIMIT 20;
---
--- SELECT sub_dim, value, sort_order, css_template
+-- SELECT sub_dim, value, sort_order, is_enabled, css_template
 -- FROM style_element_options
--- WHERE sub_dim IN ('header_deco','side_accent') ORDER BY sub_dim, sort_order;
+-- WHERE sub_dim IN ('header_deco','side_accent')
+-- ORDER BY sub_dim, sort_order;
