@@ -19,6 +19,7 @@
 const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .gallery-card {
   display: flex; flex-direction: column; position: relative; overflow: hidden;
+  padding: var(--band-inset, 0px);
   break-inside: avoid; margin-bottom: var(--spacing-md, 16px);
   cursor: pointer; text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -29,7 +30,7 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
   border-color: var(--card-accent, transparent);
 }
 /* 内容包裹层：slot skeleton 或 container-group 都放在这里 */
-.card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: var(--band-inset, 0px); }
+.card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .card-content--slots { display: grid; gap: var(--spacing-sm, var(--layout-gap, 8px));
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d"; }
 .card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
@@ -747,8 +748,9 @@ export function renderStyleJson(styleJson, diary, allOptions) {
     '--side-band-size:' + parsePx(elBand.side_width, 8) + 'px'
   );
 
-  // 留白/贴边：band 始终贴边（.gallery-card padding:0），内容区统一内缩 --band-inset。
-  // 勾选留白=12px（与无 band 时到边缘的距离一致），取消=贴边=0px。
+  // 留白/贴边（band_inset 控制 .gallery-card 的 padding）：
+  //   勾选=内缩 12px（色条与内容一起离卡片边缘 12px，即"像现在一样"）；
+  //   取消=贴边 0px（色条与内容一起满边）。
   // 旧 style_json 缺 band_inset 时默认 12px，以兼容既有视觉（原 density 的 12px padding）。
   const bandInset = elBand.band_inset === false ? false : true;
   paletteCssVars.push('--band-inset:' + (bandInset ? '12px' : '0px'));
