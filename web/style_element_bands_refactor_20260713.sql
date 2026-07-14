@@ -29,39 +29,46 @@
 
 -- ----------------------------------------------------------------------------
 -- Part A: 重定向 layout 维度模板选择器到 band / content 容器
+-- 说明：早期版本用 regexp_replace 做重定向，因旧模板选择器格式差异（前置选择器 /
+--   空格 / 换行 / 多选择器并列）正则未命中，导致重定向失败。此处改为「精确整行
+--   UPDATE」，100% 命中。完整版本见 style_layout_redirect_fix_20260713.sql。
 -- ----------------------------------------------------------------------------
 
 -- grid：slot 网格现在在 .card-content--slots 上
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-grid="([^"]+)"\]',
-  '.gallery-card[data-style-layout-grid="\1"] .card-content--slots', 'g')
-WHERE sub_dim = 'grid' AND css_template IS NOT NULL;
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="2col_equal"] .card-content--slots { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }' WHERE sub_dim='grid' AND value='2col_equal';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="2col_left_narrow"] .card-content--slots { grid-template-columns: 1fr 3fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }' WHERE sub_dim='grid' AND value='2col_left_narrow';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="2col_left_wide"] .card-content--slots { grid-template-columns: 2fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }' WHERE sub_dim='grid' AND value='2col_left_wide';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="2col_right_narrow"] .card-content--slots { grid-template-columns: 3fr 1fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }' WHERE sub_dim='grid' AND value='2col_right_narrow';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="2col_right_wide"] .card-content--slots { grid-template-columns: 1fr 2fr; grid-template-areas: "slot-a slot-b" "slot-c slot-d"; }' WHERE sub_dim='grid' AND value='2col_right_wide';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="3col_equal"] .card-content--slots { grid-template-columns: 1fr 1fr 1fr; grid-template-areas: "slot-a slot-b slot-d" "slot-c slot-c slot-c"; }' WHERE sub_dim='grid' AND value='3col_equal';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="3col_left_focus"] .card-content--slots { grid-template-columns: 2fr 1fr 1fr; grid-template-areas: "slot-b slot-b slot-b" "slot-c slot-a slot-d"; }' WHERE sub_dim='grid' AND value='3col_left_focus';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="3col_right_focus"] .card-content--slots { grid-template-columns: 1fr 1fr 2fr; grid-template-areas: "slot-b slot-b slot-b" "slot-a slot-d slot-c"; }' WHERE sub_dim='grid' AND value='3col_right_focus';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="bottom_split"] .card-content--slots { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-b slot-b" "slot-c slot-c" "slot-a slot-d"; }' WHERE sub_dim='grid' AND value='bottom_split';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="hero"] .card-content--slots { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-b slot-b" "slot-a slot-d" "slot-c slot-c"; }' WHERE sub_dim='grid' AND value='hero';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="inverted"] .card-content--slots { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-c slot-c" "slot-b slot-b" "slot-a slot-d"; }' WHERE sub_dim='grid' AND value='inverted';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="sidebar_both"] .card-content--slots { grid-template-columns: 80px 1fr 80px; grid-template-areas: "slot-a slot-b slot-d" "slot-a slot-c slot-d"; }' WHERE sub_dim='grid' AND value='sidebar_both';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="sidebar_left"] .card-content--slots { grid-template-columns: 100px 1fr; grid-template-areas: "slot-a slot-b" "slot-d slot-c"; }' WHERE sub_dim='grid' AND value='sidebar_left';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="sidebar_right"] .card-content--slots { grid-template-columns: 1fr 100px; grid-template-areas: "slot-b slot-a" "slot-c slot-d"; }' WHERE sub_dim='grid' AND value='sidebar_right';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="single"] .card-content--slots { grid-template-columns: 1fr; grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d"; }' WHERE sub_dim='grid' AND value='single';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="timeline"] .card-content--slots { grid-template-columns: 60px 1fr; grid-template-areas: "slot-a slot-b" "slot-a slot-c" "slot-a slot-d"; border-left: 2px solid var(--card-accent, #ccc); padding-left: 12px; }' WHERE sub_dim='grid' AND value='timeline';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-grid="top_split"] .card-content--slots { grid-template-columns: 1fr 1fr; grid-template-areas: "slot-a slot-d" "slot-b slot-b" "slot-c slot-c"; }' WHERE sub_dim='grid' AND value='top_split';
 
--- block_align：slot 在网格内的垂直对齐 → 作用到 .card-content--slots
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-block-align="([^"]+)"\]',
-  '.gallery-card[data-style-layout-block-align="\1"] .card-content--slots', 'g')
-WHERE sub_dim = 'block_align' AND css_template IS NOT NULL;
+-- block_align：slot 在网格内的垂直对齐 → .card-content--slots
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-block-align="center"] .card-content--slots { align-items: center; }' WHERE sub_dim='block_align' AND value='center';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-block-align="end"] .card-content--slots { align-items: end; }' WHERE sub_dim='block_align' AND value='end';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-block-align="start"] .card-content--slots { align-items: start; }' WHERE sub_dim='block_align' AND value='start';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-block-align="stretch"] .card-content--slots { align-items: stretch; }' WHERE sub_dim='block_align' AND value='stretch';
 
--- inline_align：slot 内水平对齐 → 作用到 .card-content--slots
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-inline-align="([^"]+)"\]',
-  '.gallery-card[data-style-layout-inline-align="\1"] .card-content--slots', 'g')
-WHERE sub_dim = 'inline_align' AND css_template IS NOT NULL;
+-- inline_align：slot 内水平对齐 → .card-content--slots
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-inline-align="center"] .card-content--slots { justify-items: center; text-align: center; }' WHERE sub_dim='inline_align' AND value='center';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-inline-align="end"] .card-content--slots { justify-items: end; text-align: end; }' WHERE sub_dim='inline_align' AND value='end';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-inline-align="justify"] .card-content--slots { justify-items: stretch; text-align: justify; }' WHERE sub_dim='inline_align' AND value='justify';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-inline-align="start"] .card-content--slots { justify-items: start; text-align: start; }' WHERE sub_dim='inline_align' AND value='start';
 
--- density：padding / --layout-gap 改到 .card-content（让 header/side 装饰条满边出血，内容内缩）
-UPDATE style_layout_options
-SET css_template = regexp_replace(
-  css_template,
-  '\.gallery-card\[data-style-layout-density="([^"]+)"\]',
-  '.gallery-card[data-style-layout-density="\1"] .card-content', 'g')
-WHERE sub_dim = 'density' AND css_template IS NOT NULL;
+-- density：删除 padding（留白交给 --band-inset 机制），仅保留 --layout-gap
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="dense"] { --layout-gap: 4px; }' WHERE sub_dim='density' AND value='dense';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="normal"] { --layout-gap: 8px; }' WHERE sub_dim='density' AND value='normal';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="sparse"] { --layout-gap: 16px; }' WHERE sub_dim='density' AND value='sparse';
 
 -- ----------------------------------------------------------------------------
 -- Part B: header_deco 重命名 + 新增纯外观名

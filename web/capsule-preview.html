@@ -134,6 +134,8 @@
     .dim-row { display: flex; flex-direction: column; gap: 2px; }
     .dim-row-inline { display: flex; gap: 5px; align-items: flex-end; }
     .dim-row-inline .dim-row { flex: 1; }
+    .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text, #444); cursor: pointer; }
+    .checkbox-label input { width: auto; margin: 0; }
 
     /* ===== 色板选择器 ===== */
     .palette-grid {
@@ -479,6 +481,12 @@
                         <option value="right">right 右侧</option>
                     </select>
                 </div>
+                <div class="dim-row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="d-band-inset" checked>
+                        Band Inset 留白（取消勾选=贴边 / 色条满边）
+                    </label>
+                </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
                         <label>Divider 分隔线</label>
@@ -758,7 +766,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260713a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260713b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1007,6 +1015,7 @@ function buildStyleJson() {
             side_text: document.getElementById('d-side-text')?.value || '',
             side_width: parseInt(document.getElementById('d-side-width')?.value, 10) || 8,
             side_position: document.getElementById('d-side-position')?.value || 'left',
+            band_inset: (document.getElementById('d-band-inset')?.checked ?? true),
             divider: v('divider', 'none'),
             corner_badge: v('corner_badge', 'none'),
             bg_pattern: v('bg_pattern', 'none'),
@@ -1101,11 +1110,13 @@ function applyStyleJsonToPanel(sj) {
     const headerWidthInput = document.getElementById('d-header-width');
     const sideWidthInput   = document.getElementById('d-side-width');
     const sidePositionSel  = document.getElementById('d-side-position');
+    const bandInsetCb      = document.getElementById('d-band-inset');
     if (headerTextInput) headerTextInput.value = el.header_text || '';
     if (sideTextInput)   sideTextInput.value   = el.side_text   || '';
     if (headerWidthInput) headerWidthInput.value = (el.header_width != null) ? el.header_width : 6;
     if (sideWidthInput)   sideWidthInput.value   = (el.side_width != null) ? el.side_width : 8;
     if (sidePositionSel)  sidePositionSel.value  = el.side_position || 'left';
+    if (bandInsetCb)      bandInsetCb.checked     = (el.band_inset !== false);
     setSelect(DIMS.divider,       el.divider);
     setSelect(DIMS.corner_badge,  el.corner_badge);
     setSelect(DIMS.bg_pattern,    el.bg_pattern);
@@ -1730,7 +1741,7 @@ Object.values(DIMS).forEach(el => {
 });
 
 // 装饰条粗细/位置控件不参与 DIM_CONFIG 的 DB 下拉，单独绑定
-['d-header-width', 'd-side-width', 'd-side-position'].forEach(id => {
+['d-header-width', 'd-side-width', 'd-side-position', 'd-band-inset'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', debouncedUpdate); el.addEventListener('change', debouncedUpdate); }
 });

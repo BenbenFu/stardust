@@ -29,7 +29,7 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
   border-color: var(--card-accent, transparent);
 }
 /* 内容包裹层：slot skeleton 或 container-group 都放在这里 */
-.card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: var(--band-inset, 0px); }
 .card-content--slots { display: grid; gap: var(--spacing-sm, var(--layout-gap, 8px));
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d"; }
 .card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
@@ -180,6 +180,7 @@ export const DEFAULT_STYLE_JSON = {
     box_target:'global', action_style:'none' },
   element: { header_deco:'none', header_text:'', header_width:6,
     side_accent:'none', side_text:'', side_width:8, side_position:'left',
+    band_inset:true,
     divider:'none', corner_badge:'none',
     bg_pattern:'none', edge_deco:'none', floating_deco:'none' },
   effect: {
@@ -435,7 +436,8 @@ function buildDataAttrs(styleJson) {
       // Skip header_text / side_text / header_width / side_width / side_position
       // (content / structural fields — not data-attr style dimensions)
       if (subDim === 'header_text' || subDim === 'side_text'
-        || subDim === 'header_width' || subDim === 'side_width' || subDim === 'side_position') continue;
+        || subDim === 'header_width' || subDim === 'side_width' || subDim === 'side_position'
+        || subDim === 'band_inset') continue;
 
       if (value == null || value === 'none') continue;
 
@@ -744,6 +746,12 @@ export function renderStyleJson(styleJson, diary, allOptions) {
     '--header-band-size:' + parsePx(elBand.header_width, 6) + 'px',
     '--side-band-size:' + parsePx(elBand.side_width, 8) + 'px'
   );
+
+  // 留白/贴边：band 始终贴边（.gallery-card padding:0），内容区统一内缩 --band-inset。
+  // 勾选留白=12px（与无 band 时到边缘的距离一致），取消=贴边=0px。
+  // 旧 style_json 缺 band_inset 时默认 12px，以兼容既有视觉（原 density 的 12px padding）。
+  const bandInset = elBand.band_inset === false ? false : true;
+  paletteCssVars.push('--band-inset:' + (bandInset ? '12px' : '0px'));
 
   // 3. 计算 per-slot writing-mode (从 flow_vertical + slot_assignment)
   const layout = sj.layout || {};
