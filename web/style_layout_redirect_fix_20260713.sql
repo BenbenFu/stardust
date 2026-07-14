@@ -14,9 +14,11 @@
 -- 重定向目标：
 --   grid / block_align / inline_align  → .gallery-card[...] .card-content--slots
 --     （.card-content--slots 是真正的 grid 容器，slot-a..d 是它的子元素）
---   density  → 仅保留 --layout-gap，删除 padding
---     （padding/留白交给 style-engine 的 --band-inset 机制，由 capsule-preview 的
---       「Band Inset 留白」勾选框控制：勾选=内容内缩12px，取消=贴边0px；band 始终贴边）
+--   density  → 不再直接写 padding，而是设置 --density-pad（呼吸间距变量）
+--     + --layout-gap（slot 间距）。真正的 padding 由 style-engine 按以下模型计算：
+--       · 无色条卡片：四边统一 = --density-pad（density 不被色条吞掉）
+--       · 带色条卡片：色条所在边 = band_inset(勾选12px/取消0px)，色条↔内容之间 = --density-pad
+--     band_inset 勾选框【仅影响带色条卡片】，由 capsule-preview「Bands Inset 留白」控制。
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -57,11 +59,12 @@ UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-
 UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-inline-align="start"] .card-content--slots { justify-items: start; text-align: start; }' WHERE sub_dim='inline_align' AND value='start';
 
 -- ----------------------------------------------------------------------------
--- density：删除 padding（留白交给 --band-inset），仅保留 --layout-gap
+-- density：设置 --density-pad（呼吸间距）+ --layout-gap；真正的 padding 由引擎按
+--           band_inset/density 模型计算（见文件顶部注释）。
 -- ----------------------------------------------------------------------------
-UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="dense"] { --layout-gap: 4px; }' WHERE sub_dim='density' AND value='dense';
-UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="normal"] { --layout-gap: 8px; }' WHERE sub_dim='density' AND value='normal';
-UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="sparse"] { --layout-gap: 16px; }' WHERE sub_dim='density' AND value='sparse';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="dense"] { --density-pad: 8px; --layout-gap: 4px; }' WHERE sub_dim='density' AND value='dense';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="normal"] { --density-pad: 12px; --layout-gap: 8px; }' WHERE sub_dim='density' AND value='normal';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="sparse"] { --density-pad: 16px; --layout-gap: 16px; }' WHERE sub_dim='density' AND value='sparse';
 
 -- ============================================================================
 -- 安全网（问题 1）：把已知仍存多行 \r\n 的 element 模板归一为单行 canonical 形式

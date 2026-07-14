@@ -65,10 +65,10 @@ UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-
 UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-inline-align="justify"] .card-content--slots { justify-items: stretch; text-align: justify; }' WHERE sub_dim='inline_align' AND value='justify';
 UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-inline-align="start"] .card-content--slots { justify-items: start; text-align: start; }' WHERE sub_dim='inline_align' AND value='start';
 
--- density：删除 padding（留白交给 --band-inset 机制），仅保留 --layout-gap
-UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="dense"] { --layout-gap: 4px; }' WHERE sub_dim='density' AND value='dense';
-UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="normal"] { --layout-gap: 8px; }' WHERE sub_dim='density' AND value='normal';
-UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="sparse"] { --layout-gap: 16px; }' WHERE sub_dim='density' AND value='sparse';
+-- density：设置 --density-pad（呼吸间距）+ --layout-gap；真正的 padding 由引擎按 band_inset/density 模型计算
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="dense"] { --density-pad: 8px; --layout-gap: 4px; }' WHERE sub_dim='density' AND value='dense';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="normal"] { --density-pad: 12px; --layout-gap: 8px; }' WHERE sub_dim='density' AND value='normal';
+UPDATE style_layout_options SET css_template = '.gallery-card[data-style-layout-density="sparse"] { --density-pad: 16px; --layout-gap: 16px; }' WHERE sub_dim='density' AND value='sparse';
 
 -- ----------------------------------------------------------------------------
 -- Part B: header_deco 重命名 + 新增纯外观名
