@@ -19,7 +19,7 @@
 const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .gallery-card {
   display: flex; flex-direction: column; position: relative; overflow: hidden;
-  padding: var(--pad-top, 0px) var(--pad-right, 0px) var(--pad-bottom, 0px) var(--pad-left, 0px);
+  padding: 0;
   break-inside: avoid; margin-bottom: var(--spacing-md, 16px);
   cursor: pointer; text-decoration: none;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -29,9 +29,13 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
   border-style: var(--border-style, none);
   border-color: var(--card-accent, transparent);
 }
-/* 内容包裹层：slot skeleton 或 container-group 都放在这里 */
+/* 内容包裹层：slot skeleton 或 container-group 都放在这里。
+   四边统一 = --density-pad（DB 密度模板提供，缺省 12px）：
+   · 无色条卡片：作为内容↔边缘的呼吸间距；
+   · 带色条卡片：作为色条↔内容的间距。
+   density 完全不被色条吞掉。色条本身满边/通长，覆盖 density-pad 区域。 */
 .card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column;
-  padding: var(--content-pad-top, 0px) var(--content-pad-right, 0px) var(--content-pad-bottom, 0px) var(--content-pad-left, 0px); }
+  padding: var(--density-pad, 12px); }
 .card-content--slots { display: grid; gap: var(--spacing-sm, var(--layout-gap, 8px));
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d"; }
 .card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
@@ -60,12 +64,15 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .container-group > div { min-width: 0; }
 
 /* ===== Header band（顶栏装饰条 / 文字） ===== */
+/* 满边/通长：width:100% 覆盖 density-pad 区域；band_inset 控制离卡片上/左/右边缘的内缩量
+   （取消勾选=0 贴边满边，勾选=12px 内缩留白）。底侧不再留白，由内容区的 density-pad 提供色条↔内容间距。 */
 .card-header-band {
   flex: 0 0 auto; width: 100%;
   height: var(--header-band-size, 6px);
   min-height: var(--header-band-size, 6px);
   background: transparent;
   display: flex; align-items: center; overflow: hidden; position: relative;
+  margin: var(--band-inset, 0px) var(--band-inset, 0px) 0 var(--band-inset, 0px);
 }
 .card-header-band--has-text {
   height: auto; min-height: var(--header-band-size, 6px); padding: 2px 0;
@@ -79,11 +86,16 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 
 /* ===== Main row: side band + content ===== */
 .card-main { display: flex; flex: 1 1 auto; min-height: 0; min-width: 0; }
+/* 侧栏满边/通长：纵向撑满 card-main（即卡片高度，减去顶栏）；band_inset 控制离卡片上/下边缘的内缩。
+   card-edge 一侧（左或右）的内缩由 .card-side-band-left / -right 控制。 */
 .card-side-band {
   flex: 0 0 auto; width: var(--side-band-size, 8px); min-width: var(--side-band-size, 8px);
   background: transparent; display: flex; align-items: center; justify-content: center;
   overflow: hidden; position: relative; writing-mode: vertical-rl;
+  margin-top: var(--band-inset, 0px); margin-bottom: var(--band-inset, 0px);
 }
+.card-side-band-left  { margin-left:  var(--band-inset, 0px); }
+.card-side-band-right { margin-right: var(--band-inset, 0px); }
 .card-side-band--has-text { width: auto; min-width: var(--side-band-size, 8px); padding: 0 4px; }
 .card-side-text {
   font-size: 0.55rem; line-height: 1.3; color: var(--card-muted, inherit);
@@ -749,34 +761,18 @@ export function renderStyleJson(styleJson, diary, allOptions) {
     '--side-band-size:' + parsePx(elBand.side_width, 8) + 'px'
   );
 
-  // ---- 间距模型（band_inset 与 density 解耦）----
-  // · density 始终保留：作为"色条↔内容"以及"无色条卡片↔边缘"的呼吸间距（--density-pad，由 DB 密度模板提供，缺省 12px）。
-  // · band_inset 勾选框【仅影响带色条卡片】：控制色条离卡片边缘的距离（贴边 0 / 留白 12px）。
-  // · 无色条卡片：无视 band_inset，四边统一 = --density-pad（density 不被色条吞掉）。
-  // · 带色条卡片：色条所在边 = band_inset；色条↔内容之间 = --density-pad。
-  //   分类：仅顶栏 / 仅侧栏 / 两者都有 → 色条与内容区之间始终保留 --density-pad 间距。
+  // ---- 间距模型 v3：色条满边(通长) + density 仅作用于内容 ----
+  // · 色条(band)默认【满边/通长】：覆盖 density-pad 区域，两端不再留空。
+  //   band_inset 勾选框控制色条离卡片边缘的内缩量：取消=0(贴边满边) / 勾选=12px(内缩留白)。
+  //   色条元素只在存在时才渲染，因此无需在 JS 区分是否有色条——内缩边距由 CSS 作用在色条元素自身上。
+  // · 内容区(.card-content)四边统一 = --density-pad（由 DB 密度模板提供，缺省 12px）：
+  //   既作为"无色条卡片↔边缘"的呼吸间距，也作为"色条↔内容"的间距。density 完全不被色条吞掉。
+  // · --density-pad 由 layout 维度 density 模板写入 .gallery-card，内容区继承；此处仅负责 --band-inset。
   const bandInset = elBand.band_inset === false ? false : true;
   const bi = bandInset ? '12px' : '0px';
-  const dp = 'var(--density-pad, 12px)';   // density 呼吸间距（DB 覆盖；缺省 12px 兼容旧视觉）
-  const sidePos = elBand.side_position || 'left';
-  const hasHeaderBand = !!(elBand.header_deco && elBand.header_deco !== 'none');
-  const hasSideBand   = !!(elBand.side_accent && elBand.side_accent !== 'none');
-  const sideLeft  = hasSideBand && sidePos !== 'right';
-  const sideRight = hasSideBand && sidePos === 'right';
-
-  // .gallery-card 四边 padding：色条所在边用 band_inset，其余边用 density_padding
-  paletteCssVars.push(
-    '--band-inset:' + bi,
-    '--pad-top:'    + (hasHeaderBand ? bi : dp),
-    '--pad-right:'  + (sideRight ? bi : dp),
-    '--pad-bottom:' + dp,
-    '--pad-left:'   + (sideLeft ? bi : dp),
-    // .card-content 四边 padding：与色条相邻侧补 density_padding（色条↔内容间距），其余 0
-    '--content-pad-top:'    + (hasHeaderBand ? dp : '0px'),
-    '--content-pad-right:'  + (sideRight ? dp : '0px'),
-    '--content-pad-bottom:' + '0px',
-    '--content-pad-left:'   + (sideLeft ? dp : '0px')
-  );
+  paletteCssVars.push('--band-inset:' + bi);
+  // 注：--density-pad 来自 DB density css_template（.gallery-card[data-style-layout-density]）。
+  //     若 DB 未配置则回退 12px（见 BASE_CSS 中 var(--density-pad, 12px)）。
 
   // 3. 计算 per-slot writing-mode (从 flow_vertical + slot_assignment)
   const layout = sj.layout || {};
