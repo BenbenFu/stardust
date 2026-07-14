@@ -447,11 +447,13 @@ function buildDataAttrs(styleJson) {
       // Skip filter_self and filter_backdrop (handled above)
       if (dim === 'effect' && (subDim === 'filter_self' || subDim === 'filter_backdrop')) continue;
 
-      // Skip header_text / side_text / header_width / side_width / side_position
-      // (content / structural fields — not data-attr style dimensions)
+      // Skip header_text / side_text / header_width / side_width / side_position / band_inset
+      // 以及自定义文字独立排版键（family/size/align）—— 均为 content / 内联样式字段，非 data-attr 维度
       if (subDim === 'header_text' || subDim === 'side_text'
         || subDim === 'header_width' || subDim === 'side_width' || subDim === 'side_position'
-        || subDim === 'band_inset') continue;
+        || subDim === 'band_inset'
+        || subDim === 'header_text_family' || subDim === 'header_text_size' || subDim === 'header_text_align'
+        || subDim === 'side_text_family' || subDim === 'side_text_size' || subDim === 'side_text_align') continue;
 
       if (value == null || value === 'none') continue;
 
@@ -514,6 +516,20 @@ function buildHighlightsHtml(highlights) {
 }
 
 // ============================================================
+// buildTextStyle — 生成自定义文字（顶栏/侧栏）的内联样式串
+// block=true 时（顶栏）补 display:block;width:100% 使 text-align 生效
+// ============================================================
+function buildTextStyle(family, size, align, block) {
+  const parts = [];
+  if (family) parts.push('font-family:' + family);
+  if (size)   parts.push('font-size:' + size);
+  if (align)  parts.push('text-align:' + align);
+  // display:block;width:100% 仅当指定了对齐时才需要（使其生效）；未指定则不注入内联样式
+  if (block && align) parts.push('display:block;width:100%');
+  return parts.length ? parts.join(';') : '';
+}
+
+// ============================================================
 // Section 8: buildCardHtml — 构建卡片 HTML
 // 两种模式：container_group="none" 标准grid / 其他值嵌套slot
 // ============================================================
@@ -540,6 +556,13 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   const headerText   = elCfg.header_text   || '';
   const sideText     = elCfg.side_text     || '';
   const sidePosition = elCfg.side_position  || 'left';
+  // 自定义文字（顶栏 / 侧栏）独立排版：字体 / 字号 / 对齐
+  const headerTextFamily = elCfg.header_text_family || '';
+  const headerTextSize   = elCfg.header_text_size   || '';
+  const headerTextAlign  = elCfg.header_text_align  || '';
+  const sideTextFamily   = elCfg.side_text_family   || '';
+  const sideTextSize     = elCfg.side_text_size     || '';
+  const sideTextAlign    = elCfg.side_text_align    || '';
 
   // ---- 计算 body（slot skeleton 或 container-group）----
   let bodyHtml = '';
@@ -692,8 +715,11 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     + '>';
 
   if (showHeader) {
+    const headerTextStyle = buildTextStyle(headerTextFamily, headerTextSize, headerTextAlign, true);
     html += '<div class="card-header-band' + (headerText ? ' card-header-band--has-text' : '') + '">';
-    if (headerText) html += '<span class="card-header-text">' + escapeHtml(headerText) + '</span>';
+    if (headerText) html += '<span class="card-header-text"'
+      + (headerTextStyle ? ' style="' + headerTextStyle + '"' : '') + '>'
+      + escapeHtml(headerText) + '</span>';
     html += '</div>';
   }
 
@@ -701,7 +727,12 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     + bodyHtml + '</div>';
 
   if (showSide) {
-    const sideInner = sideText ? '<span class="card-side-text">' + escapeHtml(sideText) + '</span>' : '';
+    const sideTextStyle = buildTextStyle(sideTextFamily, sideTextSize, sideTextAlign, false);
+    const sideInner = sideText
+      ? '<span class="card-side-text"'
+        + (sideTextStyle ? ' style="' + sideTextStyle + '"' : '') + '>'
+        + escapeHtml(sideText) + '</span>'
+      : '';
     const sideHtml = '<div class="card-side-band card-side-band-' + sidePosition
       + (sideText ? ' card-side-band--has-text' : '') + '">' + sideInner + '</div>';
     if (sidePosition === 'right') {

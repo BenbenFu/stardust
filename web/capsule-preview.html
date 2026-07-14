@@ -536,6 +536,66 @@
     <!-- ===== Tab 2: 字段级 ===== -->
     <div class="tab-content" id="tab-field" style="display:none;">
 
+        <!-- ===== 独立：自定义文字（顶栏/侧栏），不混入 fieldSelector 字段机制 ===== -->
+        <div class="dim-group" id="grp-customtext">
+            <div class="dim-group-header">
+                <span>CUSTOM TEXT 自定义文字（顶栏/侧栏）</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="dim-row">
+                    <label>位置 Position 字段选择</label>
+                    <select id="ct-position">
+                        <option value="header">顶栏文字 Header Text</option>
+                        <option value="side">侧栏文字 Side Text</option>
+                    </select>
+                </div>
+                <div class="dim-row">
+                    <label>Font Family 字体</label>
+                    <select id="ct-font-family">
+                        <option value="">(继承默认)</option>
+                        <option value="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">系统默认 System</option>
+                        <option value="Inter, sans-serif">Inter</option>
+                        <option value="Montserrat, sans-serif">Montserrat</option>
+                        <option value="Oswald, sans-serif">Oswald</option>
+                        <option value="Nunito, sans-serif">Nunito</option>
+                        <option value="'Roboto Slab', serif">Roboto Slab</option>
+                        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                        <option value="'Ma Shan Zheng', cursive">马善政 Ma Shan Zheng</option>
+                        <option value="'Noto Serif SC', serif">Noto Serif SC</option>
+                    </select>
+                </div>
+                <div class="dim-row">
+                    <label>Font Size 字号</label>
+                    <select id="ct-font-size">
+                        <option value="">(继承默认)</option>
+                        <option value="10px">10px</option>
+                        <option value="11px">11px</option>
+                        <option value="12px">12px</option>
+                        <option value="14px">14px</option>
+                        <option value="16px">16px</option>
+                        <option value="18px">18px</option>
+                        <option value="20px">20px</option>
+                        <option value="24px">24px</option>
+                        <option value="28px">28px</option>
+                        <option value="32px">32px</option>
+                    </select>
+                </div>
+                <div class="dim-row">
+                    <label>Alignment 对齐</label>
+                    <select id="ct-align">
+                        <option value="">(继承默认)</option>
+                        <option value="left">左对齐 left</option>
+                        <option value="center">居中 center</option>
+                        <option value="right">右对齐 right</option>
+                    </select>
+                </div>
+                <div style="font-size:9px;color:var(--pixel-dim);line-height:1.4;">
+                    文字内容请在“全局”标签页的 ELEMENT → Header Text / Side Text 中填写；此处仅调整其字体、字号、对齐。
+                </div>
+            </div>
+        </div>
+
         <!-- Field Selector -->
         <div class="dim-group">
             <div class="dim-group-header">
@@ -766,7 +826,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260714c';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260714d';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -847,6 +907,32 @@ let perFieldState = {
   transform:         { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
   animation:         { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
 };
+
+// 自定义文字（顶栏 / 侧栏）独立排版状态 —— 不参与 fieldSelector 字段机制
+let ctCurrentPos = 'header';
+let customTextState = {
+    header: { family:'', size:'', align:'' },
+    side:   { family:'', size:'', align:'' },
+};
+const CT_DIMS = {
+    position: document.getElementById('ct-position'),
+    family:   document.getElementById('ct-font-family'),
+    size:     document.getElementById('ct-font-size'),
+    align:    document.getElementById('ct-align'),
+};
+function saveCustomTextUI(pos) {
+    customTextState[pos] = {
+        family: CT_DIMS.family ? CT_DIMS.family.value : '',
+        size:   CT_DIMS.size   ? CT_DIMS.size.value   : '',
+        align:  CT_DIMS.align  ? CT_DIMS.align.value  : '',
+    };
+}
+function loadCustomTextToUI(pos) {
+    const st = customTextState[pos] || { family:'', size:'', align:'' };
+    if (CT_DIMS.family) CT_DIMS.family.value = st.family || '';
+    if (CT_DIMS.size)   CT_DIMS.size.value   = st.size   || '';
+    if (CT_DIMS.align)  CT_DIMS.align.value  = st.align  || '';
+}
 
 // Per-field dropdown DOM refs (pf- prefix)
 const PF_DIMS = {};
@@ -1016,6 +1102,13 @@ function buildStyleJson() {
             side_width: parseInt(document.getElementById('d-side-width')?.value, 10) || 8,
             side_position: document.getElementById('d-side-position')?.value || 'left',
             band_inset: (document.getElementById('d-band-inset')?.checked ?? true),
+            // 自定义文字（顶栏 / 侧栏）独立排版
+            header_text_family: customTextState.header.family,
+            header_text_size:   customTextState.header.size,
+            header_text_align:  customTextState.header.align,
+            side_text_family:   customTextState.side.family,
+            side_text_size:     customTextState.side.size,
+            side_text_align:    customTextState.side.align,
             divider: v('divider', 'none'),
             corner_badge: v('corner_badge', 'none'),
             bg_pattern: v('bg_pattern', 'none'),
@@ -1117,6 +1210,18 @@ function applyStyleJsonToPanel(sj) {
     if (sideWidthInput)   sideWidthInput.value   = (el.side_width != null) ? el.side_width : 8;
     if (sidePositionSel)  sidePositionSel.value  = el.side_position || 'left';
     if (bandInsetCb)      bandInsetCb.checked     = (el.band_inset !== false);
+    // 自定义文字（顶栏 / 侧栏）独立排版
+    customTextState.header = {
+        family: el.header_text_family || '',
+        size:   el.header_text_size   || '',
+        align:  el.header_text_align  || '',
+    };
+    customTextState.side = {
+        family: el.side_text_family || '',
+        size:   el.side_text_size   || '',
+        align:  el.side_text_align  || '',
+    };
+    loadCustomTextToUI(ctCurrentPos);
     setSelect(DIMS.divider,       el.divider);
     setSelect(DIMS.corner_badge,  el.corner_badge);
     setSelect(DIMS.bg_pattern,    el.bg_pattern);
@@ -1939,6 +2044,25 @@ Object.keys(PF_DIMS).forEach(key => {
 ['d-header-text', 'd-side-text'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', debouncedUpdate);
+});
+
+// ============================================================
+// 自定义文字（顶栏 / 侧栏）独立排版事件
+// ============================================================
+if (CT_DIMS.position) {
+    CT_DIMS.position.addEventListener('change', (e) => {
+        saveCustomTextUI(ctCurrentPos);   // 先保存当前位置 UI
+        ctCurrentPos = e.target.value;
+        loadCustomTextToUI(ctCurrentPos); // 载入新位置
+    });
+}
+['family', 'size', 'align'].forEach(k => {
+    if (CT_DIMS[k]) {
+        CT_DIMS[k].addEventListener('change', () => {
+            saveCustomTextUI(ctCurrentPos);
+            debouncedUpdate();
+        });
+    }
 });
 
 // ============================================================
