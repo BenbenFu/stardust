@@ -564,18 +564,20 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   if (styleJson && styleJson.deco && styleJson.deco.box_style && styleJson.deco.box_style !== 'none') {
     decoBoxes.push({ style: styleJson.deco.box_style, target: styleJson.deco.box_target || 'global' });
   }
-  function boxStylesFor(target) {
-    return decoBoxes
-      .filter(b => b && b.style && b.style !== 'none' && b.target === target)
-      .map(b => b.style);
+  // 返回某 target 下的盒子对象(按数组顺序)，供包裹层渲染读取 style/target/coincide
+  function boxObjsFor(target) {
+    return decoBoxes.filter(b => b && b.style && b.style !== 'none' && b.target === target);
   }
   // 字段包裹：最外层 .fx-wrap[data-fx=field] 承载 backdrop-filter；
   // 其内按数组顺序(外→内)嵌套各盒子包裹层（数组 [B0,B1] → B0 在外、B1 贴内容）。
+  // 每个盒子包裹层可单独设 coincide=true 强制 padding:0 → 与内层边缘完全重合(无框、无间距)。
   function wrapField(field, innerHtml) {
-    const styles = boxStylesFor(field);
+    const boxes = boxObjsFor(field);
     let html = innerHtml;
-    for (let i = styles.length - 1; i >= 0; i--) {
-      html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(styles[i]) + '" style="border-radius: var(--deco-radius, 8px)">' + html + '</div>';
+    for (let i = boxes.length - 1; i >= 0; i--) {
+      const b = boxes[i];
+      const pad = (b.coincide === true) ? ' padding:0;' : '';
+      html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px)' + pad + '">' + html + '</div>';
     }
     return '<div class="fx-wrap" data-fx="' + field + '">' + html + '</div>';
   }
@@ -776,10 +778,12 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   // 全局盒子（target='global'）：嵌套包裹「整个卡片内容(含顶栏+主体)」恢复整卡生效语义；
   // 仅在确有 global 盒子时插入包裹层，避免无盒时改变 DOM/布局。
   let cardInner = headerBandHtml + cardMainHtml;
-  const globalStyles = boxStylesFor('global');
-  if (globalStyles.length) {
-    for (let i = globalStyles.length - 1; i >= 0; i--) {
-      cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(globalStyles[i]) + '" style="border-radius: var(--deco-radius, 8px)">' + cardInner + '</div>';
+  const globalBoxes = boxObjsFor('global');
+  if (globalBoxes.length) {
+    for (let i = globalBoxes.length - 1; i >= 0; i--) {
+      const b = globalBoxes[i];
+      const pad = (b.coincide === true) ? ' padding:0;' : '';
+      cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px)' + pad + '">' + cardInner + '</div>';
     }
   }
   html += cardInner;

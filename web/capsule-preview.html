@@ -835,7 +835,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1227,7 +1227,7 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.bubble_style, dc.bubble_style);
     setSelect(DIMS.tag_style,    dc.tag_style);
     setSelect(DIMS.avatar_style, dc.avatar_style);
-    boxListState = Array.isArray(dc.boxes) ? dc.boxes.map(b => ({ style: b.style || 'none', target: b.target || 'global' })) : [];
+    boxListState = Array.isArray(dc.boxes) ? dc.boxes.map(b => ({ style: b.style || 'none', target: b.target || 'global', coincide: b.coincide === true })) : [];
     renderBoxList();
     const brEl = document.getElementById('d-box-radius');
     if (brEl) brEl.value = (dc.box_radius != null) ? String(dc.box_radius) : '8';
@@ -1341,20 +1341,31 @@ function renderBoxList() {
         tsel.innerHTML = BOX_TARGETS.map(t => '<option value="' + t.v + '">' + t.t + '</option>').join('');
         tsel.value = b.target || 'global';
         tsel.addEventListener('change', () => { boxListState[i].target = tsel.value; debouncedUpdate(); });
+        // 嵌套/重合开关：勾选=嵌套(留间距, 当前默认行为)；取消勾选=coincide(强制 padding:0, 与内层边缘完全重合)
+        const nestWrap = document.createElement('label');
+        nestWrap.style.cssText = 'flex:0 0 auto;display:flex;align-items:center;gap:2px;font-size:9px;cursor:pointer;white-space:nowrap;';
+        const nestChk = document.createElement('input');
+        nestChk.type = 'checkbox';
+        nestChk.checked = !(b.coincide === true);
+        nestChk.title = '勾选=嵌套(留间距, 默认)；取消勾选=边缘重合(无间距, 强制 padding:0)';
+        nestChk.addEventListener('change', () => { boxListState[i].coincide = !nestChk.checked; debouncedUpdate(); });
+        const nestLbl = document.createElement('span');
+        nestLbl.textContent = '嵌套';
+        nestWrap.appendChild(nestChk); nestWrap.appendChild(nestLbl);
         const rm = document.createElement('button');
         rm.type = 'button';
         rm.style.cssText = 'flex:0 0 auto;width:22px;height:22px;cursor:pointer;';
         rm.textContent = '×';
         rm.title = '移除该盒子';
         rm.addEventListener('click', () => { boxListState.splice(i, 1); renderBoxList(); debouncedUpdate(); });
-        row.appendChild(sel); row.appendChild(tsel); row.appendChild(rm);
+        row.appendChild(sel); row.appendChild(tsel); row.appendChild(nestWrap); row.appendChild(rm);
         listEl.appendChild(row);
     });
 }
 (function initBoxListUI() {
     const addBtn = document.getElementById('d-box-add');
     if (addBtn) addBtn.addEventListener('click', () => {
-        boxListState.push({ style: 'none', target: 'title' });
+        boxListState.push({ style: 'none', target: 'title', coincide: false });
         renderBoxList();
         debouncedUpdate();
     });
