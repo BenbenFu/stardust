@@ -35,7 +35,7 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
    · 带色条卡片：作为色条↔内容的间距。
    density 完全不被色条吞掉。色条本身满边/通长，覆盖 density-pad 区域。 */
 .card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column;
-  padding: var(--density-pad, 12px); }
+  padding: var(--density-pad, 12px); position: relative; }
 .card-content--slots { display: grid; gap: var(--spacing-sm, var(--layout-gap, 8px));
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d"; }
 .card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
@@ -60,8 +60,21 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
   font-size: calc(0.8rem * var(--typo-capsule-scale, 0.9));
   text-align: var(--typo-capsule-align, left); }
 .hl-sep { display: inline; }
-.container-group { display: grid; gap: 6px; padding: 4px; }
+.container-group { display: grid; gap: 6px; padding: 4px; position: relative; z-index: 1; }
 .container-group > div { min-width: 0; }
+
+/* ===== Deco Box 多盒叠放层 ===== */
+/* 全局盒：绝对覆盖整卡内容区，置于内容底下 */
+.deco-box-layer--global { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+/* slot 在网格中需抬到全局层之上 */
+.card-slot-a, .card-slot-b, .card-slot-c, .card-slot-d { position: relative; z-index: 1; }
+/* 字段包裹层：外层承载 backdrop-filter(毛玻璃)，与内层字段的 filter 解耦 */
+.fx-wrap { position: relative; }
+.fx-wrap > .deco-box { position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit; }
+.fx-wrap > .card-date,
+.fx-wrap > .card-title,
+.fx-wrap > .card-highlights,
+.fx-wrap > .card-capsule { position: relative; z-index: 1; }
 
 /* ===== Header band（顶栏装饰条 / 文字） ===== */
 /* 满边/通长：width:100% 覆盖 density-pad 区域；band_inset 控制离卡片上/左/右边缘的内缩量
@@ -139,8 +152,6 @@ const ATTR_MAP = {
   'deco_bubble_style':   { attr: 'data-style-deco-bubble' },
   'deco_tag_style':      { attr: 'data-style-deco-tag' },
   'deco_avatar_style':   { attr: 'data-style-deco-avatar' },
-  'deco_box_style':      { attr: 'data-style-deco-box' },
-  'deco_box_target':     { attr: 'data-style-deco-box-target' },
   'deco_action_style':   { attr: 'data-style-deco-action' },
   // element
   'element_header_deco': { attr: 'data-style-element-header' },
@@ -150,10 +161,11 @@ const ATTR_MAP = {
   'element_bg_pattern':  { attr: 'data-style-element-bg' },
   'element_edge_deco':   { attr: 'data-style-element-edge' },
   'element_floating_deco':{ attr: 'data-style-element-float' },
-  // effect (filter_self & filter_backdrop share same attr, backdrop priority — now per-element)
+  // effect — filter_self(元素自身) 与 filter_backdrop(毛玻璃) 解耦为两个独立 attr
+  // 两者可同时生效：self 作用于内层字段元素(filter)，backdrop 作用于外层 .fx-wrap(backdrop-filter)
   'effect_filter_self':     { attr: 'data-style-effect-filter', perElement: true,
     elements: ['title','date','capsule','highlights'] },
-  'effect_filter_backdrop': { attr: 'data-style-effect-filter', perElement: true,
+  'effect_filter_backdrop': { attr: 'data-style-effect-backdrop', perElement: true,
     elements: ['title','date','capsule','highlights'] },
   'effect_transform':   { attr: 'data-style-effect-transform', perElement: true,
     elements: ['title','date','capsule','highlights'] },
@@ -190,8 +202,7 @@ export const DEFAULT_STYLE_JSON = {
     text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
   border: { radius_size:'none', border_width:'none', border_style:'solid', border_shadow:'none' },
-  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', box_style:'none',
-    box_target:'global', action_style:'none' },
+  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', boxes:[], action_style:'none' },
   element: { header_deco:'none', header_text:'', header_width:6,
     side_accent:'none', side_text:'', side_width:8, side_position:'left',
     band_inset:true,
@@ -410,43 +421,16 @@ function buildDataAttrs(styleJson) {
     attrs['data-style-palette'] = escapeAttr(styleJson.palette.harmony);
   }
 
-  // --- Per-element backdrop priority for effect filter_self/filter_backdrop ---
-  // Both share data-style-effect-filter attr. Per-element: if element X has backdrop, skip self for X.
-  // Backward compat: if values are strings, normalize to per-element maps.
-  const eff = styleJson.effect || {};
-  const ELEMENTS = ['title','date','capsule','highlights'];
-
-  function normalizePerElement(value) {
-    if (typeof value === 'string') {
-      const map = {};
-      ELEMENTS.forEach(el => { map[el] = value; });
-      return map;
-    }
-    return value || {};
-  }
-
-  const backdropMap = normalizePerElement(eff.filter_backdrop);
-  const selfMap = normalizePerElement(eff.filter_self);
-
-  for (const el of ELEMENTS) {
-    const bVal = backdropMap[el];
-    const sVal = selfMap[el];
-    if (bVal && bVal !== 'none') {
-      attrs['data-style-effect-filter-' + el] = escapeAttr(bVal);
-    } else if (sVal && sVal !== 'none') {
-      attrs['data-style-effect-filter-' + el] = escapeAttr(sVal);
-    }
-  }
-
   // --- General loop for all other dims ---
+  // effect.filter_self / effect_filter_backdrop 已通过 ATTR_MAP(perElement) 各自发射独立 attr：
+  //   self  → data-style-effect-filter-<el>  （作用于内层字段元素 .card-XXX 的 filter）
+  //   backdrop → data-style-effect-backdrop-<el>（作用于外层 .fx-wrap[data-fx=el] 的 backdrop-filter）
+  // 两者不再互斥，可同时生效（DOM 分层化解浏览器层叠上下文冲突）。
   for (const [dim, subDims] of Object.entries(styleJson)) {
     if (dim === 'palette' || dim === 'container_group') continue;
     if (!subDims || typeof subDims !== 'object') continue;
 
-    for (const [subDim, value] of Object.entries(subDims)) {
-      // Skip filter_self and filter_backdrop (handled above)
-      if (dim === 'effect' && (subDim === 'filter_self' || subDim === 'filter_backdrop')) continue;
-
+      for (const [subDim, value] of Object.entries(subDims)) {
       // Skip header_text / side_text / header_width / side_width / side_position / band_inset
       // 以及自定义文字独立排版键（family/size/align）—— 均为 content / 内联样式字段，非 data-attr 维度
       if (subDim === 'header_text' || subDim === 'side_text'
@@ -575,6 +559,25 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   let bodyHtml = '';
   let contentIsSlots = false;
 
+  // --- Deco Box 多盒叠放层 ---
+  // 扁平列表 deco.boxes = [{ style, target }, ...]；兼容旧单值 deco.box_style/box_target
+  // 每个盒子渲染为一个独立绝对定位的 .deco-box 层，贴在目标区域内容底下，可任意叠加。
+  const decoBoxes = (styleJson && styleJson.deco && Array.isArray(styleJson.deco.boxes))
+    ? styleJson.deco.boxes.slice() : [];
+  if (styleJson && styleJson.deco && styleJson.deco.box_style && styleJson.deco.box_style !== 'none') {
+    decoBoxes.push({ style: styleJson.deco.box_style, target: styleJson.deco.box_target || 'global' });
+  }
+  function boxLayersFor(target) {
+    return decoBoxes
+      .filter(b => b && b.style && b.style !== 'none' && b.target === target)
+      .map(b => '<div class="deco-box" data-style-deco-box="' + escapeAttr(b.style) + '"></div>')
+      .join('');
+  }
+  function wrapField(field, innerHtml) {
+    const layers = boxLayersFor(field);
+    return '<div class="fx-wrap" data-fx="' + field + '">' + layers + innerHtml + '</div>';
+  }
+
   if (containerGroup === 'none') {
     // --- slot skeleton 模式 ---
     const slotAssignment = (styleJson && styleJson.layout && styleJson.layout.slot_assignment)
@@ -595,8 +598,9 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     for (const slot of ['a', 'b', 'c', 'd']) {
       const field = slotAssignment[slot];
       if (!field || !fieldContent[field]) continue;
-      slotHtml += '<div class="card-slot-' + slot + ' ' + fieldClass[field] + '">'
-        + fieldContent[field] + '</div>';
+      // 内层字段元素(.card-XXX)承载 filter_self；外层 .fx-wrap[data-fx=field] 承载 backdrop-filter + box 叠放层
+      const innerField = '<div class="' + fieldClass[field] + '">' + fieldContent[field] + '</div>';
+      slotHtml += '<div class="card-slot-' + slot + '">' + wrapField(field, innerField) + '</div>';
     }
     bodyHtml = slotHtml;
     contentIsSlots = true;
@@ -685,7 +689,10 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       const decoVal = slotDecoMap[slotId] || 'none';
       const slotAttr = parseSlotDeco(decoVal);
       const colIdx = layoutSlotMap[slotId];
-      const content = (slotFields[slotId] || []).map(fieldHtml).filter(Boolean).join('');
+      const content = (slotFields[slotId] || []).map(f => {
+        const h = fieldHtml(f);
+        return h ? wrapField(f, h) : '';
+      }).join('');
 
       if (content || decoVal.startsWith('group:')) {
         const fieldsInSlot = slotFields[slotId] || [];
@@ -730,8 +737,13 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     html += '</div>';
   }
 
+  // 全局盒子（target='global'）渲染为整卡覆盖层，置于内容底下
+  const globalBoxLayers = boxLayersFor('global');
+  const globalLayerHtml = globalBoxLayers
+    ? '<div class="deco-box-layer deco-box-layer--global">' + globalBoxLayers + '</div>' : '';
+
   const contentHtml = '<div class="card-content' + (contentIsSlots ? ' card-content--slots' : '') + '">'
-    + bodyHtml + '</div>';
+    + globalLayerHtml + bodyHtml + '</div>';
 
   if (showSide) {
     // 侧栏竖排文字：对齐语义是「沿侧栏纵向位置」，由 .card-side-band 的 justify-content 控制

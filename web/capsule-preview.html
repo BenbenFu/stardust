@@ -421,14 +421,11 @@
                         <label>Avatar 头像 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
                         <select id="d-avatar-style"></select>
                     </div>
-                    <div class="dim-row">
-                        <label>Box 内容块</label>
-                        <select id="d-box-style"></select>
-                    </div>
                 </div>
                 <div class="dim-row">
-                    <label>Box Target 应用目标</label>
-                    <select id="d-box-target"></select>
+                    <label>Box 内容块（可叠加多个）</label>
+                    <div id="d-box-list" style="margin:4px 0;"></div>
+                    <button type="button" id="d-box-add" style="font-size:10px;padding:2px 8px;cursor:pointer;">+ 添加盒子</button>
                 </div>
                 <div class="dim-row">
                     <label>Action 操作区 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
@@ -827,7 +824,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260715a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260715b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -858,8 +855,6 @@ const DIM_CONFIG = {
     bubble_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'bubble_style', label: 'Deco / Bubble' },
     tag_style:    { table: 'style_deco_options', col: 'sub_dim', colVal: 'tag_style',    label: 'Deco / Tag' },
     avatar_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'avatar_style', label: 'Deco / Avatar' },
-    box_style:    { table: 'style_deco_options', col: 'sub_dim', colVal: 'box_style',    label: 'Deco / Box' },
-    box_target:   { table: 'style_deco_options', col: 'sub_dim', colVal: 'box_target',  label: 'Deco / Box Target' },
     action_style: { table: 'style_deco_options', col: 'sub_dim', colVal: 'action_style', label: 'Deco / Action' },
     // element (style_element_options — 单数!)
     header_deco:   { table: 'style_element_options', col: 'sub_dim', colVal: 'header_deco',   label: 'Element / Header' },
@@ -908,6 +903,9 @@ let perFieldState = {
   transform:         { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
   animation:         { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
 };
+
+// Deco Box 多盒列表状态：deco.boxes = [{ style, target }, ...]
+let boxListState = [];
 
 // 自定义文字（顶栏 / 侧栏）独立排版状态 —— 不参与 fieldSelector 字段机制
 let ctCurrentPos = 'header';
@@ -1116,8 +1114,7 @@ function buildStyleJson() {
             bubble_style: v('bubble_style', 'none'),
             tag_style: v('tag_style', 'none'),
             avatar_style: v('avatar_style', 'none'),
-            box_style: v('box_style', 'none'),
-            box_target: v('box_target', 'global'),
+            boxes: boxListState.slice(),
             action_style: v('action_style', 'none'),
         },
         element: {
@@ -1218,8 +1215,8 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.bubble_style, dc.bubble_style);
     setSelect(DIMS.tag_style,    dc.tag_style);
     setSelect(DIMS.avatar_style, dc.avatar_style);
-    setSelect(DIMS.box_style,    dc.box_style);
-    setSelect(DIMS.box_target,   dc.box_target || 'global');
+    boxListState = Array.isArray(dc.boxes) ? dc.boxes.map(b => ({ style: b.style || 'none', target: b.target || 'global' })) : [];
+    renderBoxList();
     setSelect(DIMS.action_style, dc.action_style);
 
     // element
@@ -1284,6 +1281,70 @@ function updateFlowVerticalVisibility(flowVal) {
     const row = document.getElementById('flowVerticalRow');
     if (row) row.style.display = '';
 }
+
+// ============================================================
+// Deco Box 多盒列表 UI
+// ============================================================
+function escBox(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+const BOX_TARGETS = [
+    { v: 'global',     t: '整卡 Global' },
+    { v: 'title',      t: '标题 Title' },
+    { v: 'date',       t: '日期 Date' },
+    { v: 'capsule',    t: '胶囊 Capsule' },
+    { v: 'highlights', t: '亮点 Highlights' },
+];
+function getBoxStyleOptions() {
+    const rows = (dimensionCache['style_deco_options'] || [])
+        .filter(r => r.sub_dim === 'box_style');
+    return rows.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+}
+function renderBoxList() {
+    const listEl = document.getElementById('d-box-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+    const styleOpts = getBoxStyleOptions();
+    if (!boxListState.length) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'font-size:10px;color:#888;';
+        empty.textContent = '（未添加盒子）';
+        listEl.appendChild(empty);
+        return;
+    }
+    boxListState.forEach((b, i) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;gap:4px;align-items:center;margin:3px 0;';
+        const sel = document.createElement('select');
+        sel.style.cssText = 'flex:1;min-width:0;font-size:10px;';
+        sel.innerHTML = '<option value="none">— 无 —</option>'
+            + styleOpts.map(o => '<option value="' + escBox(o.value) + '">' + escBox(o.label || o.value) + '</option>').join('');
+        sel.value = b.style || 'none';
+        sel.addEventListener('change', () => { boxListState[i].style = sel.value; debouncedUpdate(); });
+        const tsel = document.createElement('select');
+        tsel.style.cssText = 'flex:1;min-width:0;font-size:10px;';
+        tsel.innerHTML = BOX_TARGETS.map(t => '<option value="' + t.v + '">' + t.t + '</option>').join('');
+        tsel.value = b.target || 'global';
+        tsel.addEventListener('change', () => { boxListState[i].target = tsel.value; debouncedUpdate(); });
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.style.cssText = 'flex:0 0 auto;width:22px;height:22px;cursor:pointer;';
+        rm.textContent = '×';
+        rm.title = '移除该盒子';
+        rm.addEventListener('click', () => { boxListState.splice(i, 1); renderBoxList(); debouncedUpdate(); });
+        row.appendChild(sel); row.appendChild(tsel); row.appendChild(rm);
+        listEl.appendChild(row);
+    });
+}
+(function initBoxListUI() {
+    const addBtn = document.getElementById('d-box-add');
+    if (addBtn) addBtn.addEventListener('click', () => {
+        boxListState.push({ style: 'none', target: 'title' });
+        renderBoxList();
+        debouncedUpdate();
+    });
+})();
 
 // ============================================================
 // Per-field UI: load current field values into dropdowns & checkboxes
