@@ -517,16 +517,23 @@ function buildHighlightsHtml(highlights) {
 
 // ============================================================
 // buildTextStyle — 生成自定义文字（顶栏/侧栏）的内联样式串
-// block=true 时（顶栏）补 display:block;width:100% 使 text-align 生效
+// isHeader=true（顶栏）：水平文字，align ∈ left/center/right/stretch，靠 display:block;width:100% + text-align 生效
+// isHeader=false（侧栏）：竖排文字，对齐方向是沿侧栏的「纵向位置」(top/center/bottom)，
+//   由外层 .card-side-band 的 justify-content 控制（见 buildCardHtml）；此处仅处理 stretch(撑满)→ height:100% + 纵向 justify
 // ============================================================
-function buildTextStyle(family, size, align, block) {
+function buildTextStyle(family, size, align, isHeader) {
   const parts = [];
   if (family) parts.push('font-family:' + family);
   if (size)   parts.push('font-size:' + size);
-  if (align)  parts.push('text-align:' + align);
-  // display:block;width:100% 仅当指定了对齐时才需要（使其生效）；未指定则不注入内联样式
-  if (block && align) parts.push('display:block;width:100%');
-  return parts.length ? parts.join(';') : '';
+  if (isHeader) {
+    // 顶栏：水平文字，对齐 = 水平方向
+    if (align === 'stretch')      parts.push('display:block;width:100%;text-align:justify');
+    else if (align)               parts.push('display:block;width:100%;text-align:' + align);
+  } else {
+    // 侧栏：竖排文字，top/center/bottom 在外层 band 控制；仅 stretch 需内联 height:100% + 纵向 justify
+    if (align === 'stretch')      parts.push('height:100%;text-align:justify');
+  }
+  return parts.length ? parts.join(';') + ';' : '';
 }
 
 // ============================================================
@@ -727,14 +734,26 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     + bodyHtml + '</div>';
 
   if (showSide) {
-    const sideTextStyle = buildTextStyle(sideTextFamily, sideTextSize, sideTextAlign, false);
+    // 侧栏竖排文字：对齐语义是「沿侧栏纵向位置」，由 .card-side-band 的 justify-content 控制
+    // 兼容旧数据：旧 left/right 映射为 top/bottom
+    let sideAlign = sideTextAlign;
+    if (sideAlign === 'left')  sideAlign = 'top';
+    if (sideAlign === 'right') sideAlign = 'bottom';
+    let sideBandAlignStyle = '';
+    if (sideText && sideAlign) {
+      if (sideAlign === 'top')         sideBandAlignStyle = 'justify-content:flex-start;';
+      else if (sideAlign === 'bottom') sideBandAlignStyle = 'justify-content:flex-end;';
+      // stretch → 由侧栏文字内联 height:100% 撑满，band 沿用默认居中即可；center → 默认，不覆盖
+    }
+    const sideTextStyle = buildTextStyle(sideTextFamily, sideTextSize, sideAlign, false);
     const sideInner = sideText
       ? '<span class="card-side-text"'
         + (sideTextStyle ? ' style="' + sideTextStyle + '"' : '') + '>'
         + escapeHtml(sideText) + '</span>'
       : '';
     const sideHtml = '<div class="card-side-band card-side-band-' + sidePosition
-      + (sideText ? ' card-side-band--has-text' : '') + '">' + sideInner + '</div>';
+      + (sideText ? ' card-side-band--has-text' : '') + '"'
+      + (sideBandAlignStyle ? ' style="' + sideBandAlignStyle + '"' : '') + '">' + sideInner + '</div>';
     if (sidePosition === 'right') {
       html += '<div class="card-main">' + contentHtml + sideHtml + '</div>';
     } else {

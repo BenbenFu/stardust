@@ -588,6 +588,7 @@
                         <option value="left">左对齐 left</option>
                         <option value="center">居中 center</option>
                         <option value="right">右对齐 right</option>
+                        <option value="stretch">撑满 stretch</option>
                     </select>
                 </div>
                 <div style="font-size:9px;color:var(--pixel-dim);line-height:1.4;">
@@ -826,7 +827,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260714d';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260715a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -932,6 +933,32 @@ function loadCustomTextToUI(pos) {
     if (CT_DIMS.family) CT_DIMS.family.value = st.family || '';
     if (CT_DIMS.size)   CT_DIMS.size.value   = st.size   || '';
     if (CT_DIMS.align)  CT_DIMS.align.value  = st.align  || '';
+}
+
+// 对齐下拉随「位置」动态切换：
+//   顶栏(水平文字) → left/center/right/stretch
+//   侧栏(竖排文字) → top/center/bottom/stretch（纵向位置，由侧栏 band 的 justify-content 控制）
+const ALIGN_OPTS = {
+    header: [
+        { v: '',        t: '(继承默认)' },
+        { v: 'left',    t: '左对齐 left' },
+        { v: 'center',  t: '居中 center' },
+        { v: 'right',   t: '右对齐 right' },
+        { v: 'stretch', t: '撑满 stretch' },
+    ],
+    side: [
+        { v: '',        t: '(继承默认)' },
+        { v: 'top',     t: '顶部 top' },
+        { v: 'center',  t: '居中 center' },
+        { v: 'bottom',  t: '底部 bottom' },
+        { v: 'stretch', t: '撑满 stretch' },
+    ],
+};
+function rebuildAlignOptions(pos) {
+    const sel = CT_DIMS.align;
+    if (!sel) return;
+    const opts = ALIGN_OPTS[pos] || ALIGN_OPTS.header;
+    sel.innerHTML = opts.map(o => '<option value="' + o.v + '">' + o.t + '</option>').join('');
 }
 
 // Per-field dropdown DOM refs (pf- prefix)
@@ -1221,6 +1248,7 @@ function applyStyleJsonToPanel(sj) {
         size:   el.side_text_size   || '',
         align:  el.side_text_align  || '',
     };
+    rebuildAlignOptions(ctCurrentPos); // 对齐下拉随位置重建，确保选项与已存值匹配
     loadCustomTextToUI(ctCurrentPos);
     setSelect(DIMS.divider,       el.divider);
     setSelect(DIMS.corner_badge,  el.corner_badge);
@@ -2053,6 +2081,7 @@ if (CT_DIMS.position) {
     CT_DIMS.position.addEventListener('change', (e) => {
         saveCustomTextUI(ctCurrentPos);   // 先保存当前位置 UI
         ctCurrentPos = e.target.value;
+        rebuildAlignOptions(ctCurrentPos); // 对齐选项随位置切换
         loadCustomTextToUI(ctCurrentPos); // 载入新位置
     });
 }
