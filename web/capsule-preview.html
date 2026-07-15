@@ -1298,7 +1298,7 @@ const BOX_TARGETS = [
 ];
 function getBoxStyleOptions() {
     const rows = (dimensionCache['style_deco_options'] || [])
-        .filter(r => r.sub_dim === 'box_style');
+        .filter(r => r.sub_dim === 'box_style' && r.value !== 'none');
     return rows.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 }
 function renderBoxList() {
