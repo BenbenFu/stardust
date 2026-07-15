@@ -63,18 +63,12 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .container-group { display: grid; gap: 6px; padding: 4px; position: relative; z-index: 1; }
 .container-group > div { min-width: 0; }
 
-/* ===== Deco Box 多盒叠放层 ===== */
-/* 全局盒：绝对覆盖整卡内容区，置于内容底下 */
-.deco-box-layer--global { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-/* slot 在网格中需抬到全局层之上 */
-.card-slot-a, .card-slot-b, .card-slot-c, .card-slot-d { position: relative; z-index: 1; }
-/* 字段包裹层：外层承载 backdrop-filter(毛玻璃)，与内层字段的 filter 解耦 */
+/* ===== Deco Box：每盒子是对字段/内容的嵌套 .fx-wrap 包裹层 ===== */
+/* 选择器通用 [data-style-deco-box="X"]（由 DB css_template 提供 border/bg/shadow/radius/padding），
+   同时兼容容器组 slot 上的同款 attr。外层 .fx-wrap[data-fx] 仅承载 backdrop-filter。 */
 .fx-wrap { position: relative; }
-.fx-wrap > .deco-box { position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit; }
-.fx-wrap > .card-date,
-.fx-wrap > .card-title,
-.fx-wrap > .card-highlights,
-.fx-wrap > .card-capsule { position: relative; z-index: 1; }
+/* 全局盒子包裹层：需向下传递 flex 链，保持卡片高度撑满（仅在有 global 盒子时插入） */
+.fx-wrap.gx-global { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; min-height: 0; }
 
 /* ===== Header band（顶栏装饰条 / 文字） ===== */
 /* 满边/通长：width:100% 覆盖 density-pad 区域；band_inset 控制离卡片上/左/右边缘的内缩量
@@ -559,23 +553,31 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   let bodyHtml = '';
   let contentIsSlots = false;
 
-  // --- Deco Box 多盒叠放层 ---
+  // --- Deco Box 多盒嵌套包裹层 ---
   // 扁平列表 deco.boxes = [{ style, target }, ...]；兼容旧单值 deco.box_style/box_target
-  // 每个盒子渲染为一个独立绝对定位的 .deco-box 层，贴在目标区域内容底下，可任意叠加。
+  // 每个盒子渲染为一个嵌套的 .fx-wrap[data-style-deco-box="X"] 包裹层：
+  //   · 直接套在字段/内容外，border/padding 自然作用到内容（恢复「之前」贴合度，不再忽远忽近）
+  //   · 多个盒子 = 多层嵌套，可任意叠加（渐变/毛玻璃/液态玻璃同字段并存）
+  //   · 选择器通用 [data-style-deco-box="X"]（同时兼容容器组 slot 上的同款 attr，无需改引擎）
   const decoBoxes = (styleJson && styleJson.deco && Array.isArray(styleJson.deco.boxes))
     ? styleJson.deco.boxes.slice() : [];
   if (styleJson && styleJson.deco && styleJson.deco.box_style && styleJson.deco.box_style !== 'none') {
     decoBoxes.push({ style: styleJson.deco.box_style, target: styleJson.deco.box_target || 'global' });
   }
-  function boxLayersFor(target) {
+  function boxStylesFor(target) {
     return decoBoxes
       .filter(b => b && b.style && b.style !== 'none' && b.target === target)
-      .map(b => '<div class="deco-box" data-style-deco-box="' + escapeAttr(b.style) + '"></div>')
-      .join('');
+      .map(b => b.style);
   }
+  // 字段包裹：最外层 .fx-wrap[data-fx=field] 承载 backdrop-filter；
+  // 其内按数组顺序(外→内)嵌套各盒子包裹层（数组 [B0,B1] → B0 在外、B1 贴内容）。
   function wrapField(field, innerHtml) {
-    const layers = boxLayersFor(field);
-    return '<div class="fx-wrap" data-fx="' + field + '">' + layers + innerHtml + '</div>';
+    const styles = boxStylesFor(field);
+    let html = innerHtml;
+    for (let i = styles.length - 1; i >= 0; i--) {
+      html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(styles[i]) + '">' + html + '</div>';
+    }
+    return '<div class="fx-wrap" data-fx="' + field + '">' + html + '</div>';
   }
 
   if (containerGroup === 'none') {
@@ -717,7 +719,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     contentIsSlots = false;
   }
 
-  // ---- 用装饰条 wrapper 包裹 body ----
+  // ---- 组装卡片：顶栏 + 主体(含侧栏) ----
   const showHeader = headerDeco !== 'none' || !!headerText;
   const showSide   = sideAccent !== 'none' || !!sideText;
 
@@ -728,26 +730,23 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     + ' data-id="' + escapeAttr(String(id)) + '"'
     + '>';
 
+  // 顶栏装饰条
+  let headerBandHtml = '';
   if (showHeader) {
     const headerTextStyle = buildTextStyle(headerTextFamily, headerTextSize, headerTextAlign, true);
-    html += '<div class="card-header-band' + (headerText ? ' card-header-band--has-text' : '') + '">';
-    if (headerText) html += '<span class="card-header-text"'
+    headerBandHtml = '<div class="card-header-band' + (headerText ? ' card-header-band--has-text' : '') + '">';
+    if (headerText) headerBandHtml += '<span class="card-header-text"'
       + (headerTextStyle ? ' style="' + headerTextStyle + '"' : '') + '>'
       + escapeHtml(headerText) + '</span>';
-    html += '</div>';
+    headerBandHtml += '</div>';
   }
 
-  // 全局盒子（target='global'）渲染为整卡覆盖层，置于内容底下
-  const globalBoxLayers = boxLayersFor('global');
-  const globalLayerHtml = globalBoxLayers
-    ? '<div class="deco-box-layer deco-box-layer--global">' + globalBoxLayers + '</div>' : '';
-
   const contentHtml = '<div class="card-content' + (contentIsSlots ? ' card-content--slots' : '') + '">'
-    + globalLayerHtml + bodyHtml + '</div>';
+    + bodyHtml + '</div>';
 
+  // 侧栏竖排文字（对齐语义：沿侧栏纵向位置；兼容旧数据 left/right → top/bottom）
+  let sideHtml = '';
   if (showSide) {
-    // 侧栏竖排文字：对齐语义是「沿侧栏纵向位置」，由 .card-side-band 的 justify-content 控制
-    // 兼容旧数据：旧 left/right 映射为 top/bottom
     let sideAlign = sideTextAlign;
     if (sideAlign === 'left')  sideAlign = 'top';
     if (sideAlign === 'right') sideAlign = 'bottom';
@@ -755,7 +754,6 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     if (sideText && sideAlign) {
       if (sideAlign === 'top')         sideBandAlignStyle = 'justify-content:flex-start;';
       else if (sideAlign === 'bottom') sideBandAlignStyle = 'justify-content:flex-end;';
-      // stretch → 由侧栏文字内联 height:100% 撑满，band 沿用默认居中即可；center → 默认，不覆盖
     }
     const sideTextStyle = buildTextStyle(sideTextFamily, sideTextSize, sideAlign, false);
     const sideInner = sideText
@@ -763,17 +761,28 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
         + (sideTextStyle ? ' style="' + sideTextStyle + '"' : '') + '>'
         + escapeHtml(sideText) + '</span>'
       : '';
-    const sideHtml = '<div class="card-side-band card-side-band-' + sidePosition
+    sideHtml = '<div class="card-side-band card-side-band-' + sidePosition
       + (sideText ? ' card-side-band--has-text' : '') + '"'
       + (sideBandAlignStyle ? ' style="' + sideBandAlignStyle + '"' : '') + '">' + sideInner + '</div>';
-    if (sidePosition === 'right') {
-      html += '<div class="card-main">' + contentHtml + sideHtml + '</div>';
-    } else {
-      html += '<div class="card-main">' + sideHtml + contentHtml + '</div>';
-    }
-  } else {
-    html += '<div class="card-main">' + contentHtml + '</div>';
   }
+
+  // 卡片主体
+  let cardMainHtml = showSide
+    ? (sidePosition === 'right'
+        ? '<div class="card-main">' + contentHtml + sideHtml + '</div>'
+        : '<div class="card-main">' + sideHtml + contentHtml + '</div>')
+    : '<div class="card-main">' + contentHtml + '</div>';
+
+  // 全局盒子（target='global'）：嵌套包裹「整个卡片内容(含顶栏+主体)」恢复整卡生效语义；
+  // 仅在确有 global 盒子时插入包裹层，避免无盒时改变 DOM/布局。
+  let cardInner = headerBandHtml + cardMainHtml;
+  const globalStyles = boxStylesFor('global');
+  if (globalStyles.length) {
+    for (let i = globalStyles.length - 1; i >= 0; i--) {
+      cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(globalStyles[i]) + '">' + cardInner + '</div>';
+    }
+  }
+  html += cardInner;
 
   html += '</a>';
   return html;
