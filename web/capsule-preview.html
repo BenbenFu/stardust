@@ -428,6 +428,17 @@
                     <button type="button" id="d-box-add" style="font-size:10px;padding:2px 8px;cursor:pointer;">+ 添加盒子</button>
                 </div>
                 <div class="dim-row">
+                    <label>Box 统一圆角 <span style="color:var(--pixel-alert);font-size:8px;">(消除方/圆混叠)</span></label>
+                    <select id="d-box-radius">
+                        <option value="0">0 直角</option>
+                        <option value="2">2</option>
+                        <option value="4">4</option>
+                        <option value="8" selected>8（默认）</option>
+                        <option value="12">12</option>
+                        <option value="16">16</option>
+                    </select>
+                </div>
+                <div class="dim-row">
                     <label>Action 操作区 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
                     <select id="d-action-style"></select>
                 </div>
@@ -824,7 +835,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260715c';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1115,6 +1126,7 @@ function buildStyleJson() {
             tag_style: v('tag_style', 'none'),
             avatar_style: v('avatar_style', 'none'),
             boxes: boxListState.slice(),
+            box_radius: parseInt(document.getElementById('d-box-radius')?.value, 10) || 8,
             action_style: v('action_style', 'none'),
         },
         element: {
@@ -1217,6 +1229,8 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.avatar_style, dc.avatar_style);
     boxListState = Array.isArray(dc.boxes) ? dc.boxes.map(b => ({ style: b.style || 'none', target: b.target || 'global' })) : [];
     renderBoxList();
+    const brEl = document.getElementById('d-box-radius');
+    if (brEl) brEl.value = (dc.box_radius != null) ? String(dc.box_radius) : '8';
     setSelect(DIMS.action_style, dc.action_style);
 
     // element

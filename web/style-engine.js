@@ -196,7 +196,7 @@ export const DEFAULT_STYLE_JSON = {
     text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
   border: { radius_size:'none', border_width:'none', border_style:'solid', border_shadow:'none' },
-  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', boxes:[], action_style:'none' },
+  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', boxes:[], box_radius:8, action_style:'none' },
   element: { header_deco:'none', header_text:'', header_width:6,
     side_accent:'none', side_text:'', side_width:8, side_position:'left',
     band_inset:true,
@@ -575,7 +575,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     const styles = boxStylesFor(field);
     let html = innerHtml;
     for (let i = styles.length - 1; i >= 0; i--) {
-      html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(styles[i]) + '">' + html + '</div>';
+      html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(styles[i]) + '" style="border-radius: var(--deco-radius, 8px)">' + html + '</div>';
     }
     return '<div class="fx-wrap" data-fx="' + field + '">' + html + '</div>';
   }
@@ -779,7 +779,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   const globalStyles = boxStylesFor('global');
   if (globalStyles.length) {
     for (let i = globalStyles.length - 1; i >= 0; i--) {
-      cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(globalStyles[i]) + '">' + cardInner + '</div>';
+      cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(globalStyles[i]) + '" style="border-radius: var(--deco-radius, 8px)">' + cardInner + '</div>';
     }
   }
   html += cardInner;
@@ -842,6 +842,9 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   const bandInset = elBand.band_inset === false ? false : true;
   const bi = bandInset ? '12px' : '0px';
   paletteCssVars.push('--band-inset:' + bi);
+  // Deco Box 统一半径：所有 box 包裹层用同一半径，消除方/圆混叠产生的角部 sliver/bite 瑕疵
+  const decoRadius = (sj.deco && typeof sj.deco.box_radius === 'number') ? sj.deco.box_radius : 8;
+  paletteCssVars.push('--deco-radius:' + decoRadius + 'px');
   // 注：--density-pad 来自 DB density css_template（.gallery-card[data-style-layout-density]）。
   //     若 DB 未配置则回退 12px（见 BASE_CSS 中 var(--density-pad, 12px)）。
 

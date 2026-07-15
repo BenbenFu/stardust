@@ -45,17 +45,24 @@ UPDATE style_effect_options SET css_template = '.gallery-card[data-style-effect-
 .gallery-card[data-style-effect-backdrop-highlights="backdrop_blur_lg"] .fx-wrap[data-fx="highlights"] { backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px); }' WHERE id = 6; -- filter_backdrop=backdrop_blur_lg
 
 -- ============================================================
--- 3) 新增渐变类 box_style (库里原本没有; 满足「渐变+毛玻璃+液态玻璃 同时叠加」场景)
---    用 NOT EXISTS 防止重复执行。label/description 为中文。
+-- 3) 渐变类 box_style
+--    关键: 引擎在 .fx-wrap 上发射 data-style-deco-box (不发射 .deco-box), 故选择器必须是
+--          [data-style-deco-box="VALUE"]; 旧版用过 .deco-box 前缀会导致规则完全匹配不上、渐变不渲染。
+--    先 UPDATE 已存在行(修复旧前缀 + 去掉对 --card-accent2 的依赖 + 兜底灰改彩色),
+--    再 INSERT ... NOT EXISTS 兜底(从未插过渐变行的环境)。label/description 为中文。
 -- ============================================================
+UPDATE style_deco_options SET css_template = '[data-style-deco-box="gradient_linear"] { background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent, #4a7dff) 60%, transparent) 0%, transparent 100%); border-radius: var(--border-radius, 8px); }' WHERE sub_dim = 'box_style' AND value = 'gradient_linear';
+UPDATE style_deco_options SET css_template = '[data-style-deco-box="gradient_flow"] { background: linear-gradient(120deg, color-mix(in srgb, var(--card-accent, #4a7dff) 55%, transparent) 0%, color-mix(in srgb, var(--card-accent, #4a7dff) 28%, #ffffff) 50%, transparent 100%); border-radius: var(--border-radius, 8px); }' WHERE sub_dim = 'box_style' AND value = 'gradient_flow';
+UPDATE style_deco_options SET css_template = '[data-style-deco-box="gradient_radial"] { background: radial-gradient(circle at 28% 18%, color-mix(in srgb, var(--card-accent, #4a7dff) 60%, transparent) 0%, transparent 70%); border-radius: var(--border-radius, 8px); }' WHERE sub_dim = 'box_style' AND value = 'gradient_radial';
+
 INSERT INTO style_deco_options (sub_dim, value, label, description, structure_params, css_template, sort_order, is_enabled)
-SELECT 'box_style', 'gradient_linear', '双色线性渐变', 'accent 到透明的 135° 线性渐变, 作为字段/整卡背景上的渐变叠层', NULL, '[data-style-deco-box="gradient_linear"] { background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent, #ccc) 55%, transparent) 0%, transparent 100%); border-radius: var(--border-radius, 8px); }', 12, true
+SELECT 'box_style', 'gradient_linear', '双色线性渐变', 'accent 到透明的 135° 线性渐变, 作为字段/整卡背景上的渐变叠层', NULL, '[data-style-deco-box="gradient_linear"] { background: linear-gradient(135deg, color-mix(in srgb, var(--card-accent, #4a7dff) 60%, transparent) 0%, transparent 100%); border-radius: var(--border-radius, 8px); }', 12, true
 WHERE NOT EXISTS (SELECT 1 FROM style_deco_options WHERE sub_dim = 'box_style' AND value = 'gradient_linear');
 INSERT INTO style_deco_options (sub_dim, value, label, description, structure_params, css_template, sort_order, is_enabled)
-SELECT 'box_style', 'gradient_flow', '三色流光渐变', 'accent / accent2 / 透明 的三段流光渐变, 增强层次', NULL, '[data-style-deco-box="gradient_flow"] { background: linear-gradient(120deg, color-mix(in srgb, var(--card-accent, #ccc) 50%, transparent) 0%, color-mix(in srgb, var(--card-accent2, #999) 35%, transparent) 50%, transparent 100%); border-radius: var(--border-radius, 8px); }', 13, true
+SELECT 'box_style', 'gradient_flow', '三色流光渐变', 'accent 两段 + 透明 的流光渐变 (不依赖 accent2, 第二色由 accent 混白得到)', NULL, '[data-style-deco-box="gradient_flow"] { background: linear-gradient(120deg, color-mix(in srgb, var(--card-accent, #4a7dff) 55%, transparent) 0%, color-mix(in srgb, var(--card-accent, #4a7dff) 28%, #ffffff) 50%, transparent 100%); border-radius: var(--border-radius, 8px); }', 13, true
 WHERE NOT EXISTS (SELECT 1 FROM style_deco_options WHERE sub_dim = 'box_style' AND value = 'gradient_flow');
 INSERT INTO style_deco_options (sub_dim, value, label, description, structure_params, css_template, sort_order, is_enabled)
-SELECT 'box_style', 'gradient_radial', '径向光晕', '左上角 accent 径向光晕, 向边缘透明消散', NULL, '[data-style-deco-box="gradient_radial"] { background: radial-gradient(circle at 28% 18%, color-mix(in srgb, var(--card-accent, #ccc) 55%, transparent) 0%, transparent 70%); border-radius: var(--border-radius, 8px); }', 14, true
+SELECT 'box_style', 'gradient_radial', '径向光晕', '左上角 accent 径向光晕, 向边缘透明消散', NULL, '[data-style-deco-box="gradient_radial"] { background: radial-gradient(circle at 28% 18%, color-mix(in srgb, var(--card-accent, #4a7dff) 60%, transparent) 0%, transparent 70%); border-radius: var(--border-radius, 8px); }', 14, true
 WHERE NOT EXISTS (SELECT 1 FROM style_deco_options WHERE sub_dim = 'box_style' AND value = 'gradient_radial');
 
 -- 执行后校验: box 应全部指向 [data-style-deco-box=...]; backdrop 应指向 .fx-wrap
