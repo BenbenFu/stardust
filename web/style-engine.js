@@ -196,7 +196,7 @@ export const DEFAULT_STYLE_JSON = {
     text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
   border: { radius_size:'none', border_width:'none', border_style:'solid', border_shadow:'none' },
-  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', boxes:[], box_radius:8, action_style:'none' },
+  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', boxes:[], box_radius:8, box_gap:12, action_style:'none' },
   element: { header_deco:'none', header_text:'', header_width:6,
     side_accent:'none', side_text:'', side_width:8, side_position:'left',
     band_inset:true,
@@ -576,7 +576,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     let html = innerHtml;
     for (let i = boxes.length - 1; i >= 0; i--) {
       const b = boxes[i];
-      const pad = (b.coincide === true) ? ' padding:0;' : '';
+      const pad = (b.coincide === true) ? ' padding:0;' : ' padding: var(--box-gap, 12px);';
       html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px)' + pad + '">' + html + '</div>';
     }
     return '<div class="fx-wrap" data-fx="' + field + '">' + html + '</div>';
@@ -782,7 +782,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   if (globalBoxes.length) {
     for (let i = globalBoxes.length - 1; i >= 0; i--) {
       const b = globalBoxes[i];
-      const pad = (b.coincide === true) ? ' padding:0;' : '';
+      const pad = (b.coincide === true) ? ' padding:0;' : ' padding: var(--box-gap, 12px);';
       cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px)' + pad + '">' + cardInner + '</div>';
     }
   }
@@ -849,6 +849,14 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   // Deco Box 统一半径：所有 box 包裹层用同一半径，消除方/圆混叠产生的角部 sliver/bite 瑕疵
   const decoRadius = (sj.deco && typeof sj.deco.box_radius === 'number') ? sj.deco.box_radius : 8;
   paletteCssVars.push('--deco-radius:' + decoRadius + 'px');
+  // Deco Box 统一盒间距：嵌套时所有 box 包裹层用同一间距(覆盖各 box 自身 DB padding)，重合时归零。
+  const decoGap = (sj.deco && typeof sj.deco.box_gap === 'number') ? sj.deco.box_gap : 12;
+  paletteCssVars.push('--box-gap:' + decoGap + 'px');
+  // 全局 box 存在时，把卡片外框圆角同步为 --deco-radius(=最外层全局 box 圆角)，
+  // 消除「卡片方 / box 圆」或反过来的错位(卡片 overflow:hidden 会裁切不匹配的夹角)。
+  const hasGlobalBox = Array.isArray(sj.deco && sj.deco.boxes)
+    && sj.deco.boxes.some(b => b && b.style && b.style !== 'none' && b.target === 'global');
+  if (hasGlobalBox) paletteCssVars.push('border-radius: var(--deco-radius, 8px)');
   // 注：--density-pad 来自 DB density css_template（.gallery-card[data-style-layout-density]）。
   //     若 DB 未配置则回退 12px（见 BASE_CSS 中 var(--density-pad, 12px)）。
 

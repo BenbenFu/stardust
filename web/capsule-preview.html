@@ -439,6 +439,10 @@
                     </select>
                 </div>
                 <div class="dim-row">
+                    <label>Box 间距 <span style="color:var(--pixel-alert);font-size:8px;">(勾选嵌套时的统一框距)</span></label>
+                    <input type="number" id="d-box-gap" min="0" max="40" step="1" value="12" style="width:64px;" />
+                </div>
+                <div class="dim-row">
                     <label>Action 操作区 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
                     <select id="d-action-style"></select>
                 </div>
@@ -835,7 +839,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716b';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716c';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1127,6 +1131,7 @@ function buildStyleJson() {
             avatar_style: v('avatar_style', 'none'),
             boxes: boxListState.slice(),
             box_radius: parseInt(document.getElementById('d-box-radius')?.value, 10) || 8,
+            box_gap: parseInt(document.getElementById('d-box-gap')?.value, 10) || 12,
             action_style: v('action_style', 'none'),
         },
         element: {
@@ -1231,6 +1236,8 @@ function applyStyleJsonToPanel(sj) {
     renderBoxList();
     const brEl = document.getElementById('d-box-radius');
     if (brEl) brEl.value = (dc.box_radius != null) ? String(dc.box_radius) : '8';
+    const bgEl = document.getElementById('d-box-gap');
+    if (bgEl) bgEl.value = (dc.box_gap != null) ? String(dc.box_gap) : '12';
     setSelect(DIMS.action_style, dc.action_style);
 
     // element
