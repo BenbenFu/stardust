@@ -1967,7 +1967,7 @@ Object.values(DIMS).forEach(el => {
 });
 
 // 装饰条粗细/位置控件不参与 DIM_CONFIG 的 DB 下拉，单独绑定
-['d-header-width', 'd-side-width', 'd-side-position', 'd-band-inset'].forEach(id => {
+['d-header-width', 'd-side-width', 'd-side-position', 'd-band-inset', 'd-box-radius', 'd-box-gap'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', debouncedUpdate); el.addEventListener('change', debouncedUpdate); }
 });
