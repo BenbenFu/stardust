@@ -576,8 +576,8 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     let html = innerHtml;
     for (let i = boxes.length - 1; i >= 0; i--) {
       const b = boxes[i];
-      const pad = (b.coincide === true) ? ' padding:0;' : ' padding: var(--box-gap, 12px);';
-      html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px)' + pad + '">' + html + '</div>';
+      const pad = (b.coincide === true) ? 'padding:0;' : 'padding: var(--box-gap, 12px);';
+      html = '<div class="fx-wrap" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px); ' + pad + '">' + html + '</div>';
     }
     return '<div class="fx-wrap" data-fx="' + field + '">' + html + '</div>';
   }
@@ -782,8 +782,8 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   if (globalBoxes.length) {
     for (let i = globalBoxes.length - 1; i >= 0; i--) {
       const b = globalBoxes[i];
-      const pad = (b.coincide === true) ? ' padding:0;' : ' padding: var(--box-gap, 12px);';
-      cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px)' + pad + '">' + cardInner + '</div>';
+      const pad = (b.coincide === true) ? 'padding:0;' : 'padding: var(--box-gap, 12px);';
+      cardInner = '<div class="fx-wrap gx-global" data-style-deco-box="' + escapeAttr(b.style) + '" style="border-radius: var(--deco-radius, 8px); ' + pad + '">' + cardInner + '</div>';
     }
   }
   html += cardInner;
