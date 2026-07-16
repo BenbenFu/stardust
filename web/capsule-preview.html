@@ -839,7 +839,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716c';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716d';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1130,8 +1130,8 @@ function buildStyleJson() {
             tag_style: v('tag_style', 'none'),
             avatar_style: v('avatar_style', 'none'),
             boxes: boxListState.slice(),
-            box_radius: parseInt(document.getElementById('d-box-radius')?.value, 10) || 8,
-            box_gap: parseInt(document.getElementById('d-box-gap')?.value, 10) || 12,
+            box_radius: ((n) => isNaN(n) ? 8 : n)(parseInt(document.getElementById('d-box-radius')?.value, 10)),
+            box_gap: ((n) => isNaN(n) ? 12 : n)(parseInt(document.getElementById('d-box-gap')?.value, 10)),
             action_style: v('action_style', 'none'),
         },
         element: {
@@ -1355,7 +1355,15 @@ function renderBoxList() {
         nestChk.type = 'checkbox';
         nestChk.checked = !(b.coincide === true);
         nestChk.title = '勾选=嵌套(留间距, 默认)；取消勾选=边缘重合(无间距, 强制 padding:0)';
-        nestChk.addEventListener('change', () => { boxListState[i].coincide = !nestChk.checked; debouncedUpdate(); });
+        function syncCoincideFromCheckbox() {
+            const box = boxListState[i];
+            if (!box) return;
+            box.coincide = !nestChk.checked;
+            console.log('[box-coincide] index=' + i + ' checked=' + nestChk.checked + ' coincide=' + box.coincide);
+            debouncedUpdate();
+        }
+        nestChk.addEventListener('change', syncCoincideFromCheckbox);
+        nestChk.addEventListener('input', syncCoincideFromCheckbox);
         const nestLbl = document.createElement('span');
         nestLbl.textContent = '嵌套';
         nestWrap.appendChild(nestChk); nestWrap.appendChild(nestLbl);
@@ -1558,6 +1566,7 @@ function updatePreview() {
     }
 
     const diary = { ...MOCK_DIARY, style_json: sj, capsuleName: currentName || MOCK_DIARY.capsuleName };
+    console.log('[updatePreview] sj.deco.boxes:', JSON.parse(JSON.stringify(sj.deco.boxes || [])));
     dom.previewArea.innerHTML = '';
     const labelEl = document.createElement('div');
     labelEl.style.cssText = 'text-align:center;margin-bottom:12px;font-size:9px;color:var(--pixel-dim);';
