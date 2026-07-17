@@ -60,6 +60,14 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
   font-size: calc(0.8rem * var(--typo-capsule-scale, 0.9));
   text-align: var(--typo-capsule-align, left); }
 .hl-sep { display: inline; }
+/* ===== Highlights block 列表（扁平有序，仿 deco.boxes；容器组带在 Phase 2 复用此结构） =====
+   仅提供布局骨架；头像圆形 / 气泡边框 / 分隔线样式由 DB css_template 经 data-attr 驱动。 */
+.hl-block { display: flex; flex-direction: column; min-width: 0; }
+.hl-block--avatar-side { flex-direction: row; align-items: flex-start; gap: 8px; }
+.hl-block--avatar-top  { flex-direction: column; }
+.hl-avatar { flex: 0 0 auto; max-width: 40%; }
+.hl-divider { width: 100%; }
+.hl-action-bar { display: flex; gap: 12px; margin-top: 6px; align-items: center; }
 .container-group { display: grid; gap: 6px; padding: 4px; position: relative; z-index: 1; }
 .container-group > div { min-width: 0; }
 
@@ -196,7 +204,7 @@ export const DEFAULT_STYLE_JSON = {
     text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
   border: { radius_size:'none', border_width:'none', border_style:'solid', border_shadow:'none' },
-  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', boxes:[], box_radius:8, box_gap:12, action_style:'none' },
+  deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', avatar_pos:'side', boxes:[], box_radius:8, box_gap:12, action_style:'none' },
   element: { header_deco:'none', header_text:'', header_width:6,
     side_accent:'none', side_text:'', side_width:8, side_position:'left',
     band_inset:true,
@@ -494,6 +502,60 @@ function buildHighlightsHtml(highlights) {
 }
 
 // ============================================================
+// buildHighlightsLayout — highlights 微型 block 列表（扁平有序，仿 deco.boxes）
+// 默认 per_line：每条 highlight 一行；全局 deco 的 bubble/tag/avatar 在此逐块生效。
+// 分隔线渲染为 block 间兄弟元素 .hl-divider（绝不在气泡内部）→ 解决「气泡+分隔线冲突」。
+// 操作区带(once) 默认挂在 highlights 下方。Phase 2 容器组带模板将复用此结构。
+// ============================================================
+
+function buildHighlightsLayout(styleJson, diary, allOptions) {
+  const d = diary || {};
+  const highlights = Array.isArray(d.highlights) ? d.highlights : [];
+  const deco = (styleJson && styleJson.deco) || {};
+  const el = (styleJson && styleJson.element) || {};
+
+  const bubble = (deco.bubble_style && deco.bubble_style !== 'none') ? deco.bubble_style : '';
+  const tag = (deco.tag_style && deco.tag_style !== 'none') ? deco.tag_style : '';
+  const avatarStyle = (deco.avatar_style && deco.avatar_style !== 'none') ? deco.avatar_style : '';
+  const avatarPos = deco.avatar_pos || 'side';
+  const actionStyle = (deco.action_style && deco.action_style !== 'none') ? deco.action_style : '';
+  const divider = (el.divider && el.divider !== 'none') ? el.divider : '';
+
+  if (!highlights.length && !actionStyle) return '';
+
+  let html = '';
+  // 文本块：每条 highlight 一行；全局 deco 的 bubble/tag/avatar 逐块生效
+  for (let i = 0; i < highlights.length; i++) {
+    const text = escapeHtml(highlights[i]);
+    const decoAttr = (bubble ? ' data-style-deco-bubble="' + escapeAttr(bubble) + '"' : '')
+                   + (tag ? ' data-style-deco-tag="' + escapeAttr(tag) + '"' : '');
+    let inner = '<div class="card-highlight-item">' + text + '</div>';
+    let cls = 'hl-block';
+    if (avatarStyle) {
+      const av = '<div class="hl-avatar cg-avatar-text" data-style-deco-avatar="' + escapeAttr(avatarStyle) + '">'
+        + escapeHtml(d.avatar || 'BF') + '</div>';
+      if (avatarPos === 'top') { cls += ' hl-block--avatar-top'; inner = av + inner; }
+      else { cls += ' hl-block--avatar-side'; inner = av + inner; }
+    }
+    html += '<div class="' + cls + '"' + decoAttr + '>' + inner + '</div>';
+    // 分隔线 = block 间兄弟元素（绝不在气泡内部）
+    if (divider && i < highlights.length - 1) {
+      html += '<div class="hl-divider" data-style-element-divider="' + escapeAttr(divider) + '"></div>';
+    }
+  }
+
+  // 操作区带（once）：默认挂在 highlights 下方
+  if (actionStyle) {
+    html += '<div class="hl-action-bar" data-style-deco-action="' + escapeAttr(actionStyle) + '">'
+      + '<span class="cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>'
+      + '<span class="cg-comment">' + escapeHtml(String(d.comment_count || '0')) + ' \u8bc4</span>'
+      + '<span class="cg-share">' + escapeHtml(String(d.share_count || '0')) + ' \u8f6c</span>'
+      + '</div>';
+  }
+  return html;
+}
+
+// ============================================================
 // buildTextStyle — 生成自定义文字（顶栏/侧栏）的内联样式串
 // isHeader=true（顶栏）：水平文字，align ∈ left/center/right/stretch，靠 display:block;width:100% + text-align 生效
 // isHeader=false（侧栏）：竖排文字，对齐方向是沿侧栏的「纵向位置」(top/center/bottom)，
@@ -590,7 +652,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     const fieldContent = {
       date: date || '',
       title: title || '',
-      highlights: highlights.length ? buildHighlightsInner(highlights) : '',
+      highlights: buildHighlightsLayout(styleJson, diary, allOptions),
       capsule: capsule || ''
     };
     const fieldClass = {

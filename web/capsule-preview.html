@@ -412,14 +412,20 @@
                         <select id="d-bubble-style"></select>
                     </div>
                     <div class="dim-row">
-                        <label>Tag 标签 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
+                        <label>Tag 标签</label>
                         <select id="d-tag-style"></select>
                     </div>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
-                        <label>Avatar 头像 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
-                        <select id="d-avatar-style"></select>
+                        <label>Avatar 头像</label>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <select id="d-avatar-style"></select>
+                            <select id="d-avatar-pos" title="头像位置">
+                                <option value="side">侧边</option>
+                                <option value="top">顶部</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 <div class="dim-row">
@@ -443,7 +449,7 @@
                     <input type="number" id="d-box-gap" min="0" max="40" step="1" value="12" style="width:64px;" />
                 </div>
                 <div class="dim-row">
-                    <label>Action 操作区 <span style="color:var(--pixel-alert);font-size:8px;">(需容器组)</span></label>
+                    <label>Action 操作区</label>
                     <select id="d-action-style"></select>
                 </div>
             </div>
@@ -839,7 +845,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260716f';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260718a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1129,6 +1135,7 @@ function buildStyleJson() {
             bubble_style: v('bubble_style', 'none'),
             tag_style: v('tag_style', 'none'),
             avatar_style: v('avatar_style', 'none'),
+            avatar_pos: document.getElementById('d-avatar-pos')?.value || 'side',
             boxes: boxListState.slice(),
             box_radius: ((n) => isNaN(n) ? 8 : n)(parseInt(document.getElementById('d-box-radius')?.value, 10)),
             box_gap: ((n) => isNaN(n) ? 12 : n)(parseInt(document.getElementById('d-box-gap')?.value, 10)),
@@ -1232,6 +1239,8 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.bubble_style, dc.bubble_style);
     setSelect(DIMS.tag_style,    dc.tag_style);
     setSelect(DIMS.avatar_style, dc.avatar_style);
+    const apEl = document.getElementById('d-avatar-pos');
+    if (apEl) apEl.value = (dc.avatar_pos != null) ? dc.avatar_pos : 'side';
     boxListState = Array.isArray(dc.boxes) ? dc.boxes.map(b => ({ style: b.style || 'none', target: b.target || 'global', coincide: b.coincide === true })) : [];
     renderBoxList();
     const brEl = document.getElementById('d-box-radius');
