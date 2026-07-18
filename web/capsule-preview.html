@@ -721,17 +721,15 @@
     <!-- ===== Tab 3: 容器 ===== -->
     <div class="tab-content" id="tab-container" style="display:none;">
 
-        <!-- 容器组选择器 -->
+        <!-- 容器组选择器（扁平有序多选列表，仿 #d-box-list） -->
         <div class="dim-group" id="grp-container-group">
             <div class="dim-group-header" data-grp="container_group">
-                <span>CONTAINER GROUP 容器组</span>
+                <span>CONTAINER GROUP 容器组（可多选叠加）</span>
                 <span class="toggle-icon">v</span>
             </div>
             <div class="dim-group-body">
-                <div class="dim-row">
-                    <label>选择容器组</label>
-                    <select id="d-container-group"></select>
-                </div>
+                <div id="d-container-groups" style="margin:4px 0;"></div>
+                <button type="button" id="d-cg-add" style="font-size:10px;cursor:pointer;padding:2px 8px;">+ 添加容器组</button>
                 <div id="cg-description" style="font-size:9px;color:var(--pixel-dim);line-height:1.5;padding:4px 0;"></div>
             </div>
         </div>
@@ -845,7 +843,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260718c';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260718d';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -927,6 +925,9 @@ let perFieldState = {
 
 // Deco Box 多盒列表状态：deco.boxes = [{ style, target }, ...]
 let boxListState = [];
+
+// 容器组扁平有序列表状态：container_groups = [code, ...]（顺序=渲染堆叠顺序）
+let containerGroupsState = [];
 
 // 自定义文字（顶栏 / 侧栏）独立排版状态 —— 不参与 fieldSelector 字段机制
 let ctCurrentPos = 'header';
@@ -1169,7 +1170,8 @@ function buildStyleJson() {
             transform:       perFieldState.transform,
             animation:       perFieldState.animation,
         },
-        container_group: v('container_group', 'none'),
+        container_group: 'none',
+        container_groups: containerGroupsState.slice(),
     };
 
     const customCss = DIMS.customCss?.value.trim();
@@ -1189,7 +1191,12 @@ function applyStyleJsonToPanel(sj) {
     const dc = sj.deco    || {};
     const el = sj.element || {};
     const ef = sj.effect  || {};
-    const cg = sj.container_group || 'none';
+    // 容器组：新模型 container_groups 数组优先；兼容旧单值 container_group 字符串（转为单元素数组）
+    const legacySingle = (typeof sj.container_group === 'string' && sj.container_group !== 'none') ? sj.container_group : null;
+    containerGroupsState = (Array.isArray(sj.container_groups) && sj.container_groups.length)
+      ? sj.container_groups.filter(c => c && c !== 'none')
+      : (legacySingle ? [legacySingle] : []);
+    renderContainerGroupList();
 
     // layout
     setSelect(DIMS.grid,         l.grid);
@@ -1292,9 +1299,8 @@ function applyStyleJsonToPanel(sj) {
     // Load current field values into UI
     loadFieldToUI(currentField);
 
-    // container_group
-    setSelect(DIMS.container_group, cg);
-    updateContainerStructure();
+    // container_group（新模型：扁平有序多选列表，已在上文回填并渲染）
+    updateContainerGroups();
 
     DIMS.customCss.value = sj.customCss || '';
 }
@@ -1394,6 +1400,104 @@ function renderBoxList() {
         debouncedUpdate();
     });
 })();
+
+// ============================================================
+// 容器组扁平有序多选列表 UI（Phase 2，仿 #d-box-list）
+// container_groups = [code, ...]；顺序=渲染时 highlights 带栈的堆叠顺序。
+// ============================================================
+// 仅 highlights 作用域字段（与引擎 CG_HL_FIELDS 对齐），用于结构预览过滤
+const CG_HL_FIELDS_JS = new Set([
+  'highlights','highlight_1','highlight_2','highlight_3','highlight_4','highlight_5',
+  'avatar','like_count','share_count','comment_count'
+]);
+function getContainerGroupOptions() {
+  const rows = (dimensionCache['style_container_group_options'] || [])
+    .filter(r => r.group_code && r.group_code !== 'none');
+  return rows.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+}
+function renderContainerGroupList() {
+  const listEl = document.getElementById('d-container-groups');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  const opts = getContainerGroupOptions();
+  if (!containerGroupsState.length) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'font-size:10px;color:#888;';
+    empty.textContent = '（未添加容器组；highlights 按默认逐行块渲染）';
+    listEl.appendChild(empty);
+    return;
+  }
+  containerGroupsState.forEach((code, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:4px;align-items:center;margin:3px 0;';
+    const sel = document.createElement('select');
+    sel.style.cssText = 'flex:1;min-width:0;font-size:10px;';
+    sel.innerHTML = '<option value="">— 选择容器组 —</option>'
+      + opts.map(o => '<option value="' + escBox(o.group_code) + '">' + escBox(o.group_name || o.group_code) + '</option>').join('');
+    sel.value = code || '';
+    sel.addEventListener('change', () => { containerGroupsState[i] = sel.value; updateContainerGroups(); debouncedUpdate(); });
+    const rm = document.createElement('button');
+    rm.type = 'button';
+    rm.style.cssText = 'flex:0 0 auto;width:22px;height:22px;cursor:pointer;';
+    rm.textContent = '×';
+    rm.title = '移除该容器组';
+    rm.addEventListener('click', () => { containerGroupsState.splice(i, 1); renderContainerGroupList(); updateContainerGroups(); debouncedUpdate(); });
+    row.appendChild(sel); row.appendChild(rm);
+    listEl.appendChild(row);
+  });
+}
+(function initContainerGroupUI() {
+  const addBtn = document.getElementById('d-cg-add');
+  if (addBtn) addBtn.addEventListener('click', () => {
+    containerGroupsState.push('');
+    renderContainerGroupList();
+    debouncedUpdate();
+  });
+})();
+
+// 结构预览：列出全部已选容器组（按序），含 repeat_mode 与各 slot 的 highlights 作用域字段
+function updateContainerGroups() {
+  const descEl = document.getElementById('cg-description');
+  const structEl = document.getElementById('cg-structure');
+  if (!descEl || !structEl) return;
+  const rows = dimensionCache['style_container_group_options'] || [];
+  if (!containerGroupsState.filter(c => c).length) {
+    descEl.textContent = '标准 grid 模式（无容器组）；highlights 按默认逐行块渲染。';
+    structEl.innerHTML = '<span style="color:var(--pixel-dim)">点击「+ 添加容器组」可多选叠加，各容器组按序组合进 highlights 带栈（compose，不替换四槽）。</span>';
+    return;
+  }
+  let html = '';
+  containerGroupsState.forEach((code, idx) => {
+    if (!code) return;
+    const row = rows.find(r => r.group_code === code);
+    if (!row) return;
+    html += '<div style="margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed #333;">';
+    html += '<div style="color:var(--pixel-accent,#6cf);">[' + (idx + 1) + '] ' + escapeHtmlText(row.group_name || row.group_code)
+      + ' <span style="color:var(--pixel-dim)">(' + escapeHtmlText(row.repeat_mode || 'once') + ')</span></div>';
+    html += '<div style="color:var(--pixel-dim);font-size:9px;">' + escapeHtmlText(row.description || '') + '</div>';
+    let fsm = {}, sdm = {}, lsm = {};
+    try {
+      fsm = typeof row.field_slot_map === 'string' ? JSON.parse(row.field_slot_map) : (row.field_slot_map || {});
+      sdm = typeof row.slot_deco_map === 'string' ? JSON.parse(row.slot_deco_map) : (row.slot_deco_map || {});
+      lsm = typeof row.layout_slot_map === 'string' ? JSON.parse(row.layout_slot_map) : (row.layout_slot_map || {});
+    } catch {}
+    const slotFields = {};
+    for (const [f, s] of Object.entries(fsm)) { if (!slotFields[s]) slotFields[s] = []; slotFields[s].push(f); }
+    const slotOrder = Object.keys(lsm).length
+      ? Object.keys(lsm).sort((a, b) => (lsm[a] || 0) - (lsm[b] || 0))
+      : Object.keys(slotFields);
+    for (const slotId of slotOrder) {
+      const fields = (slotFields[slotId] || []).filter(f => CG_HL_FIELDS_JS.has(f));
+      const deco = sdm[slotId] || 'none';
+      if (!fields.length) continue;
+      html += '<div style="font-size:9px;">· ' + escapeHtmlText(slotId)
+        + ' : ' + escapeHtmlText(fields.join(', '))
+        + ' <span style="color:var(--pixel-dim)">[' + escapeHtmlText(deco) + ']</span></div>';
+    }
+    html += '</div>';
+  });
+  structEl.innerHTML = html;
+}
 
 // ============================================================
 // Per-field UI: load current field values into dropdowns & checkboxes
@@ -1990,64 +2094,8 @@ Object.values(DIMS).forEach(el => {
     if (el) { el.addEventListener('input', debouncedUpdate); el.addEventListener('change', debouncedUpdate); }
 });
 
-// container_group structure preview
-if (DIMS.container_group) {
-    DIMS.container_group.addEventListener('change', updateContainerStructure);
-}
+// 容器组结构预览已由 updateContainerGroups() 接管（readStyleJson 与列表变更时调用）
 
-function updateContainerStructure() {
-    const cgVal = DIMS.container_group?.value || 'none';
-    const descEl = document.getElementById('cg-description');
-    const structEl = document.getElementById('cg-structure');
-    if (!descEl || !structEl) return;
-
-    const rows = dimensionCache['style_container_group_options'] || [];
-    const row = rows.find(r => r.group_code === cgVal);
-
-    if (!row || cgVal === 'none') {
-        descEl.textContent = '标准 grid 模式（无容器组）';
-        structEl.innerHTML = '<span style="color:var(--pixel-dim)">使用 layout grid 的 slot skeleton 渲染。</span>';
-        return;
-    }
-
-    descEl.textContent = row.description || row.group_name || '';
-
-    let fsm = {}, sdm = {}, lsm = {};
-    try {
-        fsm = typeof row.field_slot_map === 'string' ? JSON.parse(row.field_slot_map) : (row.field_slot_map || {});
-        sdm = typeof row.slot_deco_map === 'string' ? JSON.parse(row.slot_deco_map) : (row.slot_deco_map || {});
-        lsm = typeof row.layout_slot_map === 'string' ? JSON.parse(row.layout_slot_map) : (row.layout_slot_map || {});
-    } catch {}
-
-    // Build structure table
-    const slotFields = {};
-    for (const [field, slotId] of Object.entries(fsm)) {
-        if (!slotFields[slotId]) slotFields[slotId] = [];
-        slotFields[slotId].push(field);
-    }
-
-    let html = '<table style="width:100%;border-collapse:collapse;font-size:9px;">';
-    html += '<tr style="color:var(--pixel-dim);"><td colspan="2">Layout: ' + escapeHtmlText(row.layout_ref || '?') + ' / Category: ' + escapeHtmlText(row.category || '?') + '</td></tr>';
-    html += '<tr><td colspan="2" style="height:4px;"></td></tr>';
-
-    const slotOrder = Object.keys(lsm).length
-        ? Object.keys(lsm).sort((a, b) => (lsm[a]||0) - (lsm[b]||0))
-        : Object.keys(slotFields);
-
-    for (const slotId of slotOrder) {
-        const fields = slotFields[slotId] || [];
-        const deco = sdm[slotId] || 'none';
-        const colIdx = lsm[slotId];
-        html += '<tr><td style="vertical-align:top;color:var(--pixel-accent,#6cf);padding-right:6px;">'
-            + escapeHtmlText(slotId) + (colIdx !== undefined ? ' [col ' + colIdx + ']' : '')
-            + '</td><td style="vertical-align:top;">'
-            + (fields.length ? 'fields: ' + escapeHtmlText(fields.join(', ')) : '<span style="color:var(--pixel-dim)">(no fields)</span>')
-            + '<br><span style="color:var(--pixel-dim)">deco: ' + escapeHtmlText(deco) + '</span>'
-            + '</td></tr>';
-    }
-    html += '</table>';
-    structEl.innerHTML = html;
-}
 
 function escapeHtmlText(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

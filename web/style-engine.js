@@ -77,6 +77,11 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .hl-action-bar { display: flex; gap: 12px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
 .container-group { display: grid; gap: 6px; padding: 4px; position: relative; z-index: 1; }
 .container-group > div { min-width: 0; }
+/* highlights 带栈内相邻容器组带之间留间距（legacy 整卡 override 不受影响：其在 .card-content 下而非 .card-highlights 下） */
+.card-highlights > .container-group { margin-bottom: 6px; }
+.card-highlights > .container-group:last-child { margin-bottom: 0; }
+/* per_line 奇数行：用于聊天左右交替等，默认仅标记类，具体翻转留待 CSS/DB 细化 */
+.cg-band--alt { /* line alternation hook */ }
 
 /* ===== Deco Box：每盒子是对字段/内容的嵌套 .fx-wrap 包裹层 ===== */
 /* 选择器通用 [data-style-deco-box="X"]（由 DB css_template 提供 border/bg/shadow/radius/padding），
@@ -194,6 +199,50 @@ const ATTR_MAP = {
 };
 
 // ============================================================
+// Section 2.5: 容器组带渲染辅助（Phase 2）
+// 模块级定义，供 legacy override 分支与 highlights 带栈共用。
+// ============================================================
+
+const CG_LAYOUT_CSS = {
+  single: 'display:flex;flex-direction:column',
+  '2col_left_narrow': 'display:grid;grid-template-columns:auto 1fr',
+  '2col_right_narrow': 'display:grid;grid-template-columns:1fr auto',
+  '2col_equal': 'display:grid;grid-template-columns:1fr 1fr',
+  '3col_equal': 'display:grid;grid-template-columns:1fr 1fr 1fr',
+};
+
+const DECO_SUBDIM_ATTR = {
+  bubble_style: 'data-style-deco-bubble',
+  tag_style: 'data-style-deco-tag',
+  avatar_style: 'data-style-deco-avatar',
+  box_style: 'data-style-deco-box',
+  action_style: 'data-style-deco-action',
+};
+
+function parseSlotDeco(decoVal) {
+  if (!decoVal || decoVal === 'none') return '';
+  if (decoVal.startsWith('deco:')) {
+    const parts = decoVal.slice(5).split('.');
+    const subDim = parts[0], val = parts.slice(1).join('.');
+    const attr = DECO_SUBDIM_ATTR[subDim];
+    return attr ? attr + '="' + escapeAttr(val) + '"' : '';
+  }
+  return '';
+}
+
+// highlights 作用域内可渲染的字段集合（排除 date/title/capsule，避免与四槽骨架重复渲染）
+const CG_HL_FIELDS = new Set([
+  'highlights', 'highlight_1', 'highlight_2', 'highlight_3', 'highlight_4', 'highlight_5',
+  'avatar', 'like_count', 'share_count', 'comment_count'
+]);
+
+function normalizeContainerGroups(styleJson) {
+  const cg = styleJson && styleJson.container_groups;
+  if (Array.isArray(cg)) return cg.filter(c => c && c !== 'none');
+  return [];
+}
+
+// ============================================================
 // Section 3: DEFAULT_STYLE_JSON — 全默认值
 // ============================================================
 
@@ -222,7 +271,8 @@ export const DEFAULT_STYLE_JSON = {
     filter_backdrop: { title:'none', date:'none', capsule:'none', highlights:'none' },
     transform: { title:'none', date:'none', capsule:'none', highlights:'none' },
     animation: { title:'none', date:'none', capsule:'none', highlights:'none' } },
-  container_group: 'none'
+  container_group: 'none',
+  container_groups: []
 };
 
 // ============================================================
@@ -509,17 +559,25 @@ function buildHighlightsHtml(highlights) {
 }
 
 // ============================================================
-// buildHighlightsLayout — highlights 微型 block 列表（扁平有序，仿 deco.boxes）
-// 默认 per_line：每条 highlight 一行；全局 deco 的 bubble/tag/avatar 在此逐块生效。
-// 关键：DOM class 对齐 DB css_template 选择器 ——
-//   · 分隔线 = block 间兄弟 .hl-sep   → 命中 .gallery-card[data-style-element-divider] .hl-sep
-//   · 头像   = .card-avatar           → 命中 .gallery-card[data-style-deco-avatar] .card-avatar
-//   · 操作项 = .card-action-item      → 命中 .gallery-card[data-style-deco-action] .card-action-item
-//   · 标签   = 嵌套进操作项的 .card-style 徽标 → 命中 .gallery-card[data-style-deco-tag] .card-style
-// 分隔线为 block 间兄弟元素（绝不在气泡内部）→ 解决「气泡+分隔线冲突」。Phase 2 容器组带模板复用此结构。
+// buildHighlightsLayout — highlights 区渲染分派
+//  · container_groups 数组非空 → 容器组带栈（compose，堆叠进 highlights，不吞四槽）
+//  · 否则 → 默认 per_line 块列表（全局 deco 的 bubble/tag/avatar/action 逐块生效）
+// 关键 DOM class 对齐 DB css_template 选择器（见 buildDefaultHighlights / renderCgBand）。
+// 分隔线为 block 间兄弟元素 .hl-sep（绝不在气泡内部）→ 解决「气泡+分隔线冲突」。
 // ============================================================
 
 function buildHighlightsLayout(styleJson, diary, allOptions) {
+  const cgCodes = normalizeContainerGroups(styleJson);
+  if (cgCodes.length) {
+    const bands = buildContainerGroupBands(styleJson, diary, allOptions, cgCodes);
+    if (bands) return bands;
+  }
+  return buildDefaultHighlights(styleJson, diary, allOptions);
+}
+
+// 默认(无容器组) per_line 块列表：每条 highlight 一行；全局 deco 的 bubble/tag/avatar(+avatar_pos)/action 逐块生效。
+// 分隔线渲染为 block 间兄弟 .hl-sep（解决气泡+分隔线冲突）；操作区带挂在 highlights 下方。
+function buildDefaultHighlights(styleJson, diary, allOptions) {
   const d = diary || {};
   const highlights = Array.isArray(d.highlights) ? d.highlights : [];
   const deco = (styleJson && styleJson.deco) || {};
@@ -573,6 +631,105 @@ function buildHighlightsLayout(styleJson, diary, allOptions) {
   return html;
 }
 
+// 容器组带栈：container_groups 数组 → 在 highlights 内按序堆叠的横向带（compose，非 override）。
+// 单条 CG = 一条带模板；repeat_mode:
+//   · 'per_line' → 每条 highlight 重复一次该带（聊天/评论：头像+气泡逐行）；
+//   · 'once'     → 整段仅渲染一次（操作栏/便利贴：highlight_1/2/3 或 like/share/comment）。
+// 仅渲染 highlights 作用域字段（highlight_N/avatar/like/share/comment），date/title/capsule 由四槽骨架渲染，避免重复。
+function buildContainerGroupBands(styleJson, diary, allOptions, cgCodes) {
+  const d = diary || {};
+  const highlights = Array.isArray(d.highlights) ? d.highlights : [];
+  const cgOptions = (allOptions && allOptions.container_group) || [];
+  let html = '';
+  for (const code of cgCodes) {
+    const cgRow = cgOptions.find(r => r.group_code === code);
+    if (!cgRow) continue;
+    const repeat = (cgRow.repeat_mode === 'per_line') ? 'per_line' : 'once';
+    if (repeat === 'per_line') {
+      const n = highlights.length || 1;
+      for (let i = 0; i < n; i++) {
+        html += renderCgBand(cgRow, highlights, i, d);
+      }
+    } else {
+      html += renderCgBand(cgRow, highlights, -1, d);
+    }
+  }
+  return html;
+}
+
+// 渲染单条容器组带：复用 DB 的 field_slot_map / slot_deco_map / layout_slot_map（cell 模型）。
+// slot 包裹层 class = slotId.replace(/_/g,'-')（与 DB extra_css 的 .cg-xxx 选择器一致）；
+// slot_deco_map 的 deco:xxx.yyy → 对应 data-style-deco-*，命中 DB css_template。
+function renderCgBand(cgRow, highlights, lineIdx, diary) {
+  const d = diary || {};
+  let fieldSlotMap = {}, slotDecoMap = {}, layoutSlotMap = {};
+  try {
+    fieldSlotMap  = typeof cgRow.field_slot_map  === 'string' ? JSON.parse(cgRow.field_slot_map)  : (cgRow.field_slot_map  || {});
+    slotDecoMap   = typeof cgRow.slot_deco_map   === 'string' ? JSON.parse(cgRow.slot_deco_map)   : (cgRow.slot_deco_map   || {});
+    layoutSlotMap = typeof cgRow.layout_slot_map === 'string' ? JSON.parse(cgRow.layout_slot_map) : (cgRow.layout_slot_map || {});
+  } catch { /* 回退空 */ }
+
+  // 仅保留 highlights 作用域字段（排除 date/title/capsule，避免与四槽骨架重复渲染）
+  const slotFields = {};
+  for (const [field, slotId] of Object.entries(fieldSlotMap)) {
+    if (!CG_HL_FIELDS.has(field)) continue;
+    if (!slotFields[slotId]) slotFields[slotId] = [];
+    slotFields[slotId].push(field);
+  }
+  if (!Object.keys(slotFields).length) return '';
+
+  const fieldHtml = (field) => {
+    switch (field) {
+      case 'highlights': {
+        const txt = (lineIdx >= 0) ? (highlights[lineIdx] || '') : highlights.join('\n');
+        return txt ? '<div class="card-highlight-item">' + escapeHtml(txt) + '</div>' : '';
+      }
+      case 'highlight_1': return highlights[0] ? '<div class="card-highlight-item">' + escapeHtml(highlights[0]) + '</div>' : '';
+      case 'highlight_2': return highlights[1] ? '<div class="card-highlight-item">' + escapeHtml(highlights[1]) + '</div>' : '';
+      case 'highlight_3': return highlights[2] ? '<div class="card-highlight-item">' + escapeHtml(highlights[2]) + '</div>' : '';
+      case 'highlight_4': return highlights[3] ? '<div class="card-highlight-item">' + escapeHtml(highlights[3]) + '</div>' : '';
+      case 'highlight_5': return highlights[4] ? '<div class="card-highlight-item">' + escapeHtml(highlights[4]) + '</div>' : '';
+      case 'avatar':
+        return '<div class="card-avatar cg-avatar-text">' + escapeHtml(d.avatar || 'BF') + '</div>';
+      case 'like_count':
+        return '<span class="card-action-item cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>';
+      case 'share_count':
+        return '<span class="card-action-item cg-share">' + escapeHtml(String(d.share_count || '0')) + ' \u8f6c</span>';
+      case 'comment_count':
+        return '<span class="card-action-item cg-comment">' + escapeHtml(String(d.comment_count || '0')) + ' \u8bc4</span>';
+      default: return '';
+    }
+  };
+
+  const cgLayoutCss = CG_LAYOUT_CSS[cgRow.layout_ref] || CG_LAYOUT_CSS.single;
+  const slotOrder = Object.keys(layoutSlotMap).length
+    ? Object.keys(layoutSlotMap).sort((a, b) => (layoutSlotMap[a] || 0) - (layoutSlotMap[b] || 0))
+    : Object.keys(slotFields);
+
+  let cgHtml = '<div class="container-group ' + escapeAttr(cgRow.group_code) + ' cg-band'
+    + (lineIdx >= 0 ? ' cg-band--line-' + lineIdx + (lineIdx % 2 === 1 ? ' cg-band--alt' : '') : '')
+    + '" style="' + cgLayoutCss + '">';
+
+  for (const slotId of slotOrder) {
+    const decoVal = slotDecoMap[slotId] || 'none';
+    const slotAttr = parseSlotDeco(decoVal);
+    const colIdx = layoutSlotMap[slotId];
+    const content = (slotFields[slotId] || []).map(f => fieldHtml(f)).join('');
+    if (content) {
+      let slotStyle = '';
+      if (cgRow.layout_ref !== 'single' && colIdx !== undefined) {
+        slotStyle = 'grid-column:' + (colIdx + 1);
+      }
+      cgHtml += '<div class="' + escapeAttr(slotId.replace(/_/g, '-')) + '"'
+        + (slotStyle ? ' style="' + slotStyle + '"' : '')
+        + (slotAttr ? ' ' + slotAttr : '') + '>'
+        + content + '</div>';
+    }
+  }
+  cgHtml += '</div>';
+  return cgHtml;
+}
+
 // ============================================================
 // buildTextStyle — 生成自定义文字（顶栏/侧栏）的内联样式串
 // isHeader=true（顶栏）：水平文字，align ∈ left/center/right/stretch，靠 display:block;width:100% + text-align 生效
@@ -608,7 +765,12 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   const dateRaw = d.dateRaw || '';
   const id = d.id || '';
 
-  const containerGroup = (styleJson && styleJson.container_group) || 'none';
+  // 容器组双模型：
+  //  · legacy 单值字符串(非'none') → 走原 override 分支（整卡替换，兼容旧卡，不破坏既有视觉）；
+  //  · 新模型 container_groups 数组 → 在 highlights 带栈内 compose（由 buildHighlightsLayout 处理），
+  //    四槽(date/title/capsule/highlights)骨架常驻，容器组横向带仅堆叠进 highlights。
+  const legacyCg = (styleJson && styleJson.container_group);
+  const hasLegacyCg = typeof legacyCg === 'string' && legacyCg !== 'none';
 
   // 装饰条与自定义文字完全解耦：
   // - 外观由卡片上的 data-style-element-header / data-style-element-side 属性驱动（DB css_template 渲染到 .card-header-band / .card-side-band）
@@ -662,7 +824,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     return '<div class="fx-wrap" data-fx="' + field + '">' + html + '</div>';
   }
 
-  if (containerGroup === 'none') {
+  if (!hasLegacyCg) {
     // --- slot skeleton 模式 ---
     const slotAssignment = (styleJson && styleJson.layout && styleJson.layout.slot_assignment)
       || { a: 'date', b: 'title', c: 'highlights', d: 'capsule' };
@@ -689,9 +851,9 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     bodyHtml = slotHtml;
     contentIsSlots = true;
   } else {
-    // --- container_group 嵌套 slot 模式 ---
+    // --- container_group 嵌套 slot 模式（legacy 单值 override）---
     const cgOptions = (allOptions && allOptions.container_group) || [];
-    const cgRow = cgOptions.find(r => r.group_code === containerGroup);
+    const cgRow = cgOptions.find(r => r.group_code === legacyCg);
     if (!cgRow) {
       return buildCardHtml(
         { ...styleJson, container_group: 'none' }, diary, dataAttrs, paletteStyle, allOptions, verticalFields
@@ -736,32 +898,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       }
     };
 
-    const CG_LAYOUT_CSS = {
-      single: 'display:flex;flex-direction:column',
-      '2col_left_narrow': 'display:grid;grid-template-columns:auto 1fr',
-      '2col_right_narrow': 'display:grid;grid-template-columns:1fr auto',
-      '2col_equal': 'display:grid;grid-template-columns:1fr 1fr',
-      '3col_equal': 'display:grid;grid-template-columns:1fr 1fr 1fr',
-    };
     const cgLayoutCss = CG_LAYOUT_CSS[cgRow.layout_ref] || CG_LAYOUT_CSS.single;
-
-    const DECO_SUBDIM_ATTR = {
-      bubble_style: 'data-style-deco-bubble',
-      tag_style: 'data-style-deco-tag',
-      avatar_style: 'data-style-deco-avatar',
-      box_style: 'data-style-deco-box',
-      action_style: 'data-style-deco-action',
-    };
-    function parseSlotDeco(decoVal) {
-      if (!decoVal || decoVal === 'none') return '';
-      if (decoVal.startsWith('deco:')) {
-        const parts = decoVal.slice(5).split('.');
-        const subDim = parts[0], val = parts.slice(1).join('.');
-        const attr = DECO_SUBDIM_ATTR[subDim];
-        return attr ? attr + '="' + escapeAttr(val) + '"' : '';
-      }
-      return '';
-    }
 
     const slotOrder = Object.keys(layoutSlotMap).length
       ? Object.keys(layoutSlotMap).sort((a, b) => (layoutSlotMap[a] || 0) - (layoutSlotMap[b] || 0))
