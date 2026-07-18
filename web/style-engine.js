@@ -543,7 +543,8 @@ function buildHighlightsLayout(styleJson, diary, allOptions) {
     const inner = '<div class="card-highlight-item">' + text + '</div>';
     let cls = 'hl-block';
     let blockInner = inner;
-    if (avatarStyle) {
+    // 顶部头像：仅首个 block 显示（整段 highlights 单次头像）；侧边头像：每条 block 都显示（聊天/roleplay 多行头像）
+    if (avatarStyle && (avatarPos !== 'top' || i === 0)) {
       const av = '<div class="card-avatar cg-avatar-text" data-style-deco-avatar="' + escapeAttr(avatarStyle) + '">'
         + escapeHtml(d.avatar || 'BF') + '</div>';
       cls += (avatarPos === 'top') ? ' hl-block--avatar-top' : ' hl-block--avatar-side';
