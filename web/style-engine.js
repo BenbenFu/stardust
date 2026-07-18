@@ -64,10 +64,17 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
    仅提供布局骨架；头像圆形 / 气泡边框 / 分隔线样式由 DB css_template 经 data-attr 驱动。 */
 .hl-block { display: flex; flex-direction: column; min-width: 0; }
 .hl-block--avatar-side { flex-direction: row; align-items: flex-start; gap: 8px; }
-.hl-block--avatar-top  { flex-direction: column; }
-.hl-avatar { flex: 0 0 auto; max-width: 40%; }
-.hl-divider { width: 100%; }
-.hl-action-bar { display: flex; gap: 12px; margin-top: 6px; align-items: center; }
+.hl-block--avatar-top  { flex-direction: column; align-items: flex-start; }
+/* 头像 class 必须 = .card-avatar（命中 DB .gallery-card[data-style-deco-avatar] .card-avatar 模板）；
+   base 提供 initials 居中，DB 模板仅覆盖 bg/border/radius。 */
+.card-avatar { display: flex; align-items: center; justify-content: center; overflow: hidden;
+  font-size: 0.8em; font-weight: 700; flex-shrink: 0; line-height: 1; }
+/* 顶部头像：明显位于内容正上方并居中，与侧边(小圆在左)形成强区分 */
+.hl-block--avatar-top .card-avatar { align-self: center; margin-bottom: 6px; }
+/* 分隔线复用 DB 期望的 .hl-sep（命中 .gallery-card[data-style-element-divider] .hl-sep）；
+   作为 block 间兄弟元素，绝不进气泡内部。 */
+.hl-sep { display: inline; }
+.hl-action-bar { display: flex; gap: 12px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
 .container-group { display: grid; gap: 6px; padding: 4px; position: relative; z-index: 1; }
 .container-group > div { min-width: 0; }
 
@@ -504,8 +511,12 @@ function buildHighlightsHtml(highlights) {
 // ============================================================
 // buildHighlightsLayout — highlights 微型 block 列表（扁平有序，仿 deco.boxes）
 // 默认 per_line：每条 highlight 一行；全局 deco 的 bubble/tag/avatar 在此逐块生效。
-// 分隔线渲染为 block 间兄弟元素 .hl-divider（绝不在气泡内部）→ 解决「气泡+分隔线冲突」。
-// 操作区带(once) 默认挂在 highlights 下方。Phase 2 容器组带模板将复用此结构。
+// 关键：DOM class 对齐 DB css_template 选择器 ——
+//   · 分隔线 = block 间兄弟 .hl-sep   → 命中 .gallery-card[data-style-element-divider] .hl-sep
+//   · 头像   = .card-avatar           → 命中 .gallery-card[data-style-deco-avatar] .card-avatar
+//   · 操作项 = .card-action-item      → 命中 .gallery-card[data-style-deco-action] .card-action-item
+//   · 标签   = 嵌套进操作项的 .card-style 徽标 → 命中 .gallery-card[data-style-deco-tag] .card-style
+// 分隔线为 block 间兄弟元素（绝不在气泡内部）→ 解决「气泡+分隔线冲突」。Phase 2 容器组带模板复用此结构。
 // ============================================================
 
 function buildHighlightsLayout(styleJson, diary, allOptions) {
@@ -529,27 +540,33 @@ function buildHighlightsLayout(styleJson, diary, allOptions) {
     const text = escapeHtml(highlights[i]);
     const decoAttr = (bubble ? ' data-style-deco-bubble="' + escapeAttr(bubble) + '"' : '')
                    + (tag ? ' data-style-deco-tag="' + escapeAttr(tag) + '"' : '');
-    let inner = '<div class="card-highlight-item">' + text + '</div>';
+    const inner = '<div class="card-highlight-item">' + text + '</div>';
     let cls = 'hl-block';
+    let blockInner = inner;
     if (avatarStyle) {
-      const av = '<div class="hl-avatar cg-avatar-text" data-style-deco-avatar="' + escapeAttr(avatarStyle) + '">'
+      const av = '<div class="card-avatar cg-avatar-text" data-style-deco-avatar="' + escapeAttr(avatarStyle) + '">'
         + escapeHtml(d.avatar || 'BF') + '</div>';
-      if (avatarPos === 'top') { cls += ' hl-block--avatar-top'; inner = av + inner; }
-      else { cls += ' hl-block--avatar-side'; inner = av + inner; }
+      cls += (avatarPos === 'top') ? ' hl-block--avatar-top' : ' hl-block--avatar-side';
+      blockInner = av + inner;   // 头像在文本之前（top=上方 / side=左侧），由 CSS 决定方向
     }
-    html += '<div class="' + cls + '"' + decoAttr + '>' + inner + '</div>';
-    // 分隔线 = block 间兄弟元素（绝不在气泡内部）
+    html += '<div class="' + cls + '"' + decoAttr + '>' + blockInner + '</div>';
+    // 分隔线 = block 间兄弟元素 .hl-sep（绝不在气泡内部）→ 命中 DB 模板
     if (divider && i < highlights.length - 1) {
-      html += '<div class="hl-divider" data-style-element-divider="' + escapeAttr(divider) + '"></div>';
+      html += '<div class="hl-sep"></div>';
     }
   }
 
-  // 操作区带（once）：默认挂在 highlights 下方
+  // 操作区带（once）：默认挂在 highlights 下方；每项 = .card-action-item（命中 DB 模板）；
+  // tag 嵌套进操作项作为计数徽标 .card-style（命中 DB tag 模板，实现「标签嵌套在操区里」）
   if (actionStyle) {
+    const item = (cls2, label, val) => {
+      const badge = tag ? '<span class="card-style">' + escapeHtml(String(val)) + '</span>' : '';
+      return '<span class="card-action-item ' + cls2 + '">' + label + badge + '</span>';
+    };
     html += '<div class="hl-action-bar" data-style-deco-action="' + escapeAttr(actionStyle) + '">'
-      + '<span class="cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>'
-      + '<span class="cg-comment">' + escapeHtml(String(d.comment_count || '0')) + ' \u8bc4</span>'
-      + '<span class="cg-share">' + escapeHtml(String(d.share_count || '0')) + ' \u8f6c</span>'
+      + item('cg-like', '\u8d5e', d.like_count || '0')
+      + item('cg-comment', '\u8bc4', d.comment_count || '0')
+      + item('cg-share', '\u8f6c', d.share_count || '0')
       + '</div>';
   }
   return html;

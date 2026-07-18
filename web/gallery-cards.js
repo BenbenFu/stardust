@@ -2,7 +2,7 @@
 // DB驱动架构：renderCard 传递 allOptions 给 style-engine
 // 旧 cardType/STYLE_PRESETS 兼容层已移除
 
-import { renderStyleJson, injectBaseCss, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260718a';
+import { renderStyleJson, injectBaseCss, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260718b';
 
 injectBaseCss();  // 副作用：注入 BASE_CSS
 
