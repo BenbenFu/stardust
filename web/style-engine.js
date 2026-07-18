@@ -636,25 +636,50 @@ function buildDefaultHighlights(styleJson, diary, allOptions) {
 //   · 'per_line' → 每条 highlight 重复一次该带（聊天/评论：头像+气泡逐行）；
 //   · 'once'     → 整段仅渲染一次（操作栏/便利贴：highlight_1/2/3 或 like/share/comment）。
 // 仅渲染 highlights 作用域字段（highlight_N/avatar/like/share/comment），date/title/capsule 由四槽骨架渲染，避免重复。
+// 容器组带栈（compose，堆叠进 highlights，不替换四槽）。
+// 单条 CG 的 repeat_mode：
+//   · 'per_line' → 参与「逐行循环」：所有 per_line CG 按数组顺序排成一个循环，
+//     每条 highlight 行由循环里的下一个 CG 承包（左/右交替对话即 [left, right] 两个 per_line CG 轮流）。
+//     单独一个 per_line CG 则仍是它自己逐行重复（向后兼容）。
+//   · 'once'     → 整段仅渲染一次；出现在首个 per_line 之前→渲染在对话前，之后→渲染在对话后。
+// 分隔线（element.divider）：在所有顶层带之间插入 .hl-sep 兄弟元素，命中 DB [data-style-element-divider] .hl-sep，
+//   解决「容器组模式下分隔线无法使用」的问题（与默认块列表的分隔线 DOM 契约一致）。
 function buildContainerGroupBands(styleJson, diary, allOptions, cgCodes) {
   const d = diary || {};
   const highlights = Array.isArray(d.highlights) ? d.highlights : [];
   const cgOptions = (allOptions && allOptions.container_group) || [];
-  let html = '';
+  const el = (styleJson && styleJson.element) || {};
+  const divider = (el.divider && el.divider !== 'none') ? el.divider : '';
+
+  const perLine = [], onceBefore = [], onceAfter = [];
+  let seenPerLine = false;
   for (const code of cgCodes) {
     const cgRow = cgOptions.find(r => r.group_code === code);
     if (!cgRow) continue;
-    const repeat = (cgRow.repeat_mode === 'per_line') ? 'per_line' : 'once';
-    if (repeat === 'per_line') {
-      const n = highlights.length || 1;
-      for (let i = 0; i < n; i++) {
-        html += renderCgBand(cgRow, highlights, i, d);
-      }
-    } else {
-      html += renderCgBand(cgRow, highlights, -1, d);
-    }
+    if (cgRow.repeat_mode === 'per_line') { perLine.push(cgRow); seenPerLine = true; }
+    else if (!seenPerLine) onceBefore.push(cgRow);
+    else onceAfter.push(cgRow);
   }
-  return html;
+  if (!perLine.length && !onceBefore.length && !onceAfter.length) return '';
+
+  const bandParts = [];
+  for (const row of onceBefore) bandParts.push(renderCgBand(row, highlights, -1, d));
+  const n = highlights.length || 1;
+  for (let i = 0; i < n; i++) {
+    bandParts.push(renderCgBand(perLine[i % perLine.length], highlights, i, d));
+  }
+  for (const row of onceAfter) bandParts.push(renderCgBand(row, highlights, -1, d));
+  if (!bandParts.length) return '';
+
+  if (divider) {
+    let html = '';
+    for (let i = 0; i < bandParts.length; i++) {
+      html += bandParts[i];
+      if (i < bandParts.length - 1) html += '<div class="hl-sep"></div>';
+    }
+    return html;
+  }
+  return bandParts.join('');
 }
 
 // 渲染单条容器组带：复用 DB 的 field_slot_map / slot_deco_map / layout_slot_map（cell 模型）。
