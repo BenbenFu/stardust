@@ -843,7 +843,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260719c';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260719d';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -914,7 +914,7 @@ const PF_FIELDS = ['title', 'date', 'highlights', 'capsule'];
 
 let perFieldState = {
   font_family:       { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
-  alignment_mode:    { title:'left',   date:'left',   capsule:'left',   highlights:'left' },
+  alignment_mode:    { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
   spacing_tightness: { title:'normal',      date:'normal',      capsule:'normal',      highlights:'normal' },
   text_decoration:   { title:[],            date:[],            capsule:[],            highlights:[] },
   filter_self:       { title:'none',        date:'none',        capsule:'none',        highlights:'none' },

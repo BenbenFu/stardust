@@ -37,7 +37,11 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column;
   padding: var(--density-pad, 12px); position: relative; }
 .card-content--slots { display: grid; gap: var(--spacing-sm, var(--layout-gap, 8px));
-  grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d"; }
+  grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
+  /* 行内对齐（表格对齐级）：写在容器上，被各字段继承；字段级可单独覆盖。
+     对应 Word 的三级对齐：栏对齐(block) → 表格对齐(inline) → 表格内文字对齐(field)。 */
+  text-align: var(--typo-inline-align, left);
+  text-align-last: var(--typo-inline-align-last, auto); }
 .card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
 .card-slot-b { grid-area: slot-b; writing-mode: var(--wm-b, horizontal-tb); }
 .card-slot-c { grid-area: slot-c; writing-mode: var(--wm-c, horizontal-tb); }
@@ -45,24 +49,24 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .card-date   { color: var(--card-muted, inherit);
   font-weight: var(--typo-date-weight, 400);
   font-size: calc(0.8rem * var(--typo-date-scale, 0.85));
-  text-align: var(--typo-date-align, var(--typo-inline-align, left));
-  text-align-last: var(--typo-date-align-last, var(--typo-inline-align-last, auto)); }
+  text-align: var(--typo-date-align, inherit);
+  text-align-last: var(--typo-date-align-last, inherit); }
 .card-title  { word-break: break-word; overflow-wrap: break-word;
   font-weight: var(--typo-title-weight, 600);
   font-size: calc(1rem * var(--typo-title-scale, 1.5));
-  text-align: var(--typo-title-align, var(--typo-inline-align, left));
-  text-align-last: var(--typo-title-align-last, var(--typo-inline-align-last, auto)); }
+  text-align: var(--typo-title-align, inherit);
+  text-align-last: var(--typo-title-align-last, inherit); }
 .card-highlights { overflow-wrap: break-word; word-break: break-word;
   font-weight: var(--typo-highlight-weight, 400);
   font-size: calc(0.85rem * var(--typo-highlight-scale, 1.0));
-  text-align: var(--typo-highlight-align, var(--typo-inline-align, left));
-  text-align-last: var(--typo-highlight-align-last, var(--typo-inline-align-last, auto)); }
+  text-align: var(--typo-highlight-align, inherit);
+  text-align-last: var(--typo-highlight-align-last, inherit); }
 .card-highlight-item { display: block; }
 .card-capsule { color: var(--card-accent, inherit);
   font-weight: var(--typo-capsule-weight, 500);
   font-size: calc(0.8rem * var(--typo-capsule-scale, 0.9));
-  text-align: var(--typo-capsule-align, var(--typo-inline-align, left));
-  text-align-last: var(--typo-capsule-align-last, var(--typo-inline-align-last, auto)); }
+  text-align: var(--typo-capsule-align, inherit);
+  text-align-last: var(--typo-capsule-align-last, inherit); }
 .hl-sep { display: inline; }
 /* ===== Highlights block 列表（扁平有序，仿 deco.boxes；容器组带在 Phase 2 复用此结构） =====
    仅提供布局骨架；头像圆形 / 气泡边框 / 分隔线样式由 DB css_template 经 data-attr 驱动。 */
@@ -259,7 +263,7 @@ export const DEFAULT_STYLE_JSON = {
   typo: {
     font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
     weight_gradient: 'balanced', size_scale: 'petite',
-    alignment_mode: { title:'left', date:'left', capsule:'left', highlights:'left' },
+    alignment_mode: { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
     spacing_tightness: { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
     text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
@@ -515,8 +519,8 @@ function buildDataAttrs(styleJson) {
         for (const el of mapping.elements) {
           const elVal = perElVal[el];
           if (elVal == null || elVal === 'none') continue;
-          // 字段级 alignment_mode 默认 'left' = 继承全局 inline_align，不发射 attr（避免永远压住全局）
-          if (mapKey === 'typo_alignment_mode' && elVal === 'left') continue;
+          // 字段级 alignment_mode 默认 'inherit' = 跟随行内对齐，不发射 attr（由容器统一控制）
+          if (mapKey === 'typo_alignment_mode' && elVal === 'inherit') continue;
           if (Array.isArray(elVal)) {
             if (elVal.length === 0) continue;
             attrs[mapping.attr + '-' + el] = escapeAttr(elVal.join(' '));
