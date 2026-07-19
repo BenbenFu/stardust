@@ -776,16 +776,22 @@ function renderCgBand(cgRow, highlights, lineIdx, diary) {
 //   由外层 .card-side-band 的 justify-content 控制（见 buildCardHtml）；此处仅处理 stretch(撑满)→ height:100% + 纵向 justify
 // ============================================================
 function buildTextStyle(family, size, align, isHeader) {
+  // 注意：font-family 不再在此内联注入。DB 原始值（如 'terminal_mono'）不是合法 CSS 字体名，
+  // 内联会导致浏览器回退到默认衬线体（宋体）。字体改由 buildCardHtml 在 .card-header-text /
+  // .card-side-text 上写 data-style-typo-font-family-headertext / -sidetext 属性，
+  // 经 style_typo_options.font_family 的 css_template 驱动（与四字段同源）。
+  // 此处 family 参数保留仅为兼容调用点，不再使用。
   const parts = [];
-  if (family) parts.push('font-family:' + family);
   if (size)   parts.push('font-size:' + size);
   if (isHeader) {
-    // 顶栏：水平文字，对齐 = 水平方向
-    if (align === 'stretch')      parts.push('display:block;width:100%;text-align:justify;text-align-last:justify');
+    // 顶栏：水平文字，对齐 = 水平方向。stretch 用 inter-character 让单行/单词也能撑满宽度
+    if (align === 'stretch')      parts.push('display:block;width:100%;text-align:justify;text-align-last:justify;text-justify:inter-character');
     else if (align)               parts.push('display:block;width:100%;text-align:' + align);
   } else {
-    // 侧栏：竖排文字，top/center/bottom 在外层 band 控制；仅 stretch 需内联 height:100% + 纵向 justify
-    if (align === 'stretch')      parts.push('height:100%;text-align:justify;text-align-last:justify');
+    // 侧栏：竖排文字(writing-mode:vertical-rl)。stretch 需纵向撑满：
+    // 行内轴为纵向，inter-character 让单行竖排文字也能沿高度方向铺开。
+    // top/center/bottom 由外层 band 的 justify-content 控制，此处不处理。
+    if (align === 'stretch')      parts.push('height:100%;text-align:justify;text-align-last:justify;text-justify:inter-character');
   }
   return parts.length ? parts.join(';') + ';' : '';
 }
@@ -994,7 +1000,9 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     const headerTextStyle = buildTextStyle(headerTextFamily, headerTextSize, headerTextAlign, true);
     headerBandHtml = '<div class="card-header-band' + (headerText ? ' card-header-band--has-text' : '') + '">';
     if (headerText) headerBandHtml += '<span class="card-header-text"'
-      + (headerTextStyle ? ' style="' + headerTextStyle + '"' : '') + '>'
+      + (headerTextStyle ? ' style="' + headerTextStyle + '"' : '')
+      + (headerTextFamily ? ' data-style-typo-font-family-headertext="' + escapeAttr(headerTextFamily) + '"' : '')
+      + '>'
       + escapeHtml(headerText) + '</span>';
     headerBandHtml += '</div>';
   }
@@ -1016,7 +1024,8 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     const sideTextStyle = buildTextStyle(sideTextFamily, sideTextSize, sideAlign, false);
     const sideInner = sideText
       ? '<span class="card-side-text"'
-        + (sideTextStyle ? ' style="' + sideTextStyle + '"' : '') + '>'
+        + (sideTextStyle ? ' style="' + sideTextStyle + '"' : '')
+        + (sideTextFamily ? ' data-style-typo-font-family-sidetext="' + escapeAttr(sideTextFamily) + '"' : '') + '>'
         + escapeHtml(sideText) + '</span>'
       : '';
     sideHtml = '<div class="card-side-band card-side-band-' + sidePosition

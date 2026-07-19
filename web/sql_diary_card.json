@@ -1,0 +1,75 @@
+{
+  "palette": {
+    "harmony": "mono_blue",
+    "tone": "dark_deep",
+    "slot": "original"
+  },
+  "layout": {
+    "grid": "single",
+    "flow": "horizontal",
+    "density": "normal",
+    "block_align": "start",
+    "inline_align": "left",
+    "slot_assignment": { "a": "capsule", "b": "title", "c": "date", "d": "highlights" }
+  },
+  "typo": {
+    "font_family": { "title": "terminal_mono", "date": "terminal_mono", "capsule": "terminal_mono", "highlights": "terminal_mono" },
+    "weight_gradient": "capsule_heavy",
+    "size_scale": "compact_dense",
+    "alignment_mode": { "title": "left", "date": "left", "capsule": "left", "highlights": "left" },
+    "spacing_tightness": "tight",
+    "text_decoration": {
+      "title": ["prefix_bar"],
+      "date": [],
+      "capsule": ["uppercase"],
+      "highlights": []
+    }
+  },
+  "border": {
+    "radius_size": "sm",
+    "border_width": "thin",
+    "border_style": "solid",
+    "border_shadow": "none"
+  },
+  "deco": {
+    "bubble_style": "none",
+    "tag_style": "none",
+    "avatar_style": "none",
+    "avatar_pos": "side",
+    "boxes": [
+      { "style": "code_dark", "target": "highlights" }
+    ],
+    "box_radius": 6,
+    "box_gap": 12,
+    "action_style": "none"
+  },
+  "element": {
+    "header_deco": "none",
+    "header_text": "diary.sql",
+    "header_width": 6,
+    "header_text_family": "terminal_mono",
+    "header_text_size": "12px",
+    "header_text_align": "left",
+    "side_accent": "line_number_column",
+    "side_text": "",
+    "side_width": 8,
+    "side_position": "left",
+    "side_text_family": "",
+    "side_text_size": "",
+    "side_text_align": "",
+    "band_inset": true,
+    "divider": "none",
+    "corner_badge": "none",
+    "bg_pattern": "none",
+    "edge_deco": "none",
+    "floating_deco": "none"
+  },
+  "effect": {
+    "filter_self": { "title": "none", "date": "none", "capsule": "none", "highlights": "none" },
+    "filter_backdrop": { "title": "none", "date": "none", "capsule": "none", "highlights": "none" },
+    "transform": { "title": "none", "date": "none", "capsule": "none", "highlights": "none" },
+    "animation": { "title": "none", "date": "none", "capsule": "none", "highlights": "none" }
+  },
+  "container_group": "none",
+  "container_groups": []
+}
