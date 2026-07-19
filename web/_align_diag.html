@@ -48,7 +48,7 @@
 <div class="readout" id="readout"></div>
 
 <script type="module">
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=DIAG_20260719_FRESH';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=DIAG_20260719c';
 
 const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9weWVhaGJ6aWJ1dXBta21qcGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjk3MDcsImV4cCI6MjA5MzYwNTcwN30.7kCHwI7lKy1jH5BjI4gOKqw2vEUxpsjRJar_94j4Srk";
 const BASE = "https://opyeahbzibuupmkmjpkr.supabase.co/rest/v1/";
@@ -111,9 +111,20 @@ function render() {
   const banner = document.getElementById('banner');
   if (ok) { banner.className='banner ok'; banner.textContent='✅ 字段级对齐机制正常（覆盖全局成功）'; }
   else { banner.className='banner bad'; banner.textContent='❌ 字段级对齐失效：computed 与期望值不符 → 机制被全局/其它规则覆盖'; }
-  // 显示期望 vs 实际
+  // 显示期望 vs 实际 + 模板注入诊断
+  const dynStyle = document.getElementById('card-engine-dynamic-css');
+  const dynCss = dynStyle ? dynStyle.textContent : '';
+  const typoRows = (allOptions && allOptions.typo) ? allOptions.typo.length : 0;
+  const alignRows = (allOptions && allOptions.typo) ? allOptions.typo.filter(r => r.sub_dim === 'alignment_mode').length : 0;
+  const hasFieldRule = dynCss.includes('data-style-typo-alignment-mode-title="right"');
+  const hasInlineRule = dynCss.includes('data-style-layout-inline-align="justify"');
   const readout = document.getElementById('readout');
   readout.textContent =
+    '【模板注入诊断】\n' +
+    '  allOptions.typo 行数        = ' + typoRows + '\n' +
+    '  alignment_mode 子行数       = ' + alignRows + '\n' +
+    '  注入CSS含字段级规则?        = ' + hasFieldRule + '\n' +
+    '  注入CSS含全局inline规则?    = ' + hasInlineRule + '\n\n' +
     '全局 inline_align = ' + state.inline + '\n' +
     '字段级设置 = ' + JSON.stringify({title:state.title,date:state.date,capsule:state.capsule,highlights:state.highlights}) + '\n\n' +
     '期望 computed (stretch→justify): ' + JSON.stringify(expected) + '\n' +
