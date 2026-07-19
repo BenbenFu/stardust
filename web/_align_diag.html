@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>字段级对齐诊断 _align_diag</title>
+<style>
+  body { font-family: system-ui, sans-serif; background:#1a1a1a; color:#eee; padding:16px; }
+  .wrap { display:flex; gap:24px; flex-wrap:wrap; }
+  .card-col { background:#222; padding:12px; border-radius:8px; }
+  .banner { font-size:15px; font-weight:700; padding:10px 14px; border-radius:6px; margin-bottom:12px; }
+  .ok { background:#143d14; color:#7CFC7C; }
+  .bad { background:#3d1414; color:#ff9b9b; }
+  .controls { background:#222; padding:12px; border-radius:8px; margin-bottom:16px; }
+  .controls label { display:inline-block; margin-right:14px; font-size:13px; }
+  select { background:#333; color:#eee; padding:3px 6px; border-radius:4px; }
+  .readout { font-family: monospace; font-size:13px; white-space:pre-wrap; background:#111; padding:10px; border-radius:6px; margin-top:10px; }
+  .label { font-size:11px; color:#aaa; margin:8px 0 4px; }
+</style>
+</head>
+<body>
+<h2>字段级对齐诊断（使用当前 style-engine.js 的真实文件内容 + 真实 DB 数据）</h2>
+<div id="banner" class="banner">诊断中…</div>
+
+<div class="controls" id="controls" style="display:none">
+  <div><b>全局 inline_align（你这一轮设过的）：</b>
+    <select id="g-inline">
+      <option value="justify">justify（两端对齐）</option>
+      <option value="start">start</option>
+      <option value="center">center</option>
+      <option value="end">end</option>
+    </select>
+  </div>
+  <div style="margin-top:8px">
+    <b>字段级 alignment_mode：</b><br>
+    <label>title <select class="f" data-f="title"><option value="left">left</option><option value="center">center</option><option value="right">right</option><option value="stretch">stretch</option></select></label>
+    <label>date <select class="f" data-f="date"><option value="left">left</option><option value="center">center</option><option value="right">right</option><option value="stretch">stretch</option></select></label>
+    <label>capsule <select class="f" data-f="capsule"><option value="left">left</option><option value="center">center</option><option value="right">right</option><option value="stretch">stretch</option></select></label>
+    <label>highlights <select class="f" data-f="highlights"><option value="left">left</option><option value="center">center</option><option value="right">right</option><option value="stretch">stretch</option></select></label>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card-col">
+    <div class="label">测试卡片（字段级覆盖全局）</div>
+    <div id="cardArea"></div>
+  </div>
+</div>
+<div class="readout" id="readout"></div>
+
+<script type="module">
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=DIAG_20260719_FRESH';
+
+const KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9weWVhaGJ6aWJ1dXBta21qcGtyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMjk3MDcsImV4cCI6MjA5MzYwNTcwN30.7kCHwI7lKy1jH5BjI4gOKqw2vEUxpsjRJar_94j4Srk";
+const BASE = "https://opyeahbzibuupmkmjpkr.supabase.co/rest/v1/";
+const TABLES = ['style_palette_options','style_layout_options','style_typo_options','style_border_options','style_deco_options','style_effect_options','style_element_options'];
+
+async function fetchAll() {
+  const all = {};
+  for (const t of TABLES) {
+    const res = await fetch(BASE + t + '?select=sub_dim,value,css_template', { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
+    all[t] = await res.json();
+  }
+  return all;
+}
+
+function buildAllOptions(dim) {
+  return {
+    palette: dim['style_palette_options'] || [],
+    layout: dim['style_layout_options'] || [],
+    typo: dim['style_typo_options'] || [],
+    border: dim['style_border_options'] || [],
+    deco: dim['style_deco_options'] || [],
+    effect: dim['style_effect_options'] || [],
+    element: dim['style_element_options'] || [],
+    container_group: dim['style_container_group_options'] || [],
+  };
+}
+
+const diary = { date:'2026/07/19', title:'这是标题文字', capsuleName:'胶囊', highlights:['第一句','第二句','这是第三句比较长的内容用来测试两端对齐效果是否生效'] };
+
+let allOptions = null;
+const state = { inline:'justify', title:'right', date:'center', capsule:'right', highlights:'left' };
+
+function render() {
+  const sj = {
+    palette: { harmony:'mono_grey', tone:'light_standard', slot:'original' },
+    layout: { grid:'single', flow:'horizontal', slot_assignment:{a:'date',b:'title',c:'highlights',d:'capsule'}, density:'normal', block_align:'left', inline_align: state.inline, spacing_scale:'md' },
+    typo: { font_family:{title:'system_sans',date:'system_sans',capsule:'system_sans',highlights:'system_sans'}, weight_gradient:'balanced', size_scale:'petite',
+      alignment_mode: { title:state.title, date:state.date, capsule:state.capsule, highlights:state.highlights },
+      spacing_tightness:{title:'normal',date:'normal',capsule:'normal',highlights:'normal'}, text_decoration:{title:[],date:[],capsule:[],highlights:[]} },
+    border: { radius_size:'none', border_width:'none', border_style:'solid', border_shadow:'none' },
+    deco: { bubble_style:'none', tag_style:'none', avatar_style:'none', avatar_pos:'side', boxes:[], box_radius:8, box_gap:12, action_style:'none' },
+    element: { header_deco:'none', header_text:'', header_width:6, side_accent:'none', side_text:'', side_width:8, side_position:'left', band_inset:true, divider:'none', corner_badge:'none', bg_pattern:'none', edge_deco:'none', floating_deco:'none' },
+    effect: { filter_self:{title:'none',date:'none',capsule:'none',highlights:'none'}, filter_backdrop:{title:'none',date:'none',capsule:'none',highlights:'none'}, transform:{title:'none',date:'none',capsule:'none',highlights:'none'}, animation:{title:'none',date:'none',capsule:'none',highlights:'none'} },
+    container_group:'none', container_groups:[]
+  };
+  const html = renderStyleJson(sj, diary, allOptions);
+  const area = document.getElementById('cardArea');
+  area.innerHTML = html;
+  const card = area.querySelector('.gallery-card');
+  const get = (sel) => { const el = card.querySelector(sel); return el ? getComputedStyle(el).textAlign : '(missing)'; };
+  const computed = {
+    title: get('.card-title'),
+    date: get('.card-date'),
+    capsule: get('.card-capsule'),
+    highlights: get('.card-highlights'),
+  };
+  const expected = { title: state.title==='stretch'?'justify':state.title, date: state.date==='stretch'?'justify':state.date, capsule: state.capsule==='stretch'?'justify':state.capsule, highlights: state.highlights==='stretch'?'justify':state.highlights };
+  const ok = computed.title===expected.title && computed.date===expected.date && computed.capsule===expected.capsule && computed.highlights===expected.highlights;
+  // 注意： stretch→justify 后，单行 text-align:justify 可能显示 left（浏览器对单行 justify 不展开），需用 text-align-last 才能撑满；此处以变量机制是否生效为准：
+  const banner = document.getElementById('banner');
+  if (ok) { banner.className='banner ok'; banner.textContent='✅ 字段级对齐机制正常（覆盖全局成功）'; }
+  else { banner.className='banner bad'; banner.textContent='❌ 字段级对齐失效：computed 与期望值不符 → 机制被全局/其它规则覆盖'; }
+  // 显示期望 vs 实际
+  const readout = document.getElementById('readout');
+  readout.textContent =
+    '全局 inline_align = ' + state.inline + '\n' +
+    '字段级设置 = ' + JSON.stringify({title:state.title,date:state.date,capsule:state.capsule,highlights:state.highlights}) + '\n\n' +
+    '期望 computed (stretch→justify): ' + JSON.stringify(expected) + '\n' +
+    '实际 computed:                   ' + JSON.stringify(computed) + '\n\n' +
+    '卡片根 data-attrs:\n' + (card ? card.outerHTML.slice(0, card.outerHTML.indexOf('>')+1) : 'NO CARD');
+}
+
+(async () => {
+  try {
+    const dim = await fetchAll();
+    allOptions = buildAllOptions(dim);
+    injectBaseCss();
+    injectDynamicStyles(allOptions);
+    document.getElementById('controls').style.display = 'block';
+    document.getElementById('g-inline').addEventListener('change', e => { state.inline = e.target.value; render(); });
+    document.querySelectorAll('.f').forEach(s => s.addEventListener('change', e => { state[e.target.dataset.f] = e.target.value; render(); }));
+    render();
+  } catch (e) {
+    document.getElementById('banner').className = 'banner bad';
+    document.getElementById('banner').textContent = '加载失败: ' + e.message;
+  }
+})();
+</script>
+</body>
+</html>
