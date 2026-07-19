@@ -45,20 +45,24 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .card-date   { color: var(--card-muted, inherit);
   font-weight: var(--typo-date-weight, 400);
   font-size: calc(0.8rem * var(--typo-date-scale, 0.85));
-  text-align: var(--typo-date-align, left); }
+  text-align: var(--typo-date-align, left);
+  text-align-last: var(--typo-date-align-last, auto); }
 .card-title  { word-break: break-word; overflow-wrap: break-word;
   font-weight: var(--typo-title-weight, 600);
   font-size: calc(1rem * var(--typo-title-scale, 1.5));
-  text-align: var(--typo-title-align, left); }
+  text-align: var(--typo-title-align, left);
+  text-align-last: var(--typo-title-align-last, auto); }
 .card-highlights { overflow-wrap: break-word; word-break: break-word;
   font-weight: var(--typo-highlight-weight, 400);
   font-size: calc(0.85rem * var(--typo-highlight-scale, 1.0));
-  text-align: var(--typo-highlight-align, left); }
+  text-align: var(--typo-highlight-align, left);
+  text-align-last: var(--typo-highlight-align-last, auto); }
 .card-highlight-item { display: block; }
 .card-capsule { color: var(--card-accent, inherit);
   font-weight: var(--typo-capsule-weight, 500);
   font-size: calc(0.8rem * var(--typo-capsule-scale, 0.9));
-  text-align: var(--typo-capsule-align, left); }
+  text-align: var(--typo-capsule-align, left);
+  text-align-last: var(--typo-capsule-align-last, auto); }
 .hl-sep { display: inline; }
 /* ===== Highlights block 列表（扁平有序，仿 deco.boxes；容器组带在 Phase 2 复用此结构） =====
    仅提供布局骨架；头像圆形 / 气泡边框 / 分隔线样式由 DB css_template 经 data-attr 驱动。 */
@@ -255,7 +259,7 @@ export const DEFAULT_STYLE_JSON = {
   typo: {
     font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
     weight_gradient: 'balanced', size_scale: 'petite',
-    alignment_mode: { title:'left_flow', date:'left_flow', capsule:'left_flow', highlights:'left_flow' },
+    alignment_mode: { title:'left', date:'left', capsule:'left', highlights:'left' },
     spacing_tightness: { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
     text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
@@ -767,11 +771,11 @@ function buildTextStyle(family, size, align, isHeader) {
   if (size)   parts.push('font-size:' + size);
   if (isHeader) {
     // 顶栏：水平文字，对齐 = 水平方向
-    if (align === 'stretch')      parts.push('display:block;width:100%;text-align:justify');
+    if (align === 'stretch')      parts.push('display:block;width:100%;text-align:justify;text-align-last:justify');
     else if (align)               parts.push('display:block;width:100%;text-align:' + align);
   } else {
     // 侧栏：竖排文字，top/center/bottom 在外层 band 控制；仅 stretch 需内联 height:100% + 纵向 justify
-    if (align === 'stretch')      parts.push('height:100%;text-align:justify');
+    if (align === 'stretch')      parts.push('height:100%;text-align:justify;text-align-last:justify');
   }
   return parts.length ? parts.join(';') + ';' : '';
 }
