@@ -50,23 +50,27 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
   font-weight: var(--typo-date-weight, 400);
   font-size: calc(0.8rem * var(--typo-date-scale, 0.85));
   text-align: var(--typo-date-align, inherit);
-  text-align-last: var(--typo-date-align-last, inherit); }
+  text-align-last: var(--typo-date-align-last, inherit);
+  text-justify: var(--typo-date-justify, auto); }
 .card-title  { word-break: break-word; overflow-wrap: break-word;
   font-weight: var(--typo-title-weight, 600);
   font-size: calc(1rem * var(--typo-title-scale, 1.5));
   text-align: var(--typo-title-align, inherit);
-  text-align-last: var(--typo-title-align-last, inherit); }
+  text-align-last: var(--typo-title-align-last, inherit);
+  text-justify: var(--typo-title-justify, auto); }
 .card-highlights { overflow-wrap: break-word; word-break: break-word;
   font-weight: var(--typo-highlight-weight, 400);
   font-size: calc(0.85rem * var(--typo-highlight-scale, 1.0));
   text-align: var(--typo-highlight-align, inherit);
-  text-align-last: var(--typo-highlight-align-last, inherit); }
+  text-align-last: var(--typo-highlight-align-last, inherit);
+  text-justify: var(--typo-highlight-justify, auto); }
 .card-highlight-item { display: block; }
 .card-capsule { color: var(--card-accent, inherit);
   font-weight: var(--typo-capsule-weight, 500);
   font-size: calc(0.8rem * var(--typo-capsule-scale, 0.9));
   text-align: var(--typo-capsule-align, inherit);
-  text-align-last: var(--typo-capsule-align-last, inherit); }
+  text-align-last: var(--typo-capsule-align-last, inherit);
+  text-justify: var(--typo-capsule-justify, auto); }
 .hl-sep { display: inline; }
 /* ===== Highlights block 列表（扁平有序，仿 deco.boxes；容器组带在 Phase 2 复用此结构） =====
    仅提供布局骨架；头像圆形 / 气泡边框 / 分隔线样式由 DB css_template 经 data-attr 驱动。 */
