@@ -1,0 +1,27 @@
+/* ============================================================
+   本地字体集中声明 — 配合 style_font_localize_20260720.sql
+   ------------------------------------------------------------
+   - 每个分类一个 @font-face，family 名与 DB css_template 里的
+     font-family 一一对应（FontHei / FontSong / ...）。
+   - 字体文件放在对应中文文件夹下的 regular.woff2。
+   - woff2 后带 ?v= 版本号，替换字体文件后请同步自增该版本号
+     （或硬刷新）以避免浏览器缓存旧字体。
+   - 当前状态（2026-07-20）：
+       9 个分类全部为真实字体，均已子集化 GB2312：
+         黑体=思源黑体 宋体=思源宋体 圆体=站酷快乐体 楷体=霞鹜文楷
+         等宽=更纱黑体SC 创意=站酷庆科 手写=志莽行书 书法=马善政 卡通=柳建毛草
+   ============================================================ */
+
+@font-face { font-family: "FontHei";      src: url("./黑体/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontSong";     src: url("./宋体/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontYuan";     src: url("./圆体/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontKai";      src: url("./楷体/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontMono";     src: url("./等宽/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontCreative"; src: url("./创意/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontHand";     src: url("./手写/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontCalli";    src: url("./书法/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontCartoon";  src: url("./卡通/regular.woff2?v=20260720c") format("woff2"); font-display: swap; }
+
+/* 粗体示例（启用时去掉注释，并把对应文件放入各分类文件夹、同步改上面的 ?v=）：
+@font-face { font-family: "FontHei"; font-weight: 700; src: url("./黑体/bold.woff2?v=20260720c") format("woff2"); font-display: swap; }
+*/

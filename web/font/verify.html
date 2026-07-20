@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>字体本地化验证 — 9 分类</title>
+<link rel="stylesheet" href="fonts.css?v=20260720b">
+<style>
+  body{margin:0;background:#111;color:#eee;font-family:system-ui,sans-serif;padding:24px;}
+  h1{font-size:18px;font-weight:600;margin:0 0 4px;}
+  .sub{color:#888;font-size:12px;margin-bottom:20px;}
+  .row{display:flex;align-items:baseline;gap:16px;padding:14px 0;border-bottom:1px solid #222;}
+  .tag{width:64px;flex:none;color:#7fd;font-size:13px;text-align:right;}
+  .sample{flex:1;font-size:26px;line-height:1.4;}
+  .meta{width:120px;flex:none;color:#666;font-size:11px;}
+  code{background:#222;padding:1px 5px;border-radius:3px;color:#9b9;}
+</style>
+</head>
+<body>
+<h1>字体本地化验证</h1>
+<div class="sub">确认 9 个分类的 woff2 已正确加载（见 <code>fonts.css</code>）。若某行仍是系统默认字体，说明对应 <code>web/font/分类/regular.woff2</code> 缺失或损坏。</div>
+
+<div class="row"><div class="tag">黑体</div><div class="sample" style="font-family:'FontHei','Microsoft YaHei',sans-serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontHei</div></div>
+<div class="row"><div class="tag">宋体</div><div class="sample" style="font-family:'FontSong','SimSun',serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontSong</div></div>
+<div class="row"><div class="tag">圆体</div><div class="sample" style="font-family:'FontYuan','Microsoft YaHei',sans-serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontYuan</div></div>
+<div class="row"><div class="tag">楷体</div><div class="sample" style="font-family:'FontKai','KaiTi',serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontKai</div></div>
+<div class="row"><div class="tag">等宽</div><div class="sample" style="font-family:'FontMono',Consolas,monospace">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontMono</div></div>
+<div class="row"><div class="tag">创意</div><div class="sample" style="font-family:'FontCreative','Microsoft YaHei',sans-serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontCreative</div></div>
+<div class="row"><div class="tag">手写</div><div class="sample" style="font-family:'FontHand','Microsoft YaHei',sans-serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontHand</div></div>
+<div class="row"><div class="tag">书法</div><div class="sample" style="font-family:'FontCalli','KaiTi',serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontCalli</div></div>
+<div class="row"><div class="tag">卡通</div><div class="sample" style="font-family:'FontCartoon','Microsoft YaHei',sans-serif">日记 · 今天天气晴朗 2026年7月20日 The quick brown fox 0123456789</div><div class="meta">FontCartoon</div></div>
+
+<div class="sub" style="margin-top:18px;border-top:1px solid #222;padding-top:12px;">
+✅ 9 个分类现已全部为真实字体：圆体=站酷快乐体、楷体=霞鹜文楷、等宽=更纱黑体 SC
+（均已子集化 GB2312）。
+</div>
+
+</body>
+</html>
