@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <title>woff2 渲染测试</title>
+<!-- 
+  模式 A（当前默认）：全量加载 — fonts.css 一次性声明 9 个 @font-face
+  模式 B（生产方案）：按需加载 — 取消上方 link，改用 font-loader.js
+  
+  切换方法：注释/取消注释下方对应标签即可
+-->
 <link rel="stylesheet" href="fonts.css?v=20260721d">
+<!-- <script src="font-loader.js?v=20260721e"></script> -->
 <style>
 body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
 .card { background: white; border-radius: 8px; padding: 20px; margin: 12px 0; box-shadow: 0 1px 4px rgba(0,0,0,.1); }

@@ -215,7 +215,7 @@
         background: rgba(0,0,0,0.04); }
     .tab-content { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 0; }
 </style>
-<link rel="stylesheet" href="font/fonts.css?v=20260721d">
+<script src="font/font-loader.js?v=20260721e"></script>
 </head>
 <body>
 
@@ -2206,6 +2206,64 @@ if (fieldSelectorEl) {
 }
 
 // ============================================================
+// 字体按需加载（FontFace API）
+// 只下载当前选中的字体，避免 9 个 ~10MB 全量加载耗时 4-5 分钟
+// ============================================================
+(function() {
+    /** 从 typoRows 的 css_template 中提取 FontFace family 名 */
+    function extractFontFamily(dbValue) {
+        if (!dimensionCache.style_typo_options) return null;
+        var rows = dimensionCache.style_typo_options;
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].value === dbValue || rows[i].option_key === dbValue) {
+                var tpl = rows[i].css_template || '';
+                // 匹配 font-family:"FontX" 或 font-family: "FontX"
+                var m = tpl.match(/font-family\s*:\s*"([^"]+)"/);
+                return m ? m[1] : null;
+            }
+        }
+        return null;
+    }
+
+    /** 根据当前下拉框值加载对应字体（不阻塞 UI） */
+    function loadFontForSelect(selectEl) {
+        if (!selectEl || !selectEl.value) return;
+        var family = extractFontFamily(selectEl.value);
+        if (!family || family.indexOf('Font') !== 0) return; // 只处理本地 FontX 字体
+        console.log('[FontLoad] 请求:', selectEl.value, '->', family);
+        FontLoader.load(family).then(function() {
+            console.log('[FontLoad] 就绪:', family);
+        }).catch(function(err) {
+            console.warn('[FontLoad] 失败:', family, err.message);
+        });
+    }
+
+    /** 加载当前所有下拉框选中的字体 */
+    function loadCurrentFonts() {
+        // 全局标签页字体
+        loadFontForSelect(PF_DIMS.font_family);
+        // 自定义文字字体
+        loadFontForSelect(CT_DIMS.family);
+    }
+
+    // 暴露到全局供事件调用
+    window._loadCurrentFonts = loadCurrentFonts;
+
+    // 在全局 font_family 下拉框变化时触发
+    if (PF_DIMS.font_family) {
+        PF_DIMS.font_family.addEventListener('change', function() {
+            loadFontForSelect(this);
+        });
+    }
+    // 自定义文字字体变化时
+    if (CT_DIMS.family) {
+        CT_DIMS.family.addEventListener('change', function() {
+            loadFontForSelect(this);
+        });
+    }
+})();
+
+// ============================================================
 // Per-field dropdown change handlers
 // ============================================================
 Object.keys(PF_DIMS).forEach(key => {
@@ -2270,6 +2328,10 @@ async function init() {
         await loadPool();
         applyStyleJsonToPanel(DEFAULT_STYLE_JSON);
         updatePreview();
+        // 按需加载当前选中的字体（不阻塞页面渲染）
+        if (window._loadCurrentFonts) {
+            setTimeout(function() { window._loadCurrentFonts(); }, 100);
+        }
         console.log('[capsule-preview] init() completed successfully. SLOT_SELECTS:', Object.keys(SLOT_SELECTS));
     } catch (e) {
         console.error('[capsule-preview] init() error:', e);

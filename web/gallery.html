@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STARDUST_v0.1_DIARY_GALLERY</title>
 <link rel="stylesheet" href="style.css?v=20260710c">
-<link rel="stylesheet" href="font/fonts.css?v=20260721d">
+<script src="font/font-loader.js?v=20260721e"></script>
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -368,6 +368,40 @@
             galleryGrid.insertAdjacentHTML('beforeend', renderCard(diary, allOptions));
         });
         if (lcd) lcd.scrollTop = scrollTop;
+        // 按需加载卡片用到的字体（不阻塞渲染）
+        if (window.FontLoader && dimCache) {
+            requestAnimationFrame(function() { preloadGalleryFonts(); });
+        }
+    }
+
+    /** 扫描已渲染卡片，收集需要的字体并按需加载 */
+    function preloadGalleryFonts() {
+        if (!dimCache || !dimCache.style_typo_options) return;
+        var typoRows = dimCache.style_typo_options;
+        // 构建 value -> FontFace family 映射
+        var val2family = {};
+        typoRows.forEach(function(r) {
+            var m = (r.css_template || '').match(/font-family\s*:\s*"([^"]+)"/);
+            if (m) val2family[r.value] = m[1];
+        });
+        // 收集当前卡片实际使用的字体
+        var needed = {};
+        document.querySelectorAll('.gallery-card').forEach(function(card) {
+            ['data-style-typo-font-family-title',
+             'data-style-typo-font-family-date',
+             'data-style-typo-font-family-highlights',
+             'data-style-typo-font-family-capsule'].forEach(function(attr) {
+                var v = card.getAttribute(attr);
+                if (v && val2family[v]) needed[val2family[v]] = true;
+            });
+        });
+        var families = Object.keys(needed);
+        if (families.length > 0) {
+            console.log('[Gallery] 预加载字体:', families);
+            FontLoader.loadAll(families).catch(function(e) {
+                console.warn('[Gallery] 字体预加载部分失败:', e.message);
+            });
+        }
     }
 
     let lastColCount = getColumnCount();
