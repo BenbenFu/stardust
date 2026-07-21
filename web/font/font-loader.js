@@ -5,7 +5,7 @@
    后几个超时失败。本模块只加载当前需要的那一个字体。
    
    用法：
-     FontLoader.load('FontHei').then(() => { /* 已就绪 */ })
+     FontLoader.load('FontHei').then(() => { 已就绪 })
      FontLoader.isLoaded('FontHei')  // boolean
      FontLoader.getAvailable()       // ['FontHei','FontSong',...]
      
