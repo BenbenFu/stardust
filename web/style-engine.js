@@ -987,7 +987,14 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   const showHeader = headerDeco !== 'none' || !!headerText;
   const showSide   = sideAccent !== 'none' || !!sideText;
 
-  let html = '<a class="gallery-card"' + dataAttrs
+  // 自定义文字(顶栏/侧栏)字体属性必须与四字段同源：发射在卡片根 .gallery-card 上，
+  // 而非内部 <span>。css_template 选择器统一按根元素书写
+  //   .gallery-card[data-style-typo-font-family-headertext="X"] .card-header-text
+  // 若发射在 span 上则永远命不中（修复前自定义文字字体切换无效的根因）。
+  const customFontAttrs = (headerTextFamily ? ' data-style-typo-font-family-headertext="' + escapeAttr(headerTextFamily) + '"' : '')
+    + (sideTextFamily ? ' data-style-typo-font-family-sidetext="' + escapeAttr(sideTextFamily) + '"' : '');
+
+  let html = '<a class="gallery-card"' + dataAttrs + customFontAttrs
     + ' style="' + paletteStyle + '"'
     + ' href="diary.html?date=' + escapeAttr(dateRaw) + '" target="_blank"'
     + ' title="' + escapeAttr(d.title || '') + '"'
@@ -1001,7 +1008,6 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     headerBandHtml = '<div class="card-header-band' + (headerText ? ' card-header-band--has-text' : '') + '">';
     if (headerText) headerBandHtml += '<span class="card-header-text"'
       + (headerTextStyle ? ' style="' + headerTextStyle + '"' : '')
-      + (headerTextFamily ? ' data-style-typo-font-family-headertext="' + escapeAttr(headerTextFamily) + '"' : '')
       + '>'
       + escapeHtml(headerText) + '</span>';
     headerBandHtml += '</div>';
@@ -1025,7 +1031,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     const sideInner = sideText
       ? '<span class="card-side-text"'
         + (sideTextStyle ? ' style="' + sideTextStyle + '"' : '')
-        + (sideTextFamily ? ' data-style-typo-font-family-sidetext="' + escapeAttr(sideTextFamily) + '"' : '') + '>'
+        + '>'
         + escapeHtml(sideText) + '</span>'
       : '';
     sideHtml = '<div class="card-side-band card-side-band-' + sidePosition
