@@ -215,7 +215,7 @@
         background: rgba(0,0,0,0.04); }
     .tab-content { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 0; }
 </style>
-<link rel="stylesheet" href="font/fonts.css?v=20260721a">
+<link rel="stylesheet" href="font/fonts.css?v=20260721b">
 </head>
 <body>
 
@@ -571,15 +571,6 @@
                     <label>Font Family 字体</label>
                     <select id="ct-font-family">
                         <option value="">(继承默认)</option>
-                        <option value="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">系统默认 System</option>
-                        <option value="Inter, sans-serif">Inter</option>
-                        <option value="Montserrat, sans-serif">Montserrat</option>
-                        <option value="Oswald, sans-serif">Oswald</option>
-                        <option value="Nunito, sans-serif">Nunito</option>
-                        <option value="'Roboto Slab', serif">Roboto Slab</option>
-                        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
-                        <option value="'Ma Shan Zheng', cursive">马善政 Ma Shan Zheng</option>
-                        <option value="'Noto Serif SC', serif">Noto Serif SC</option>
                     </select>
                 </div>
                 <div class="dim-row">
@@ -1598,6 +1589,7 @@ function applyPerFieldOptionsToUI() {
     const effectRows = dimensionCache['style_effect_options'] || [];
 
     populateSelect(PF_DIMS.font_family,       typoRows,   'font_family');
+    populateSelect(CT_DIMS.family,             typoRows,   'font_family');  // 自定义文字（顶栏/侧栏）字体
     populateSelect(PF_DIMS.alignment_mode,    typoRows,   'alignment_mode');
     populateSelect(PF_DIMS.spacing_tightness, typoRows,   'spacing_tightness');
     populateSelect(PF_DIMS.filter_self,       effectRows, 'filter_self');
