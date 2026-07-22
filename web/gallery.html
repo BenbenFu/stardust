@@ -8,7 +8,7 @@
 <!-- 预建 jsDelivr 连接，省掉 9 个字体并行请求的 DNS+TLS 握手（crossorigin 必带，FontFace 走 CORS）-->
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-<script src="font/font-loader.js?v=20260723e"></script>
+<script src="font/font-loader.js?v=20260723f"></script>
 <style>
     :root {
         --gba-bg: #cadbb7;
@@ -377,15 +377,9 @@
         }
     }
 
-    /** 扫描已渲染卡片，收集需要的字体并按需加载（带全局锁防重复调用） */
+    /** 扫描已渲染卡片，收集需要的字体并按需加载（会话级，不重复） */
     function preloadGalleryFonts() {
-        // 预加载锁：renderAll()/resize 可能在短时间内多次触发，只执行一次
-        if (!FontLoader.preloadStart()) {
-            console.log('[Gallery] 字体预加载跳过（已有任务进行中）');
-            return;
-        }
-        try {
-            if (!dimCache || !dimCache.style_typo_options) return;
+        if (!dimCache || !dimCache.style_typo_options) return;
         var typoRows = dimCache.style_typo_options;
         // 构建 value -> FontFace family 映射
         var val2family = {};
@@ -394,7 +388,8 @@
             if (m) val2family[r.value] = m[1];
         });
         // 收集当前卡片实际使用的字体
-        var needed = {};
+        var needed = [];
+        var seen = {};
         document.querySelectorAll('.gallery-card').forEach(function(card) {
             ['data-style-typo-font-family-title',
              'data-style-typo-font-family-date',
@@ -403,22 +398,19 @@
              'data-style-typo-font-family-headertext',
              'data-style-typo-font-family-sidetext'].forEach(function(attr) {
                 var v = card.getAttribute(attr);
-                if (v && val2family[v]) needed[val2family[v]] = true;
+                if (v && val2family[v] && !seen[val2family[v]]) {
+                    seen[val2family[v]] = true;
+                    needed.push(val2family[v]);
+                }
             });
         });
-        var families = Object.keys(needed);
-        if (families.length > 0) {
-            console.log('[Gallery] 预加载字体:', families);
-            FontLoader.loadAll(families).then(function() {
-                FontLoader.preloadDone();
-            }, function(e) {
-                console.warn('[Gallery] 字体预加载部分失败:', e.message);
-                FontLoader.preloadDone();
+        if (needed.length > 0) {
+            console.log('[Gallery] 预加载字体:', needed);
+            // preloadOnce: 首次全量加载，后续只增量（自动跳过已加载/已失败的）
+            FontLoader.preloadOnce(needed).then(function() {
+                console.log('[Gallery] 字体预加载完成', FontLoader.stats());
             });
-        } else {
-            FontLoader.preloadDone();
         }
-        } catch(e) { FontLoader.preloadDone(); }
     }
 
     let lastColCount = getColumnCount();
