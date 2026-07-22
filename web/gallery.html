@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STARDUST_v0.1_DIARY_GALLERY</title>
 <link rel="stylesheet" href="style.css?v=20260710c">
+<!-- 预建 jsDelivr 连接，省掉 9 个字体并行请求的 DNS+TLS 握手（crossorigin 必带，FontFace 走 CORS）-->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <script src="font/font-loader.js?v=20260722c"></script>
 <style>
     :root {
@@ -390,7 +393,9 @@
             ['data-style-typo-font-family-title',
              'data-style-typo-font-family-date',
              'data-style-typo-font-family-highlights',
-             'data-style-typo-font-family-capsule'].forEach(function(attr) {
+             'data-style-typo-font-family-capsule',
+             'data-style-typo-font-family-headertext',
+             'data-style-typo-font-family-sidetext'].forEach(function(attr) {
                 var v = card.getAttribute(attr);
                 if (v && val2family[v]) needed[val2family[v]] = true;
             });

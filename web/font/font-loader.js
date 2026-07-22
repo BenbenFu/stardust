@@ -36,7 +36,7 @@
   var FONT_REF = 'main';   // 'main' | 'v1.2.3'(tag) | 完整 commit SHA
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/BenbenFu/stardust@' + FONT_REF + '/web/font/';
 
-  var VERSION = '20260722b';
+  var VERSION = '20260723b';
 
   /* ---- 字体清单（family 名 -> 相对路径）---- */
   var FONTS = {
