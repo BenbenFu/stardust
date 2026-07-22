@@ -19,7 +19,7 @@
   var FONT_BASE = (document.currentScript && document.currentScript.src)
     ? document.currentScript.src.replace(/[^/]*$/, '')
     : './font/';
-  var VERSION = '20260721f';
+  var VERSION = '20260722b';
 
   /* ---- 字体清单（family 名 -> 相对路径）---- */
   var FONTS = {
