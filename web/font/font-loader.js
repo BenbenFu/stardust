@@ -37,10 +37,10 @@
   // ⚠️ 字体更新后建议：git tag fonts-v1 && git push origin fonts-v1，然后把上面改成 'fonts-v1'
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/BenbenFu/stardust@' + FONT_REF + '/web/font/';
 
-  var VERSION = '20260723c';
+  var VERSION = '20260723d';
 
-  /* 单次加载超时（毫秒）：主源/CDN 挂起时快速回退，避免长时间白等 */
-  var LOAD_TIMEOUT = 10000;
+  /* 单次加载超时（毫秒）：CDN 通常 15-25s 可完成（旧缓存文件较大），给足时间避免超时触发回退导致双份下载 */
+  var LOAD_TIMEOUT = 30000;
 
   /* 全局预加载锁：防止 renderAll()/resize 等短时间内多次触发重复批量加载 */
   var _preloadGuard = false;
