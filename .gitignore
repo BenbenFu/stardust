@@ -17,3 +17,12 @@ build/
 
 # WorkBuddy 内部文件（不对外）
 .workbuddy/
+
+# 字体原始 TTF 归档（中间产物，不入库；亦避免触发 jsDelivr 50MB 仓库上限）
+web/_deprecated/2026-07-22-font-refactor/fontwork_archive/
+
+# 字体完整源（重裁用，本地保留，不入库）
+web/font/_sources/
+
+# Python 字节码缓存
+__pycache__/

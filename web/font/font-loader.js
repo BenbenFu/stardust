@@ -16,9 +16,26 @@
 (function(global) {
   'use strict';
 
+  // 字体基准路径：默认走本地相对路径（GitHub Pages 同源，用作 CDN 失败回退）
   var FONT_BASE = (document.currentScript && document.currentScript.src)
     ? document.currentScript.src.replace(/[^/]*$/, '')
     : './font/';
+
+  /* ===== jsDelivr 中转（加速国内从 GitHub Pages 拉字体）=====
+     - 站点与字体都放在 GitHub 仓库、由 GitHub Pages 托管时，国内拉取常被
+       限速到 ~30KB/s（9 个字体全下要 2~3 分钟）。
+     - 改为从 jsDelivr CDN 拉取（cdn.jsdelivr.net/gh/<repo>@<ref>/...），
+       利用其在国内的边缘节点，通常能快一个数量级。
+     - 前置条件：仓库须为【公开】；且仓库体积须 < jsDelivr 的 50MB 上限
+       （故 .fontwork 原始 TTF 已移出 git，见 _deprecated）。
+     - 切换：USE_CDN 默认 true；在 URL 后加 ?nocdn 可强制走本地做 A/B 对比。
+     - 缓存：jsDelivr 按 @ref 缓存，字体更新后请把 FONT_REF 从 'main' 改成
+       发布 tag（如 'fonts-v1'），否则按分支缓存最多延迟 ~12h 生效。
+     - 回退：CDN 加载失败时自动回退到本地 FONT_BASE，不会白屏。            */
+  var USE_CDN  = (typeof location !== 'undefined' && location.search.indexOf('nocdn') === -1);
+  var FONT_REF = 'main';   // 'main' | 'v1.2.3'(tag) | 完整 commit SHA
+  var CDN_BASE = 'https://cdn.jsdelivr.net/gh/BenbenFu/stardust@' + FONT_REF + '/web/font/';
+
   var VERSION = '20260722b';
 
   /* ---- 字体清单（family 名 -> 相对路径）---- */
@@ -58,25 +75,33 @@
       return Promise.reject(new Error('[FontLoader] 未注册字体: ' + family));
     }
 
-    var url = FONT_BASE + file + '?v=' + VERSION;
+    var primary  = (USE_CDN ? CDN_BASE : FONT_BASE) + file + '?v=' + VERSION;
+    var fallback = (USE_CDN ? FONT_BASE : CDN_BASE) + file + '?v=' + VERSION;
 
     var promise = new Promise(function(resolve, reject) {
-      var ff = new FontFace(family, 'url("' + url + '")', { display: 'swap' });
-
-      ff.load().then(
-        function() {
-          document.fonts.add(ff);
-          _loaded[family] = ff;
-          delete _loading[family];
-          console.log('[FontLoader] OK: ' + family + ' (' + (ff.status || 'loaded') + ')');
-          resolve(ff);
-        },
-        function(err) {
-          delete _loading[family];
-          console.error('[FontLoader] FAIL: ' + family, err);
-          reject(err);
-        }
-      );
+      function attempt(url, isFallback) {
+        var ff = new FontFace(family, 'url("' + url + '")', { display: 'swap' });
+        ff.load().then(
+          function() {
+            document.fonts.add(ff);
+            _loaded[family] = ff;
+            delete _loading[family];
+            console.log('[FontLoader] OK: ' + family + ' <- ' + url);
+            resolve(ff);
+          },
+          function(err) {
+            if (!isFallback && fallback !== primary) {
+              console.warn('[FontLoader] 主源失败，回退本地: ' + family, err);
+              attempt(fallback, true);
+            } else {
+              delete _loading[family];
+              console.error('[FontLoader] FAIL: ' + family, err);
+              reject(err);
+            }
+          }
+        );
+      }
+      attempt(primary, false);
     });
 
     _loading[family] = promise;

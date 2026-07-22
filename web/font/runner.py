@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-将 9 个完整字体（中文子目录下的 regular.woff2）子集化到
+将 9 个完整字体（_sources/ 下的 regular.woff2）子集化到
 「common_chars.txt 中的真实常用汉字(G) + ASCII + 常用标点」并去掉 hinting。
 
 子集依据 common_chars.txt（GB2312 一级字表 3755 字 = 国家《现代汉语常用字表》常用字），
@@ -18,17 +18,17 @@ from fontTools.ttLib import TTFont
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
-# 根名 -> 中文子目录/regular.woff2（完整字体源）
+# 根名 -> _sources/中文子目录/regular.woff2（完整字体源，本地保留、不入库）
 SRC_MAP = {
-    'hei': '黑体/regular.woff2',
-    'song': '宋体/regular.woff2',
-    'yuan': '圆体/regular.woff2',
-    'kai': '楷体/regular.woff2',
-    'mono': '等宽/regular.woff2',
-    'creative': '创意/regular.woff2',
-    'hand': '手写/regular.woff2',
-    'calli': '书法/regular.woff2',
-    'cartoon': '卡通/regular.woff2',
+    'hei': '_sources/黑体/regular.woff2',
+    'song': '_sources/宋体/regular.woff2',
+    'yuan': '_sources/圆体/regular.woff2',
+    'kai': '_sources/楷体/regular.woff2',
+    'mono': '_sources/等宽/regular.woff2',
+    'creative': '_sources/创意/regular.woff2',
+    'hand': '_sources/手写/regular.woff2',
+    'calli': '_sources/书法/regular.woff2',
+    'cartoon': '_sources/卡通/regular.woff2',
 }
 FONT_LIST = list(SRC_MAP.keys())
 

@@ -70,7 +70,7 @@ print("\n=== 圆体: ZCOOL KuaiLe ===")
 try:
     d = get("https://raw.githubusercontent.com/google/fonts/main/ofl/zcoolkuairle/ZCOOLKuaiLe-Regular.ttf")
     tmp = os.path.join(OUT, "_zk.ttf"); open(tmp,'wb').write(d)
-    subset(tmp, os.path.join(OUT, "圆体", "regular.woff2"))
+    subset(tmp, os.path.join(OUT, "_sources", "圆体", "regular.woff2"))
     os.remove(tmp)
 except Exception as e:
     print("圆体下载失败（检查网络/代理）:", e)
@@ -80,7 +80,7 @@ print("\n=== 楷体: LXGW WenKai (Screen) ===")
 try:
     d = get("https://github.com/lxgw/LxgwWenKai-Screen/releases/download/v1.522/LXGWWenKaiScreen.ttf")
     tmp = os.path.join(OUT, "_lxgw.ttf"); open(tmp,'wb').write(d)
-    subset(tmp, os.path.join(OUT, "楷体", "regular.woff2"))
+    subset(tmp, os.path.join(OUT, "_sources", "楷体", "regular.woff2"))
     os.remove(tmp)
 except Exception as e:
     print("楷体下载失败（检查网络/代理）:", e)
@@ -99,7 +99,7 @@ try:
             raise RuntimeError("压缩包内未找到 sarasa-fixed-sc-regular.ttf，实际条目：" + str(names[:10]))
         z.extract(path=OUT, targets=[tgt[0]])
         tp = os.path.join(OUT, tgt[0])
-        subset(tp, os.path.join(OUT, "等宽", "regular.woff2"))
+        subset(tp, os.path.join(OUT, "_sources", "等宽", "regular.woff2"))
         os.remove(tp); os.remove(zp)
 except Exception as e:
     print("等宽下载/解压失败（检查网络/代理，或手动下载后子集化）:", e)
