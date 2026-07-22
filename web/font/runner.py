@@ -71,8 +71,7 @@ def process(name):
     ss.populate(text=text)
     ss.subset(f)
     f.flavor = 'woff2'
-    # 落到版本化目录，与 font-loader.js 的 FONT_DIR 保持一致（破 jsDelivr 缓存）
-    out = os.path.join(BASE, 'v20260723f', name + '.woff2')
+    out = os.path.join(BASE, name + '.woff2')
     tmp = out + '.sub.tmp'
     f.save(tmp)
     f.close()

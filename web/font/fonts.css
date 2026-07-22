@@ -3,27 +3,26 @@
    ------------------------------------------------------------
    - 每个分类一个 @font-face，family 名与 DB css_template 里的
      font-family 一一对应（FontHei / FontSong / ...）。
-   - 字体文件放在 web/font/v<版本>/ 下，英文唯一文件名：
+   - 字体文件放在 web/font/ 根目录，英文唯一文件名：
      hei/song/yuan/kai/mono/creative/hand/calli/cartoon.woff2
-   - 版本化目录（v20260723f/）用于破 jsDelivr 分支引用(~main)的
-     ~12h 缓存：路径变了 CDN 立即拉取最新文件，无需硬刷新或 tag。
-   - 路径需与 font-loader.js 的 FONT_DIR 保持一致；换字体后务必同步。
-   - 当前状态（2026-07-23 f）：
+   - woff2 后带 ?v= 版本号，替换字体文件后请同步自增该版本号
+     （或硬刷新）以避免浏览器缓存旧字体。
+   - 当前状态（2026-07-23 b）：
        9 个分类全部为 woff2 格式，子集化到「数据库实际出现字符并集
        (约 2290 字) + 完整 ASCII(32-126) + 常用中文/全角标点」，去 hinting。
        来源为用户本机下载的完整字体，由 _sources/<中文>/regular.woff2 提供，
-       经 fontTools subset 裁剪后落地为 v20260723f/ 下 hei..cartoon.woff2。
+       经 fontTools subset 裁剪后落地为根目录 hei..cartoon.woff2。
        黑体=得意黑 宋体=SourceHanSerifCN-Bold 圆体=maokenzhuyuanti
        楷体=江西拙楷3.0 等宽=NotoSansMonoCJKjp-VF 创意=fusion-pixel
        手写=鸿雷拙书 书法=Slidefu 卡通=mo導taiwanゴシック
    ============================================================ */
 
-@font-face { font-family: "FontHei";      src: url("./v20260723f/hei.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontSong";     src: url("./v20260723f/song.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontYuan";     src: url("./v20260723f/yuan.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontKai";      src: url("./v20260723f/kai.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontMono";     src: url("./v20260723f/mono.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontCreative"; src: url("./v20260723f/creative.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontHand";     src: url("./v20260723f/hand.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontCalli";    src: url("./v20260723f/calli.woff2?v=20260723f") format("woff2"); font-display: swap; }
-@font-face { font-family: "FontCartoon";  src: url("./v20260723f/cartoon.woff2?v=20260723f") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontHei";      src: url("./hei.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontSong";     src: url("./song.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontYuan";     src: url("./yuan.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontKai";      src: url("./kai.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontMono";     src: url("./mono.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontCreative"; src: url("./creative.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontHand";     src: url("./hand.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontCalli";    src: url("./calli.woff2?v=20260723b") format("woff2"); font-display: swap; }
+@font-face { font-family: "FontCartoon";  src: url("./cartoon.woff2?v=20260723b") format("woff2"); font-display: swap; }

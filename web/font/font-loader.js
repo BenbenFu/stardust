@@ -31,16 +31,10 @@
   /* ===== jsDelivr 中转 ===== */
   var USE_CDN  = (typeof location !== 'undefined' && location.search.indexOf('nocdn') === -1);
   var FONT_REF = 'main';   // 'main'(分支,缓存~12h) | 'fonts-v1'(tag,即时生效)
-  // ⚠️ 已改用版本化目录(v<VERSION>/)破 jsDelivr 分支缓存，无需 tag。
-  //    若仍想用 tag 引用：git tag fonts-v1 && git push origin fonts-v1，再把 FONT_REF 改 'fonts-v1'。
+  // ⚠️ 字体更新后建议：git tag fonts-v1 && git push origin fonts-v1，然后把上面改成 'fonts-v1'
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/BenbenFu/stardust@' + FONT_REF + '/web/font/';
 
-  var VERSION = '20260723f';
-
-  /* 版本化目录：字体落到 v<版本>/ 下。路径变了 = jsDelivr 视为新文件，
-     立即向 GitHub 拉取最新内容，绕开分支引用(~main)的 ~12h 缓存。
-     （查询参数 ?v= 不能破分支缓存，只能靠换路径。）*/
-  var FONT_DIR = 'v' + VERSION + '/';
+  var VERSION = '20260723e';
 
   /* 单次加载超时（毫秒） */
   var LOAD_TIMEOUT = 60000;
@@ -98,8 +92,8 @@
 
     /* 自适应 CDN */
     var useCdn = (USE_CDN && !_cdnDisabled);
-    var primary  = useCdn ? (CDN_BASE + FONT_DIR + file + '?v=' + VERSION) : (FONT_BASE + FONT_DIR + file + '?v=' + VERSION);
-    var fallback = useCdn ? (FONT_BASE + FONT_DIR + file + '?v=' + VERSION) : null;
+    var primary  = useCdn ? (CDN_BASE + file + '?v=' + VERSION) : (FONT_BASE + file + '?v=' + VERSION);
+    var fallback = useCdn ? (FONT_BASE + file + '?v=' + VERSION) : null;
 
     function tryLoad(url, isCdn) {
       return new Promise(function(resolve, reject) {
