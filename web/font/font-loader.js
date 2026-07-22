@@ -33,13 +33,22 @@
        发布 tag（如 'fonts-v1'），否则按分支缓存最多延迟 ~12h 生效。
      - 回退：CDN 加载失败时自动回退到本地 FONT_BASE，不会白屏。            */
   var USE_CDN  = (typeof location !== 'undefined' && location.search.indexOf('nocdn') === -1);
-  var FONT_REF = 'main';   // 'main' | 'v1.2.3'(tag) | 完整 commit SHA
+  var FONT_REF = 'main';   // 'main'(分支,缓存~12h) | 'fonts-v1'(tag,即时生效) | 完整 commit SHA
+  // ⚠️ 字体更新后建议：git tag fonts-v1 && git push origin fonts-v1，然后把上面改成 'fonts-v1'
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/BenbenFu/stardust@' + FONT_REF + '/web/font/';
 
-  var VERSION = '20260723b';
+  var VERSION = '20260723c';
 
   /* 单次加载超时（毫秒）：主源/CDN 挂起时快速回退，避免长时间白等 */
   var LOAD_TIMEOUT = 10000;
+
+  /* 全局预加载锁：防止 renderAll()/resize 等短时间内多次触发重复批量加载 */
+  var _preloadGuard = false;
+
+  /* 自适应 CDN 跳过：连续 CDN 超时/失败达到阈值后，本轮剩余字体直接走本地 */
+  var _cdnFailCount = 0;
+  var _cdnDisabled = false;
+  var CDN_FAIL_THRESHOLD = 3;  // 连续 3 次 CDN 失败后禁用
 
   /* ---- 字体清单（family 名 -> 相对路径）---- */
   var FONTS = {
@@ -56,10 +65,10 @@
 
   /* ---- 内部状态 ---- */
   var _loaded = {};   // family -> FontFace (已加载)
-  var _loading = {};  // family -> Promise (正在加载)
+  var _loading = {};  // family -> Promise (正在加载，含回退中)
 
   /**
-   * 加载单个字体（带去重缓存）
+   * 加载单个字体（带去重缓存 + CDN 自适应跳过）
    * @param {string} family - FontFace family 名称
    * @returns {Promise<FontFace>}
    */
@@ -68,7 +77,7 @@
     if (_loaded[family]) {
       return Promise.resolve(_loaded[family]);
     }
-    /* 正在加载中（防止重复请求）*/
+    /* 正在加载中（防止重复请求，含回退中）*/
     if (_loading[family]) {
       return _loading[family];
     }
@@ -78,25 +87,37 @@
       return Promise.reject(new Error('[FontLoader] 未注册字体: ' + family));
     }
 
-    var primary  = (USE_CDN ? CDN_BASE : FONT_BASE) + file + '?v=' + VERSION;
-    var fallback = (USE_CDN ? FONT_BASE : CDN_BASE) + file + '?v=' + VERSION;
+    /* 自适应 CDN：连续失败过多时直接走本地 */
+    var useCdnThisTime = (USE_CDN && !_cdnDisabled);
+    var primary  = useCdnThisTime ? (CDN_BASE + file + '?v=' + VERSION) : (FONT_BASE + file + '?v=' + VERSION);
+    var fallback = useCdnThisTime ? (FONT_BASE + file + '?v=' + VERSION) : null;
 
-    /* 带超时的单次 FontFace 加载；超时或失败都走 reject，由外层决定回退 */
-    function tryLoad(url) {
+    /* 带超时的单次 FontFace 加载 */
+    function tryLoad(url, isCdn) {
       return new Promise(function(resolve, reject) {
         var ff = new FontFace(family, 'url("' + url + '")', { display: 'swap' });
         var settled = false;
         var timer = setTimeout(function() {
           if (settled) return;
           settled = true;
+          /* CDN 超时：计数并检查是否需要禁用 CDN */
+          if (isCdn) {
+            _cdnFailCount++;
+            if (_cdnFailCount >= CDN_FAIL_THRESHOLD) {
+              _cdnDisabled = true;
+              console.warn('[FontLoader] CDN 连续失败 ' + CDN_FAIL_THRESHOLD + ' 次，本轮剩余字体直接走本地');
+            }
+          }
           console.warn('[FontLoader] 超时(' + LOAD_TIMEOUT + 'ms)放弃: ' + family + ' <- ' + url);
           reject(new Error('timeout'));
         }, LOAD_TIMEOUT);
         ff.load().then(
           function() {
-            if (settled) return;          // 已超时处理，丢弃本次结果
+            if (settled) return;
             settled = true;
             clearTimeout(timer);
+            /* CDN 成功：重置失败计数 */
+            if (isCdn) _cdnFailCount = 0;
             document.fonts.add(ff);
             resolve(ff);
           },
@@ -104,13 +125,20 @@
             if (settled) return;
             settled = true;
             clearTimeout(timer);
+            /* CDN 失败：计数 */
+            if (isCdn) {
+              _cdnFailCount++;
+              if (_cdnFailCount >= CDN_FAIL_THRESHOLD) {
+                _cdnDisabled = true;
+              }
+            }
             reject(err);
           }
         );
       });
     }
 
-    var promise = tryLoad(primary).then(
+    var promise = tryLoad(primary, useCdnThisTime).then(
       function(ff) {
         _loaded[family] = ff;
         delete _loading[family];
@@ -118,13 +146,14 @@
         return ff;
       },
       function(err) {
-        if (fallback !== primary) {
-          console.warn('[FontLoader] 主源失败，回退: ' + family, err);
-          return tryLoad(fallback).then(
+        /* 有回退地址且不是已禁用 CDN 后的直连失败 */
+        if (fallback) {
+          console.warn('[FontLoader] 主源失败，回退本地: ' + family, err.message);
+          return tryLoad(fallback, false).then(
             function(ff) {
               _loaded[family] = ff;
               delete _loading[family];
-              console.log('[FontLoader] OK(fallback): ' + family + ' <- ' + fallback);
+              console.log('[FontLoader] OK(local): ' + family);
               return ff;
             },
             function(err2) {
@@ -177,7 +206,21 @@
     getAvailable: getAvailableFonts,
     stats:      stats,
     FONTS:      FONTS,
-    _internal:  { _loaded: _loaded }  // 仅用于调试
+    _internal:  { _loaded: _loaded },  // 仅用于调试
+
+    /**
+     * 预加载锁（防重复批量加载）
+     * - preloadStart(): 返回 true 表示获得锁可以执行；false 表示已在加载中跳过
+     * - preloadDone(): 释放锁
+     */
+    preloadStart: function() { if (_preloadGuard) return false; _preloadGuard = true; return true; },
+    preloadDone:  function() { _preloadGuard = false; },
+
+    /** 重置 CDN 状态（手动切换或新会话时用） */
+    resetCdn: function() { _cdnDisabled = false; _cdnFailCount = 0; },
+
+    /** 查询 CDN 是否已被禁用 */
+    isCdnDisabled: function() { return _cdnDisabled; }
   };
 
 })(window || self);
