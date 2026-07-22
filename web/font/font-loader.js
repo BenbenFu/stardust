@@ -38,6 +38,9 @@
 
   var VERSION = '20260723b';
 
+  /* 单次加载超时（毫秒）：主源/CDN 挂起时快速回退，避免长时间白等 */
+  var LOAD_TIMEOUT = 10000;
+
   /* ---- 字体清单（family 名 -> 相对路径）---- */
   var FONTS = {
     'FontHei':      'hei.woff2',
@@ -78,31 +81,64 @@
     var primary  = (USE_CDN ? CDN_BASE : FONT_BASE) + file + '?v=' + VERSION;
     var fallback = (USE_CDN ? FONT_BASE : CDN_BASE) + file + '?v=' + VERSION;
 
-    var promise = new Promise(function(resolve, reject) {
-      function attempt(url, isFallback) {
+    /* 带超时的单次 FontFace 加载；超时或失败都走 reject，由外层决定回退 */
+    function tryLoad(url) {
+      return new Promise(function(resolve, reject) {
         var ff = new FontFace(family, 'url("' + url + '")', { display: 'swap' });
+        var settled = false;
+        var timer = setTimeout(function() {
+          if (settled) return;
+          settled = true;
+          console.warn('[FontLoader] 超时(' + LOAD_TIMEOUT + 'ms)放弃: ' + family + ' <- ' + url);
+          reject(new Error('timeout'));
+        }, LOAD_TIMEOUT);
         ff.load().then(
           function() {
+            if (settled) return;          // 已超时处理，丢弃本次结果
+            settled = true;
+            clearTimeout(timer);
             document.fonts.add(ff);
-            _loaded[family] = ff;
-            delete _loading[family];
-            console.log('[FontLoader] OK: ' + family + ' <- ' + url);
             resolve(ff);
           },
           function(err) {
-            if (!isFallback && fallback !== primary) {
-              console.warn('[FontLoader] 主源失败，回退本地: ' + family, err);
-              attempt(fallback, true);
-            } else {
-              delete _loading[family];
-              console.error('[FontLoader] FAIL: ' + family, err);
-              reject(err);
-            }
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            reject(err);
           }
         );
+      });
+    }
+
+    var promise = tryLoad(primary).then(
+      function(ff) {
+        _loaded[family] = ff;
+        delete _loading[family];
+        console.log('[FontLoader] OK: ' + family + ' <- ' + primary);
+        return ff;
+      },
+      function(err) {
+        if (fallback !== primary) {
+          console.warn('[FontLoader] 主源失败，回退: ' + family, err);
+          return tryLoad(fallback).then(
+            function(ff) {
+              _loaded[family] = ff;
+              delete _loading[family];
+              console.log('[FontLoader] OK(fallback): ' + family + ' <- ' + fallback);
+              return ff;
+            },
+            function(err2) {
+              delete _loading[family];
+              console.error('[FontLoader] FAIL: ' + family, err2);
+              throw err2;
+            }
+          );
+        }
+        delete _loading[family];
+        console.error('[FontLoader] FAIL: ' + family, err);
+        throw err;
       }
-      attempt(primary, false);
-    });
+    );
 
     _loading[family] = promise;
     return promise;
