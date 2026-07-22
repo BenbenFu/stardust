@@ -34,7 +34,7 @@
   // ⚠️ 字体更新后建议：git tag fonts-v1 && git push origin fonts-v1，然后把上面改成 'fonts-v1'
   var CDN_BASE = 'https://cdn.jsdelivr.net/gh/BenbenFu/stardust@' + FONT_REF + '/web/font/';
 
-  var VERSION = '20260723e';
+  var VERSION = '20260723g';
 
   /* 单次加载超时（毫秒） */
   var LOAD_TIMEOUT = 60000;

@@ -18,17 +18,18 @@ from fontTools.ttLib import TTFont
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 
-# 根名 -> _sources/中文子目录/regular.woff2（完整字体源，本地保留、不入库）
+# 根名 -> _sources/ 下用户提供的完整主字体（otf/ttf，本地保留、不入库）
+# 注：之前指向 _sources/<中文>/regular.woff2，但那些是旧字体；2026-07-23 起改用用户放入的新主字体。
 SRC_MAP = {
-    'hei': '_sources/黑体/regular.woff2',
-    'song': '_sources/宋体/regular.woff2',
-    'yuan': '_sources/圆体/regular.woff2',
-    'kai': '_sources/楷体/regular.woff2',
-    'mono': '_sources/等宽/regular.woff2',
-    'creative': '_sources/创意/regular.woff2',
-    'hand': '_sources/手写/regular.woff2',
-    'calli': '_sources/书法/regular.woff2',
-    'cartoon': '_sources/卡通/regular.woff2',
+    'hei':     '_sources/（黑体）得意黑.otf',
+    'song':    '_sources/（宋体）SourceHanSerifCN-Bold#1.otf',
+    'yuan':    '_sources/（圆体）maokenzhuyuanti.ttf',
+    'kai':     '_sources/（楷体）江西拙楷3.0.ttf',
+    'mono':    '_sources/（mono）NotoSansMonoCJKjp-VF.ttf',
+    'creative':'_sources/（创意）fusion-pixel.ttf',
+    'hand':    '_sources/（手写）鸿雷拙书简体.ttf',
+    'calli':   '_sources/（书法）Slidefu-Regular-2.ttf',
+    'cartoon': '_sources/（卡通）mo導taiwanゴシック.ttf',
 }
 FONT_LIST = list(SRC_MAP.keys())
 
