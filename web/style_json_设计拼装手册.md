@@ -231,7 +231,7 @@
 | floating_deco | floating_circle | css_background | — | float-1 |
 | floating_deco | scatter_dots | css_background | — | float-1,2 |
 | floating_deco | tamagotchi_label | pseudo_before（文字） | `::before` | — |
-| floating_deco | art_deco_diamond | pseudo_both（文字） | `::before`+`::after` | — |
+| floating_deco | art_deco_diamond | pseudo_both（文字） | `.card-deco-layer`::before`+`::after` | — |
 
 > 实现方式取值含义：`css_background`=用背景图层（走画布）；`pseudo_before`/`pseudo_after`/`pseudo_both`=用卡片伪元素（文字类）；`css_border`/`css_clip`=用正交属性（不抢背景也不抢伪元素）；`css_mask`=用 `mask` 镂空卡形（如 `stamp_perforation` 四边挖半圆齿孔，齿孔为透明、透出页面底色，符合邮票质感，且不与背景画布/伪元素冲突）。
 
@@ -257,26 +257,27 @@
 > 🚨 **overflow 铁律**：卡片根 `.gallery-card` 有 `overflow: hidden`。探出卡外的装饰（如旋转 45° 贴角落的丝带）会被裁掉——丝带类应锚定在**卡内**右上角（`top/right` 取正值），而非 `right:0` 配 `translate` 外推。
 
 **④ 伪元素分配表 + 兼容性矩阵（文本类装饰）**
-卡片伪元素只有 `::before` 与 `::after` 两个。文本类装饰固定占用如下，不可越界：
+文本类装饰占用情况如下（引擎为每张卡注入空层 `.card-deco-layer` 作菱形等装饰的挂载层，与卡片根伪元素解耦）：
 
 | 伪元素 | 授权给 | 用途 |
 |---|---|---|
-| `::before` | tamagotchi_label、art_deco_diamond（顶条） | 顶部文字 |
-| `::after` | corner_ribbon、art_deco_diamond（底条） | 角标丝带 / 底部文字 |
+| `.gallery-card::before` | tamagotchi_label | 顶部字样 |
+| `.gallery-card::after` | corner_ribbon | 角标丝带 |
+| `.card-deco-layer::before` / `::after` | art_deco_diamond（顶/底条） | Art Deco 菱形带 |
 
 兼容性矩阵（只列文本类互相组合；背景类与文本类天然正交，永远 ✅）：
 
-| | corner_ribbon (::after) | tamagotchi_label (::before) | art_deco_diamond (::before+::after) |
+| | corner_ribbon (::after) | tamagotchi_label (::before) | art_deco_diamond (.card-deco-layer) |
 |---|---|---|---|
-| corner_ribbon | — | ✅ 可同用 | ❌ `::after` 冲突 |
-| tamagotchi_label | ✅ | — | ❌ `::before` 冲突 |
-| art_deco_diamond | ❌ | ❌ | — |
+| corner_ribbon | — | ✅ 可同用 | ✅ 可同用 |
+| tamagotchi_label | ✅ | — | ✅ 可同用 |
+| art_deco_diamond | ✅ | ✅ | — |
 
-> 说明：每个子维度同一时刻只有一个 value（一个属性一个值），所以「同一子维度内」不会有两个装饰争抢同一伪元素。冲突只发生在「不同子维度都选了文本类装饰」这一种情况——即上表三种 ❌。设计卡时避开即可；若需要菱形+丝带同卡，请把丝带改用背景类方案（如新增一个 `css_background` 的角标装饰）。
+> 说明：菱形原本挂在 `.gallery-card::before/::after` 上，与丝带（`::after`）/标签（`::before`）争用同一伪元素，导致「菱形+丝带」同卡时互相覆盖（丝带被撑大、菱形消失）。已改为挂在引擎注入的专属层 `.card-deco-layer` 的伪元素上，与 `.gallery-card` 的 `::before/::after` 彻底解耦——三种文本类装饰现在可自由两两共存。
 
 **⑤ 安全上限（经验值）**
 - 背景类装饰（corner/bg/edge/float 中走画布的部分）：**数量不限**，可全开。
-- 文本类装饰（corner_ribbon / tamagotchi_label / art_deco_diamond）：受限于 2 个伪元素，按 ④ 矩阵最多同开 2 个（且 art_deco_diamond 独占双伪元素时只可 1 个）。
+- 文本类装饰（corner_ribbon / tamagotchi_label / art_deco_diamond）：丝带与标签共用 `.gallery-card` 的 `::after`/`::before`（各占其一），菱形独占 `.card-deco-layer` 的 `::before`/`::after`。三者互不争用，可同时开启 3 个文本类装饰。
 - 单卡装饰总数建议 ≤ 5（指 corner/bg/edge/float 四类 + 文本装饰合计）；结构性装饰 header_deco/side_accent/divider 不计入此上限。旧版谜语卡 8+ 装饰崩溃的根因是伪元素/背景互相覆盖，新架构已解除背景类瓶颈，唯一硬约束就是上面的伪元素 2 槽。
 
 **⑥ 标准入库写法（CSS 规范）**
@@ -366,16 +367,18 @@
 **引擎行为**（`style-engine.js` 的 `renderStyleJson` / `buildDataAttrs`）：
 - 角标 / 浮动：把锚点翻译成 inline CSS 变量挂到 `.gallery-card` 根——`--el-{corner|float}-anchor-pos`（background-position 串）、`--el-{subdim}-pos-top/right/bottom/left`、`--el-{subdim}-pos-tf`（居中补偿 transform）。
 - 边缘（clip）：发射 `data-style-element-edge-anchor="<corner>"` 属性（仅四角）。
-- 角标（方向性）：`page_fold` 翻角发射 `data-style-element-corner-anchor="<anchor>"` 属性（仅四角有意义；四边居中回落原生），模板用属性选择器切 `--pf-angle` 翻转渐变。
+- 角标：`data-style-element-corner-anchor="<anchor>"` 属性由引擎按 `corner_badge_pos` 发射（8 锚点皆可）。`page_fold` 翻角用它切 `--pf-angle` 翻转渐变（仅四角有意义，四边居中回落原生）；`corner_ribbon` 丝带用它切「角落 45° 对角 / 四边垂直」朝向（四边居中有意义）。
 
 **模板消费写法（三类）**：
 - 背景型（circle_stamp / dot_status / floating_circle / scatter_dots）：位置变量改写为 `var()` 兜底——
   `--el-corner-pos-1: var(--el-corner-anchor-pos, top 6px right 6px);`
-- 伪元素型（corner_ribbon ::after / tamagotchi_label ::before）：`top/right/bottom/left/transform` 全部走变量，原生兜底；丝带自带 `rotate(45deg)` 固有旋转，居中锚点会注入 `translateX(-50%)` 叠加后仍保持旋转——
+- 伪元素型（corner_ribbon ::after / tamagotchi_label ::before）：`top/right/bottom/left/transform` 全部走变量，原生兜底。
+  **朝向规则（丝带）**：角落（四角锚点）= 45° 对角丝带（经典角标）；四边居中 = 垂直于所在边——顶/底边→竖丝带 `rotate(90deg)`、左/右边→横丝带 `rotate(0deg)`。用 `data-style-element-corner-anchor` 四边属性选择器切这三档旋转，四角锚点走默认 45°。
+  **⚠️ transform 兜底陷阱**：`--el-corner-pos-tf` 兜底必须是合法值 `translate(0,0)`，**绝不可写 `none`**——`transform` 列表里混入 `none` 会使整条声明失效（角落丝带因此变水平）。引擎四角锚点已发 `translate(0,0)`，居中锚点发 `translateX/Y(-50%)`。
   ```css
   top: var(--el-corner-pos-top, 12px); right: var(--el-corner-pos-right, 12px);
   bottom: var(--el-corner-pos-bottom, auto); left: var(--el-corner-pos-left, auto);
-  transform: var(--el-corner-pos-tf, none) rotate(45deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(45deg);
   ```
 - clip 型（notched_corner）：用 `data-style-element-edge-anchor` 属性选择器枚举四角 clip-path 变体（默认无属性 = 右上切角）。
 

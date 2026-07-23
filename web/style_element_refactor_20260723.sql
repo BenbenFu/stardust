@@ -108,12 +108,21 @@ UPDATE style_element_options SET css_template = '
   right: var(--el-corner-pos-right, 12px);
   bottom: var(--el-corner-pos-bottom, auto);
   left: var(--el-corner-pos-left, auto);
-  transform: var(--el-corner-pos-tf, none) rotate(45deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(45deg);
   background: var(--card-accent, #888); color: var(--card-bg, #fff);
   font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
   padding: 2px 10px;
   transform-origin: center; pointer-events: none; z-index: 4;
   border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+/* 四边居中：垂直于所在边（顶/底边=竖丝带 90°；左/右边=横丝带 0°）；角落保持 45° 对角（上方默认规则） */
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="top-center"]::after,
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="bottom-center"]::after {
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(90deg);
+}
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="left-center"]::after,
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="right-center"]::after {
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(0deg);
 }' WHERE id = 20;
 UPDATE style_element_options SET css_template = '.gallery-card[data-style-element-bg="dot_grid"] {
   --el-bg-1: radial-gradient(circle, var(--card-muted, #ccc) 1px, transparent 1.6px);
@@ -410,20 +419,20 @@ UPDATE style_element_options SET css_template = '
   font-family: monospace; pointer-events: none; z-index: 4;
 }' WHERE id = 37;
 UPDATE style_element_options SET css_template = '
-.gallery-card[data-style-element-float="art_deco_diamond"]::before {
+.gallery-card[data-style-element-float="art_deco_diamond"] .card-deco-layer::before {
   content: "\25C6 \25C7 \25C6 \25C7 \25C6";
   position: absolute; top: 0; left: 0; right: 0; text-align: center;
   font-size: 8px; letter-spacing: 4px; color: var(--card-accent, #888);
   padding: 4px 0; border-top: 1px solid var(--card-accent, #888);
   border-bottom: 1px solid var(--card-accent, #888);
-  pointer-events: none; z-index: 3; box-sizing: border-box;
+  pointer-events: none; box-sizing: border-box;
 }
-.gallery-card[data-style-element-float="art_deco_diamond"]::after {
+.gallery-card[data-style-element-float="art_deco_diamond"] .card-deco-layer::after {
   content: "\25C6 \25C7 \25C6 \25C7 \25C6";
   position: absolute; bottom: 0; left: 0; right: 0; text-align: center;
   font-size: 8px; letter-spacing: 4px; color: var(--card-accent, #888);
   padding: 4px 0; border-top: 1px solid var(--card-accent, #888);
-  pointer-events: none; z-index: 3; box-sizing: border-box;
+  pointer-events: none; box-sizing: border-box;
 }' WHERE id = 36;
 
 -- 校验：SELECT id, sub_dim, value FROM style_element_options WHERE id IN (18, 19, 20, 21, 23, 24, 25, 26, 27, 29, 30, 31, 32, 34, 35, 36, 37) ORDER BY id;

@@ -7,7 +7,8 @@
 核心机制：
   - 背景类装饰（角标/背景纹/边缘/浮动）只写各自的 --el-* 槽位变量，
     主合成块(14 槽)在每个背景元素里完全一致 → CSS 变量跨规则解析天然叠加，互不覆盖。
-  - 文本类装饰（corner_ribbon / tamagotchi_label / art_deco_diamond）走专属伪元素，固定分配。
+  - 文本类装饰：corner_ribbon / tamagotchi_label 走 .gallery-card 专属伪元素；art_deco_diamond 走引擎注入的
+    .card-deco-layer 伪元素（与前者解耦，避免同卡叠加时争用同一 ::before/::after 互相覆盖）。
   - box/clip 类（stamp_perforation / notched_corner）正交，零冲突。
 """
 
@@ -77,11 +78,14 @@ E_dot_status = bg("corner", "dot_status", """  --el-corner-1: radial-gradient(ci
   --el-corner-pos-1: var(--el-corner-anchor-pos, top 6px right 6px);
   --el-corner-rep-1: no-repeat;""")
 
-# corner_ribbon —— 文本类，走 ::after（不写背景）
+# corner_ribbon —— 文本类，走 .gallery-card::after（不写背景）
 # 注意：① 选择器必须带前导 . ；② content 用固定字面量（两参 attr() 在 content 上不被支持，引擎也未发射该属性）
 #      ③ 卡片根 overflow:hidden 会裁掉探出角落的丝带，故锚定在卡内右上角(完全可见)
-#      ④ 位置走引擎发射的 --el-corner-pos-* 变量（8 锚点），原生兜底 = 右上角 12px；rotate(45deg) 为其固有设计，
-#         引擎居中锚点(如 top-center)会注入 translateX(-50%) 作 --el-corner-pos-tf，叠加后仍保持旋转丝带。
+#      ④ 位置走引擎发射的 --el-corner-pos-* 变量（8 锚点），原生兜底 = 右上角 12px。
+#      ⑤ 朝向：角落(四角锚点) = 45° 对角丝带（经典角标）；四边居中 = 垂直于所在边
+#         （顶/底边 → 竖丝带 rotate(90deg)；左/右边 → 横丝带 rotate(0deg)）。
+#      ⑥ 关键修复：--el-corner-pos-tf 兜底必须是合法值 translate(0,0) 而非 none——
+#         transform 列表中混入 none 会使整条声明失效（角落丝带因此变水平）。引擎四角锚点已改为 translate(0,0)。
 E_corner_ribbon = """
 .gallery-card[data-style-element-corner="corner_ribbon"]::after {
   content: "NEW";
@@ -90,12 +94,21 @@ E_corner_ribbon = """
   right: var(--el-corner-pos-right, 12px);
   bottom: var(--el-corner-pos-bottom, auto);
   left: var(--el-corner-pos-left, auto);
-  transform: var(--el-corner-pos-tf, none) rotate(45deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(45deg);
   background: var(--card-accent, #888); color: var(--card-bg, #fff);
   font-size: 8px; font-weight: 700; letter-spacing: 0.1em;
   padding: 2px 10px;
   transform-origin: center; pointer-events: none; z-index: 4;
   border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+}
+/* 四边居中：垂直于所在边（顶/底边=竖丝带 90°；左/右边=横丝带 0°）；角落保持 45° 对角（上方默认规则） */
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="top-center"]::after,
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="bottom-center"]::after {
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(90deg);
+}
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="left-center"]::after,
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="right-center"]::after {
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(0deg);
 }"""
 
 # ====== 背景纹 bg (attr=bg) ======
@@ -210,22 +223,25 @@ E_tamagotchi_label = """
   font-family: monospace; pointer-events: none; z-index: 4;
 }"""
 
-# art_deco_diamond —— 文本类 ::before + ::after（不写背景）
+# art_deco_diamond —— 文本类，走 .card-deco-layer 的 ::before + ::after（不写背景）
+# 关键修复：原直接挂在 .gallery-card::before/::after，会与 corner_ribbon(::after)、tamagotchi_label(::before)
+# 争用同一伪元素 → 同卡叠加时相互覆盖（丝带变大、菱形消失）。引擎已为每张卡注入空层 .card-deco-layer，
+# 菱形改挂该层伪元素，与 .gallery-card 的 ::before/::after 彻底解耦，可自由与丝带/标签共存。
 E_art_deco_diamond = """
-.gallery-card[data-style-element-float="art_deco_diamond"]::before {
+.gallery-card[data-style-element-float="art_deco_diamond"] .card-deco-layer::before {
   content: "\\25C6 \\25C7 \\25C6 \\25C7 \\25C6";
   position: absolute; top: 0; left: 0; right: 0; text-align: center;
   font-size: 8px; letter-spacing: 4px; color: var(--card-accent, #888);
   padding: 4px 0; border-top: 1px solid var(--card-accent, #888);
   border-bottom: 1px solid var(--card-accent, #888);
-  pointer-events: none; z-index: 3; box-sizing: border-box;
+  pointer-events: none; box-sizing: border-box;
 }
-.gallery-card[data-style-element-float="art_deco_diamond"]::after {
+.gallery-card[data-style-element-float="art_deco_diamond"] .card-deco-layer::after {
   content: "\\25C6 \\25C7 \\25C6 \\25C7 \\25C6";
   position: absolute; bottom: 0; left: 0; right: 0; text-align: center;
   font-size: 8px; letter-spacing: 4px; color: var(--card-accent, #888);
   padding: 4px 0; border-top: 1px solid var(--card-accent, #888);
-  pointer-events: none; z-index: 3; box-sizing: border-box;
+  pointer-events: none; box-sizing: border-box;
 }"""
 
 # ====== 汇总：id -> 新 css_template ======
@@ -301,9 +317,11 @@ h1 { font-size:18px; } h2 { font-size:14px; margin-top:28px; color:#555; }
 .card-title { font-weight:600; font-size:18px; color:var(--card-text); }
 .card-date { color:var(--card-muted); font-size:11px; }
 .card-highlights { font-size:12px; color:var(--card-text); opacity:.85; }
+/* 装饰图层（与 style-engine BASE_CSS 对齐）：菱形等文本装饰挂载层 */
+.card-deco-layer { position:absolute; inset:0; pointer-events:none; z-index:3; }
 
 /* ===== 重构后的 element CSS（与 SQL 完全一致） ===== */
-%s
+/*__ELEMENT_CSS_PLACEHOLDER__*/
 </style>
 </head>
 <body>
@@ -329,7 +347,7 @@ h1 { font-size:18px; } h2 { font-size:14px; margin-top:28px; color:#555; }
 <div class="grid">
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb" data-style-element-corner="corner_ribbon" data-style-element-bg="fine_grid"><div class="card-content"><div class="card-title">特惠卡</div><div class="card-highlights">丝带(::after) + 精细方格背景</div></div></div><div class="cap">corner=corner_ribbon ::after + bg=fine_grid</div></div>
   <div><div class="gallery-card" style="--card-bg:#1a1a2e;--card-text:#eee;--card-accent:#ffcf3f;--card-muted:#888" data-style-element-float="tamagotchi_label" data-style-element-bg="terminal_scanlines"><div class="card-content"><div class="card-title">复古终端</div><div class="card-highlights">TAMAGOTCHI(::before) + 扫描线</div></div></div><div class="cap">float=tamagotchi_label ::before + bg=terminal_scanlines</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff8f0;--card-text:#333;--card-accent:#a0522d;--card-muted:#d3b8a0" data-style-element-float="art_deco_diamond" data-style-element-edge="stamp_perforation"><div class="card-content"><div class="card-title">Art Deco</div><div class="card-highlights">菱形(::before+::after) + 邮票齿孔</div></div></div><div class="cap">float=art_deco_diamond 双伪元素 + edge=stamp_perforation</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff8f0;--card-text:#333;--card-accent:#a0522d;--card-muted:#d3b8a0" data-style-element-float="art_deco_diamond" data-style-element-edge="stamp_perforation"><div class="card-deco-layer"></div><div class="card-content"><div class="card-title">Art Deco</div><div class="card-highlights">菱形(.card-deco-layer 伪元素) + 邮票齿孔</div></div></div><div class="cap">float=art_deco_diamond（.card-deco-layer::before+::after）+ edge=stamp_perforation</div></div>
 </div>
 
 <h2>D. 边缘类正交（clip / outline 不抢背景与伪元素）</h2>
@@ -341,9 +359,9 @@ h1 { font-size:18px; } h2 { font-size:14px; margin-top:28px; color:#555; }
 <p style="font-size:12px;color:#777">下面 4 张卡都是 <b>同一个 corner_ribbon</b>，仅靠引擎注入的 --el-corner-* 位置变量切换到四角；切角卡演示 data-style-element-edge-anchor 切到左下角。</p>
 <div class="grid">
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·右上(原生)</div></div></div><div class="cap">corner=corner_ribbon（无变量，原生右上）</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 12px; --el-corner-pos-top:12px; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:none" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·左上</div></div></div><div class="cap">corner=corner_ribbon（注入左上变量）</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 12px; --el-corner-pos-bottom:12px; --el-corner-pos-left:12px; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:none" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·左下</div></div></div><div class="cap">corner=corner_ribbon（注入左下变量）</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px right 12px; --el-corner-pos-bottom:12px; --el-corner-pos-right:12px; --el-corner-pos-top:auto; --el-corner-pos-left:auto; --el-corner-pos-tf:none" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·右下</div></div></div><div class="cap">corner=corner_ribbon（注入右下变量）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 12px; --el-corner-pos-top:12px; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·左上</div></div></div><div class="cap">corner=corner_ribbon（注入左上变量）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 12px; --el-corner-pos-bottom:12px; --el-corner-pos-left:12px; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·左下</div></div></div><div class="cap">corner=corner_ribbon（注入左下变量）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px right 12px; --el-corner-pos-bottom:12px; --el-corner-pos-right:12px; --el-corner-pos-top:auto; --el-corner-pos-left:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·右下</div></div></div><div class="cap">corner=corner_ribbon（注入右下变量）</div></div>
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-edge="notched_corner" data-style-element-edge-anchor="bottom-left"><div class="card-content"><div class="card-title">切角·左下</div><div class="card-highlights">data-style-element-edge-anchor=bottom-left</div></div></div><div class="cap">edge=notched_corner（锚点切到左下角）</div></div>
 </div>
 
@@ -355,9 +373,22 @@ h1 { font-size:18px; } h2 { font-size:14px; margin-top:28px; color:#555; }
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="bottom-left"><div class="card-content"><div class="card-title">翻角·左下</div></div></div><div class="cap">corner=page_fold anchor=bottom-left 45deg</div></div>
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="bottom-right"><div class="card-content"><div class="card-title">翻角·右下</div></div></div><div class="cap">corner=page_fold anchor=bottom-right 135deg</div></div>
 </div>
+
+<h2>G. 丝带朝向 + 菱形共存修复</h2>
+<p style="font-size:12px;color:#777">角落=45° 对角丝带；四边居中=垂直于所在边（顶/底边→竖丝带 90°、左/右边→横丝带 0°）。下方最后一张同时挂 corner_ribbon + art_deco_diamond，验证菱形不再消失、丝带不再被撑大。</p>
+<div class="grid">
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 50%; --el-corner-pos-top:12px; --el-corner-pos-left:50%; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateX(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-center"><div class="card-content"><div class="card-title">丝带·顶边(垂直)</div></div></div><div class="cap">corner_ribbon anchor=top-center → 竖丝带 90°</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 50% right 12px; --el-corner-pos-top:50%; --el-corner-pos-right:12px; --el-corner-pos-left:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateY(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="right-center"><div class="card-content"><div class="card-title">丝带·右边(水平)</div></div></div><div class="cap">corner_ribbon anchor=right-center → 横丝带 0°</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 50%; --el-corner-pos-bottom:12px; --el-corner-pos-left:50%; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:translateX(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="bottom-center"><div class="card-content"><div class="card-title">丝带·底边(垂直)</div></div></div><div class="cap">corner_ribbon anchor=bottom-center → 竖丝带 90°</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 50% left 12px; --el-corner-pos-top:50%; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateY(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="left-center"><div class="card-content"><div class="card-title">丝带·左边(水平)</div></div></div><div class="cap">corner_ribbon anchor=left-center → 横丝带 0°</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff8f0;--card-text:#333;--card-accent:#a0522d;--card-muted:#d3b8a0; --el-corner-anchor-pos: top 12px right 12px; --el-corner-pos-top:12px; --el-corner-pos-right:12px; --el-corner-pos-left:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-right" data-style-element-float="art_deco_diamond"><div class="card-deco-layer"></div><div class="card-content"><div class="card-title">丝带 + 菱形</div><div class="card-highlights">corner_ribbon::after + 菱形(.card-deco-layer 双伪元素)</div></div></div><div class="cap">同卡挂 corner_ribbon + art_deco_diamond，二者互不覆盖</div></div>
+</div>
+
 </body>
 </html>
-""" % ELEMENT_CSS
+"""
+
+html = html.replace("/*__ELEMENT_CSS_PLACEHOLDER__*/", ELEMENT_CSS)
 
 with open("element_compat_test.html", "w", encoding="utf-8") as f:
     f.write(html)

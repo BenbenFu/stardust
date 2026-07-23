@@ -36,6 +36,9 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
    density 完全不被色条吞掉。色条本身满边/通长，覆盖 density-pad 区域。 */
 .card-content { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; flex-direction: column;
   padding: var(--density-pad, 12px); position: relative; }
+/* 装饰图层：文本类装饰（菱形等）的伪元素挂载层。与 .gallery-card 的 ::before/::after（丝带/标签用）分离，
+   避免同一卡片上「菱形 + 丝带」或「菱形 + 标签」争用同一伪元素导致相互覆盖/消失。 */
+.card-deco-layer { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
 .card-content--slots { display: grid; gap: var(--spacing-sm, var(--layout-gap, 8px));
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
   /* 行内对齐（表格对齐级）：写在容器上，被各字段继承；字段级可单独覆盖。
@@ -222,13 +225,13 @@ const ATTR_MAP = {
 //   故移动后装饰离角统一为 12px（方向随锚点翻转），原生（未选锚点）时沿用模板自身兜底位置。
 // ============================================================
 const ANCHOR = {
-  'top-left':     { bg:'top 12px left 12px',     t:'12px', r:'auto', b:'auto', l:'12px', tf:'none' },
+  'top-left':     { bg:'top 12px left 12px',     t:'12px', r:'auto', b:'auto', l:'12px', tf:'translate(0,0)' },
   'top-center':   { bg:'top 12px left 50%',      t:'12px', r:'auto', b:'auto', l:'50%',  tf:'translateX(-50%)' },
-  'top-right':    { bg:'top 12px right 12px',    t:'12px', r:'12px', b:'auto', l:'auto',  tf:'none' },
+  'top-right':    { bg:'top 12px right 12px',    t:'12px', r:'12px', b:'auto', l:'auto',  tf:'translate(0,0)' },
   'right-center': { bg:'top 50% right 12px',     t:'50%',  r:'12px', b:'auto', l:'auto',  tf:'translateY(-50%)' },
-  'bottom-right': { bg:'bottom 12px right 12px', t:'auto', r:'12px', b:'12px', l:'auto',  tf:'none' },
+  'bottom-right': { bg:'bottom 12px right 12px', t:'auto', r:'12px', b:'12px', l:'auto',  tf:'translate(0,0)' },
   'bottom-center':{ bg:'bottom 12px left 50%',   t:'auto', r:'auto', b:'12px', l:'50%',   tf:'translateX(-50%)' },
-  'bottom-left':  { bg:'bottom 12px left 12px',  t:'auto', r:'auto', b:'12px', l:'12px',  tf:'none' },
+  'bottom-left':  { bg:'bottom 12px left 12px',  t:'auto', r:'auto', b:'12px', l:'12px',  tf:'translate(0,0)' },
   'left-center':  { bg:'top 50% left 12px',      t:'50%',  r:'auto', b:'auto', l:'12px',  tf:'translateY(-50%)' },
 };
 // 边缘位置锚点只取四角（仅 notched_corner 这类"切哪个角"的 clip 型有意义；整周/整框型忽略）
@@ -578,9 +581,9 @@ function buildDataAttrs(styleJson) {
   if (edgePos && EDGE_ANCHOR_CORNERS.includes(edgePos)) {
     attrs['data-style-element-edge-anchor'] = escapeAttr(edgePos);
   }
-  // 角标装饰位置锚点（仅 page_fold 这类方向性 dog-ear 需要翻角，用属性选择器切渐变角度）：
-  // 引擎发射 data-style-element-corner-anchor="<anchor>"，DB 模板据此切换四角渐变。
-  // 其余角标(丝带/圆印/点状)走 inline CSS 变量(见 renderStyleJson 的 emitAnchorVars)，属性选择器对其无效、无害。
+  // 角标装饰位置锚点：引擎发射 data-style-element-corner-anchor="<anchor>"。
+  // 方向性 dog-ear(page_fold) 用属性选择器切渐变角度；丝带(corner_ribbon) 用其切换角落45°对角 / 四边垂直朝向。
+  // 其余角标(圆印/点状)走 inline CSS 变量(见 renderStyleJson 的 emitAnchorVars)，属性选择器对其无效、无害。
   const cornerPos = elCfg0.corner_badge_pos;
   if (cornerPos && ANCHOR[cornerPos]) {
     attrs['data-style-element-corner-anchor'] = escapeAttr(cornerPos);
@@ -1098,6 +1101,8 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     }
   }
   html += cardInner;
+  // 装饰图层：始终挂载空层，供菱形等文本装饰的伪元素落位（与 .gallery-card 的 ::before/::after 解耦）
+  html += '<div class="card-deco-layer"></div>';
 
   html += '</a>';
   return html;
