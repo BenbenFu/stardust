@@ -872,7 +872,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260723b';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260723c';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -2125,7 +2125,8 @@ Object.values(DIMS).forEach(el => {
 });
 
 // 装饰条粗细/位置控件不参与 DIM_CONFIG 的 DB 下拉，单独绑定
-['d-header-width', 'd-side-width', 'd-side-position', 'd-band-inset', 'd-box-radius', 'd-box-gap', 'd-avatar-pos'].forEach(id => {
+['d-header-width', 'd-side-width', 'd-side-position', 'd-band-inset', 'd-box-radius', 'd-box-gap', 'd-avatar-pos',
+ 'd-corner-badge-pos', 'd-edge-deco-pos', 'd-floating-deco-pos'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', debouncedUpdate); el.addEventListener('change', debouncedUpdate); }
 });

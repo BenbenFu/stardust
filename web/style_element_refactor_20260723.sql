@@ -32,11 +32,12 @@ UPDATE style_element_options SET css_template = '.gallery-card[data-style-elemen
     var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
 }' WHERE id = 18;
 UPDATE style_element_options SET css_template = '.gallery-card[data-style-element-corner="page_fold"] {
-  --el-corner-1: linear-gradient(225deg, var(--card-muted, #ccc) 0 18px, transparent 18px);
+  --pf-angle: 225deg;
+  --el-corner-1: linear-gradient(var(--pf-angle), var(--card-muted, #ccc) 0 18px, transparent 18px);
   --el-corner-size-1: 18px 18px;
   --el-corner-pos-1: top right;
   --el-corner-rep-1: no-repeat;
-  --el-corner-2: linear-gradient(225deg, transparent 0 16px, var(--card-text, #222) 16px 18px, transparent 18px);
+  --el-corner-2: linear-gradient(var(--pf-angle), transparent 0 16px, var(--card-text, #222) 16px 18px, transparent 18px);
   --el-corner-size-2: 18px 18px;
   --el-corner-pos-2: top right;
   --el-corner-rep-2: no-repeat;
@@ -61,6 +62,16 @@ UPDATE style_element_options SET css_template = '.gallery-card[data-style-elemen
     var(--el-edge-rep-1, no-repeat), var(--el-edge-rep-2, no-repeat), var(--el-edge-rep-3, no-repeat), var(--el-edge-rep-4, no-repeat),
     var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat),
     var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
+}
+
+.gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="top-left"] {
+  --pf-angle: 315deg; --el-corner-pos-1: top left; --el-corner-pos-2: top left;
+}
+.gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-left"] {
+  --pf-angle: 45deg; --el-corner-pos-1: bottom left; --el-corner-pos-2: bottom left;
+}
+.gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-right"] {
+  --pf-angle: 135deg; --el-corner-pos-1: bottom right; --el-corner-pos-2: bottom right;
 }' WHERE id = 19;
 UPDATE style_element_options SET css_template = '.gallery-card[data-style-element-corner="dot_status"] {
   --el-corner-1: radial-gradient(circle, var(--card-bg, #fff) 0 3px, var(--card-accent, #888) 3px 5px, transparent 5px);

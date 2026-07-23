@@ -366,6 +366,7 @@
 **引擎行为**（`style-engine.js` 的 `renderStyleJson` / `buildDataAttrs`）：
 - 角标 / 浮动：把锚点翻译成 inline CSS 变量挂到 `.gallery-card` 根——`--el-{corner|float}-anchor-pos`（background-position 串）、`--el-{subdim}-pos-top/right/bottom/left`、`--el-{subdim}-pos-tf`（居中补偿 transform）。
 - 边缘（clip）：发射 `data-style-element-edge-anchor="<corner>"` 属性（仅四角）。
+- 角标（方向性）：`page_fold` 翻角发射 `data-style-element-corner-anchor="<anchor>"` 属性（仅四角有意义；四边居中回落原生），模板用属性选择器切 `--pf-angle` 翻转渐变。
 
 **模板消费写法（三类）**：
 - 背景型（circle_stamp / dot_status / floating_circle / scatter_dots）：位置变量改写为 `var()` 兜底——
@@ -380,7 +381,7 @@
 
 **偏移量「设计期固定」**：引擎只决定锚点（贴哪角），离角多远由各模板的 `var()` 兜底值决定（移动后统一 12px，方向随锚点翻转）。若某装饰要不同的离角距离，改它自己的模板兜底值即可——无需引擎改动，也无需运行时滑块。
 
-**原生锁**：`page_fold`（dog-ear 翻角，方向性元素，移到对角需翻转渐变角度）与 `art_deco_diamond`（顶/底满宽条带）不参与位置切换，保持原生。
+**原生锁 / 方向性元素**：`art_deco_diamond`（顶/底满宽条带，无「角」概念）不参与位置切换，保持原生。`page_fold`（dog-ear 翻角）是方向性元素——移到对角需翻转渐变角度，故**不走通用位置变量**，而用专属的 `data-style-element-corner-anchor` 四角属性选择器（渐变角度抽成 `--pf-angle` 变量，top-left=315deg / bottom-left=45deg / bottom-right=135deg，原生无 anchor=右上 225deg）。翻角只能贴角，四边居中锚点对其无意义、回落原生。
 
 **前端**：capsule-preview 在角标 / 边缘 / 浮动三处各提供一个「位置」下拉（角标+浮动 8 锚点，边缘 4 角）。
 

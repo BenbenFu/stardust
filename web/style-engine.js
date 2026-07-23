@@ -578,6 +578,13 @@ function buildDataAttrs(styleJson) {
   if (edgePos && EDGE_ANCHOR_CORNERS.includes(edgePos)) {
     attrs['data-style-element-edge-anchor'] = escapeAttr(edgePos);
   }
+  // 角标装饰位置锚点（仅 page_fold 这类方向性 dog-ear 需要翻角，用属性选择器切渐变角度）：
+  // 引擎发射 data-style-element-corner-anchor="<anchor>"，DB 模板据此切换四角渐变。
+  // 其余角标(丝带/圆印/点状)走 inline CSS 变量(见 renderStyleJson 的 emitAnchorVars)，属性选择器对其无效、无害。
+  const cornerPos = elCfg0.corner_badge_pos;
+  if (cornerPos && ANCHOR[cornerPos]) {
+    attrs['data-style-element-corner-anchor'] = escapeAttr(cornerPos);
+  }
 
   const parts = Object.entries(attrs).map(([k, v]) => k + '="' + v + '"');
   return parts.length ? ' ' + parts.join(' ') : '';

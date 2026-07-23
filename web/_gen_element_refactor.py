@@ -49,14 +49,28 @@ E_circle_stamp = bg("corner", "circle_stamp", """  --el-corner-1: radial-gradien
 
 # page_fold —— 经典 dog-ear（翻起的页角 + 折痕阴影），走角标 corner-1,2 双槽
 # corner-1 = 翻角页背(muted 三角)；corner-2 = 沿折痕的深色细线(crease shadow)
-E_page_fold = bg("corner", "page_fold", """  --el-corner-1: linear-gradient(225deg, var(--card-muted, #ccc) 0 18px, transparent 18px);
+# 翻转：渐变角度抽成 --pf-angle 变量，配合 data-style-element-corner-anchor 四角属性选择器；
+#   原生(无 anchor)=右上 225deg；top-left=315deg / bottom-left=45deg / bottom-right=135deg（角度随角翻转）。
+#   不用居中锚点（翻角只能贴角，居中无意义，会回落原生）。
+E_page_fold = bg("corner", "page_fold", """  --pf-angle: 225deg;
+  --el-corner-1: linear-gradient(var(--pf-angle), var(--card-muted, #ccc) 0 18px, transparent 18px);
   --el-corner-size-1: 18px 18px;
   --el-corner-pos-1: top right;
   --el-corner-rep-1: no-repeat;
-  --el-corner-2: linear-gradient(225deg, transparent 0 16px, var(--card-text, #222) 16px 18px, transparent 18px);
+  --el-corner-2: linear-gradient(var(--pf-angle), transparent 0 16px, var(--card-text, #222) 16px 18px, transparent 18px);
   --el-corner-size-2: 18px 18px;
   --el-corner-pos-2: top right;
-  --el-corner-rep-2: no-repeat;""")
+  --el-corner-rep-2: no-repeat;""") + """
+
+.gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="top-left"] {
+  --pf-angle: 315deg; --el-corner-pos-1: top left; --el-corner-pos-2: top left;
+}
+.gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-left"] {
+  --pf-angle: 45deg; --el-corner-pos-1: bottom left; --el-corner-pos-2: bottom left;
+}
+.gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-right"] {
+  --pf-angle: 135deg; --el-corner-pos-1: bottom right; --el-corner-pos-2: bottom right;
+}"""
 
 E_dot_status = bg("corner", "dot_status", """  --el-corner-1: radial-gradient(circle, var(--card-bg, #fff) 0 3px, var(--card-accent, #888) 3px 5px, transparent 5px);
   --el-corner-size-1: 11px 11px;
@@ -331,6 +345,15 @@ h1 { font-size:18px; } h2 { font-size:14px; margin-top:28px; color:#555; }
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 12px; --el-corner-pos-bottom:12px; --el-corner-pos-left:12px; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:none" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·左下</div></div></div><div class="cap">corner=corner_ribbon（注入左下变量）</div></div>
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px right 12px; --el-corner-pos-bottom:12px; --el-corner-pos-right:12px; --el-corner-pos-top:auto; --el-corner-pos-left:auto; --el-corner-pos-tf:none" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·右下</div></div></div><div class="cap">corner=corner_ribbon（注入右下变量）</div></div>
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-edge="notched_corner" data-style-element-edge-anchor="bottom-left"><div class="card-content"><div class="card-title">切角·左下</div><div class="card-highlights">data-style-element-edge-anchor=bottom-left</div></div></div><div class="cap">edge=notched_corner（锚点切到左下角）</div></div>
+</div>
+
+<h2>F. 翻角 page_fold 四角翻转（data-style-element-corner-anchor）</h2>
+<p style="font-size:12px;color:#777">翻角是方向性 dog-ear，移到对角需翻转渐变角度；这里用四角属性选择器实现，原生(无 anchor)=右上。翻角只能贴角，居中锚点会回落原生。</p>
+<div class="grid">
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold"><div class="card-content"><div class="card-title">翻角·右上(原生)</div></div></div><div class="cap">corner=page_fold（无 anchor）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="top-left"><div class="card-content"><div class="card-title">翻角·左上</div></div></div><div class="cap">corner=page_fold anchor=top-left 315deg</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="bottom-left"><div class="card-content"><div class="card-title">翻角·左下</div></div></div><div class="cap">corner=page_fold anchor=bottom-left 45deg</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="bottom-right"><div class="card-content"><div class="card-title">翻角·右下</div></div></div><div class="cap">corner=page_fold anchor=bottom-right 135deg</div></div>
 </div>
 </body>
 </html>
