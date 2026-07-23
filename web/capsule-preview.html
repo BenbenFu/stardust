@@ -516,6 +516,20 @@
                         <select id="d-corner-badge"></select>
                     </div>
                 </div>
+                <div class="dim-row">
+                    <label>Corner Position 角标位置</label>
+                    <select id="d-corner-badge-pos">
+                        <option value="native">native 原生(右上)</option>
+                        <option value="top-left">top-left 左上</option>
+                        <option value="top-center">top-center 上中</option>
+                        <option value="top-right">top-right 右上</option>
+                        <option value="right-center">right-center 右中</option>
+                        <option value="bottom-right">bottom-right 右下</option>
+                        <option value="bottom-center">bottom-center 下中</option>
+                        <option value="bottom-left">bottom-left 左下</option>
+                        <option value="left-center">left-center 左中</option>
+                    </select>
+                </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
                         <label>BG Pattern 背景纹</label>
@@ -527,8 +541,31 @@
                     </div>
                 </div>
                 <div class="dim-row">
+                    <label>Edge Position 边缘位置(切角)</label>
+                    <select id="d-edge-deco-pos">
+                        <option value="native">native 原生(右上切角)</option>
+                        <option value="top-left">top-left 左上切角</option>
+                        <option value="bottom-left">bottom-left 左下切角</option>
+                        <option value="bottom-right">bottom-right 右下切角</option>
+                    </select>
+                </div>
+                <div class="dim-row">
                     <label>Floating Deco 浮动</label>
                     <select id="d-floating-deco"></select>
+                </div>
+                <div class="dim-row">
+                    <label>Floating Position 浮动位置</label>
+                    <select id="d-floating-deco-pos">
+                        <option value="native">native 原生</option>
+                        <option value="top-left">top-left 左上</option>
+                        <option value="top-center">top-center 上中</option>
+                        <option value="top-right">top-right 右上</option>
+                        <option value="right-center">right-center 右中</option>
+                        <option value="bottom-right">bottom-right 右下</option>
+                        <option value="bottom-center">bottom-center 下中</option>
+                        <option value="bottom-left">bottom-left 左下</option>
+                        <option value="left-center">left-center 左中</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -835,7 +872,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260722a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260723b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1152,9 +1189,12 @@ function buildStyleJson() {
             side_text_align:    customTextState.side.align,
             divider: v('divider', 'none'),
             corner_badge: v('corner_badge', 'none'),
+            corner_badge_pos: document.getElementById('d-corner-badge-pos')?.value || 'native',
             bg_pattern: v('bg_pattern', 'none'),
             edge_deco: v('edge_deco', 'none'),
+            edge_deco_pos: document.getElementById('d-edge-deco-pos')?.value || 'native',
             floating_deco: v('floating_deco', 'none'),
+            floating_deco_pos: document.getElementById('d-floating-deco-pos')?.value || 'native',
         },
         effect: {
             filter_self:     perFieldState.filter_self,
@@ -1281,6 +1321,9 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.bg_pattern,    el.bg_pattern);
     setSelect(DIMS.edge_deco,     el.edge_deco);
     setSelect(DIMS.floating_deco, el.floating_deco);
+    const posCorner = document.getElementById('d-corner-badge-pos'); if (posCorner) posCorner.value = el.corner_badge_pos || 'native';
+    const posEdge   = document.getElementById('d-edge-deco-pos');    if (posEdge)   posEdge.value   = el.edge_deco_pos    || 'native';
+    const posFloat  = document.getElementById('d-floating-deco-pos'); if (posFloat) posFloat.value  = el.floating_deco_pos || 'native';
 
     // effect — per-element dims -> perFieldState
     perFieldState.filter_self     = normalizePerEl(ef.filter_self, 'none');

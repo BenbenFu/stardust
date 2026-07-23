@@ -211,6 +211,30 @@ const ATTR_MAP = {
 };
 
 // ============================================================
+// Section 2.4: 装饰位置锚点（8 锚点：四角 + 四边居中）
+// 用途：让"同一装饰"无需另建 DB 条目即可贴到任意角 / 边。
+//   · 角标(corner) / 浮动(float) 走 inline CSS 变量（挂在 .gallery-card 上，伪元素与背景层均可继承）：
+//       --el-{subdim}-anchor-pos : background-position 字符串（背景型装饰消费）
+//       --el-{subdim}-pos-top/right/bottom/left : 伪元素型装饰定位
+//       --el-{subdim}-pos-tf : 伪元素居中时的 transform 补偿
+//   · 边缘(edge) 的 clip 型（notched_corner）走 data-style-element-edge-anchor 属性（见 buildDataAttrs）。
+// 设计原则：偏移量"设计期固定"——引擎只决定锚点（贴哪），离角多远由各装饰模板的 var() 兜底值决定；
+//   故移动后装饰离角统一为 12px（方向随锚点翻转），原生（未选锚点）时沿用模板自身兜底位置。
+// ============================================================
+const ANCHOR = {
+  'top-left':     { bg:'top 12px left 12px',     t:'12px', r:'auto', b:'auto', l:'12px', tf:'none' },
+  'top-center':   { bg:'top 12px left 50%',      t:'12px', r:'auto', b:'auto', l:'50%',  tf:'translateX(-50%)' },
+  'top-right':    { bg:'top 12px right 12px',    t:'12px', r:'12px', b:'auto', l:'auto',  tf:'none' },
+  'right-center': { bg:'top 50% right 12px',     t:'50%',  r:'12px', b:'auto', l:'auto',  tf:'translateY(-50%)' },
+  'bottom-right': { bg:'bottom 12px right 12px', t:'auto', r:'12px', b:'12px', l:'auto',  tf:'none' },
+  'bottom-center':{ bg:'bottom 12px left 50%',   t:'auto', r:'auto', b:'12px', l:'50%',   tf:'translateX(-50%)' },
+  'bottom-left':  { bg:'bottom 12px left 12px',  t:'auto', r:'auto', b:'12px', l:'12px',  tf:'none' },
+  'left-center':  { bg:'top 50% left 12px',      t:'50%',  r:'auto', b:'auto', l:'12px',  tf:'translateY(-50%)' },
+};
+// 边缘位置锚点只取四角（仅 notched_corner 这类"切哪个角"的 clip 型有意义；整周/整框型忽略）
+const EDGE_ANCHOR_CORNERS = ['top-left','top-right','bottom-left','bottom-right'];
+
+// ============================================================
 // Section 2.5: 容器组带渲染辅助（Phase 2）
 // 模块级定义，供 legacy override 分支与 highlights 带栈共用。
 // ============================================================
@@ -544,6 +568,15 @@ function buildDataAttrs(styleJson) {
         attrs[mapping.attr] = escapeAttr(String(value));
       }
     }
+  }
+
+  // 边缘装饰位置锚点（仅 notched_corner 这类"切哪个角"的 clip 型装饰需要）：
+  // 引擎发射 data-style-element-edge-anchor="<corner>"，DB 模板据此切换 clip-path 四角变体。
+  // 角标 / 浮动走的是 inline CSS 变量（见 renderStyleJson 的 emitAnchorVars），与这里区分。
+  const elCfg0 = (styleJson && styleJson.element) || {};
+  const edgePos = elCfg0.edge_deco_pos;
+  if (edgePos && EDGE_ANCHOR_CORNERS.includes(edgePos)) {
+    attrs['data-style-element-edge-anchor'] = escapeAttr(edgePos);
   }
 
   const parts = Object.entries(attrs).map(([k, v]) => k + '="' + v + '"');
@@ -1147,6 +1180,24 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   if (verticalFields.length >= 4) {
     paletteCssVars.push('writing-mode:vertical-rl', 'max-height:400px', 'overflow:hidden');
   }
+  // 装饰位置锚点：角标 / 浮动支持 8 锚点定位，无需为同一装饰另建 DB 条目。
+  // 引擎把锚点翻译为 inline CSS 变量挂到 .gallery-card；DB 模板用 var(--el-{subdim}-anchor-pos, 原生兜底) 消费。
+  // 偏移量"设计期固定"：引擎只定锚点，离角多远由模板 var() 兜底值决定。
+  const emitAnchorVars = (subdim, posField) => {
+    const a = (elBand[posField] && ANCHOR[elBand[posField]]) ? ANCHOR[elBand[posField]] : null;
+    if (!a) return;
+    paletteCssVars.push(
+      '--el-' + subdim + '-anchor-pos:' + a.bg,
+      '--el-' + subdim + '-pos-top:' + a.t,
+      '--el-' + subdim + '-pos-right:' + a.r,
+      '--el-' + subdim + '-pos-bottom:' + a.b,
+      '--el-' + subdim + '-pos-left:' + a.l,
+      '--el-' + subdim + '-pos-tf:' + a.tf
+    );
+  };
+  if (elBand.corner_badge && elBand.corner_badge !== 'none') emitAnchorVars('corner', 'corner_badge_pos');
+  if (elBand.floating_deco && elBand.floating_deco !== 'none') emitAnchorVars('float', 'floating_deco_pos');
+
   const fullStyle = paletteCssVars.join(';');
 
   // 4. 构建 data-* 属性

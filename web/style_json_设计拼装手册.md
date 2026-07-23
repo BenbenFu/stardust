@@ -208,6 +208,182 @@
 - **自定义文字**：`header_text` / `side_text` 填内容；`*_text_family`/`*_text_size`/`*_text_align` 控制排印（顶栏 align ∈ left/center/right/stretch；侧栏 align ∈ top/center/bottom/stretch）。
 - **band_inset**：`true` 色条内缩留白（精致）/ `false` 色条贴边满边（硬朗通长）。`header_width`/`side_width` 控制条粗细(px)。
 
+#### 3.7.1 element 装饰的兼容性规则与标准入库写法（2026-07-23 重构定稿）
+
+> 背景：前两天制卡实践中，谜语卡等「多装饰同卡」频繁出现「装饰互相覆盖 / 消失 / 显示位置错乱」。根因有两类——(a) 多个装饰争抢 `.gallery-card` 仅有的 `::before`/`::after` 两个伪元素；(b) 多个背景类装饰各自声明完整 `background-image`，而一张卡只有一条 `background-image` 能赢。本次重构用「共享 14 槽画布 + 固定伪元素分配」彻底解决，四个装饰子维度可独立显示、可任意叠加。
+
+**① 渲染机制（一句话）**
+四个装饰子维度各发射一个**独立**属性到卡片根：`.gallery-card[data-style-element-corner=...]`、`...-bg=...`、`...-edge=...`、`...-float=...`。四个属性互不互斥，**可同时开启**。
+
+**② 三种实现方式分类表（设计/入库必读）**
+
+| 子维度 | value | 实现方式 | 伪元素占用 | 画布槽位 |
+|---|---|---|---|---|
+| corner_badge | circle_stamp | css_background | — | corner-1 |
+| corner_badge | page_fold | css_background | — | corner-1,2 |
+| corner_badge | dot_status | css_background | — | corner-1 |
+| corner_badge | corner_ribbon | pseudo_after（文字） | `::after` | — |
+| bg_pattern | dot_grid / fine_grid / horizontal_lines / gradient_overlay / terminal_scanlines | css_background | — | bg-1..4 |
+| edge_deco | bracket_frame | css_background | — | edge-1..4 |
+| edge_deco | tape_stripe | css_background | — | edge-1 |
+| edge_deco | stamp_perforation | css_mask（四边 radial-gradient 镂空齿孔） | — | — |
+| edge_deco | notched_corner | css_clip（clip-path） | — | — |
+| floating_deco | floating_circle | css_background | — | float-1 |
+| floating_deco | scatter_dots | css_background | — | float-1,2 |
+| floating_deco | tamagotchi_label | pseudo_before（文字） | `::before` | — |
+| floating_deco | art_deco_diamond | pseudo_both（文字） | `::before`+`::after` | — |
+
+> 实现方式取值含义：`css_background`=用背景图层（走画布）；`pseudo_before`/`pseudo_after`/`pseudo_both`=用卡片伪元素（文字类）；`css_border`/`css_clip`=用正交属性（不抢背景也不抢伪元素）；`css_mask`=用 `mask` 镂空卡形（如 `stamp_perforation` 四边挖半圆齿孔，齿孔为透明、透出页面底色，符合邮票质感，且不与背景画布/伪元素冲突）。
+
+**③ 背景类装饰的「共享 14 槽画布」机制（为什么能叠加）**
+卡片根固定一块 14 槽背景画布，槽位顺序不可改：
+
+```
+角标 corner-1,2 | 边缘 edge-1,2,3,4 | 背景纹 bg-1,2,3,4 | 浮动 float-1,2,3,4
+```
+
+每个**背景类**装饰的 `css_template` 由两部分组成，且在所有背景装饰里**逐字一致**：
+- 本装饰只写自己占用的槽位变量（如 `dot_grid` 只写 `--el-bg-1` 及其 `-size/-pos/-rep`）；
+- 末尾统一带一段「固定 14 槽主合成」块（声明 `background-image/-size/-position/-repeat`，全部用 `var(--el-*, none)` 引用各槽位，缺省 `none`）。
+
+多背景装饰同卡时，各自只贡献自己的槽位变量，主合成引用**全部**变量；CSS 自定义属性跨匹配规则解析天然叠加，**互不覆盖**。因此角标 + 背景纹 + 边缘 + 浮动 四类背景装饰可任意共存（如谜语卡：折角 + 点阵 + 方括号 + 浮动圆 同显）。
+
+> ⚠️ **入库铁律**：背景类装饰**严禁**自己写 `background-image` / `background` 简写 / `!important`——那会覆盖主合成、吞掉其它背景装饰。槽位变量也禁止跨组写（如 bg 装饰不能写 `--el-corner-*`）。
+>
+> 🚨 **选择器铁律（2026-07-23 踩坑）**：`css_template` 里的选择器**必须带前导点** `.gallery-card[...]`。写成 `gallery-card[...]`（漏 `.`）会被浏览器当成「标签名为 gallery-card 的元素」，**永远命中不了 class**，整条规则静默失效——表现为该装饰完全不显示，且不会报错、极难排查。文本/正交类装饰（丝带/标签/菱形/齿孔/切角）尤其容易被漏点。
+>
+> 🚨 **伪元素 content 铁律**：文本类装饰的 `content` 用**固定字面量**（`content: "NEW"` / `content: "\25C6..."`），**禁止**两参 `attr(name, fallback)`——该语法在 `content` 上不被浏览器支持（且引擎未发射对应属性），会导致伪元素不生成。
+>
+> 🚨 **overflow 铁律**：卡片根 `.gallery-card` 有 `overflow: hidden`。探出卡外的装饰（如旋转 45° 贴角落的丝带）会被裁掉——丝带类应锚定在**卡内**右上角（`top/right` 取正值），而非 `right:0` 配 `translate` 外推。
+
+**④ 伪元素分配表 + 兼容性矩阵（文本类装饰）**
+卡片伪元素只有 `::before` 与 `::after` 两个。文本类装饰固定占用如下，不可越界：
+
+| 伪元素 | 授权给 | 用途 |
+|---|---|---|
+| `::before` | tamagotchi_label、art_deco_diamond（顶条） | 顶部文字 |
+| `::after` | corner_ribbon、art_deco_diamond（底条） | 角标丝带 / 底部文字 |
+
+兼容性矩阵（只列文本类互相组合；背景类与文本类天然正交，永远 ✅）：
+
+| | corner_ribbon (::after) | tamagotchi_label (::before) | art_deco_diamond (::before+::after) |
+|---|---|---|---|
+| corner_ribbon | — | ✅ 可同用 | ❌ `::after` 冲突 |
+| tamagotchi_label | ✅ | — | ❌ `::before` 冲突 |
+| art_deco_diamond | ❌ | ❌ | — |
+
+> 说明：每个子维度同一时刻只有一个 value（一个属性一个值），所以「同一子维度内」不会有两个装饰争抢同一伪元素。冲突只发生在「不同子维度都选了文本类装饰」这一种情况——即上表三种 ❌。设计卡时避开即可；若需要菱形+丝带同卡，请把丝带改用背景类方案（如新增一个 `css_background` 的角标装饰）。
+
+**⑤ 安全上限（经验值）**
+- 背景类装饰（corner/bg/edge/float 中走画布的部分）：**数量不限**，可全开。
+- 文本类装饰（corner_ribbon / tamagotchi_label / art_deco_diamond）：受限于 2 个伪元素，按 ④ 矩阵最多同开 2 个（且 art_deco_diamond 独占双伪元素时只可 1 个）。
+- 单卡装饰总数建议 ≤ 5（指 corner/bg/edge/float 四类 + 文本装饰合计）；结构性装饰 header_deco/side_accent/divider 不计入此上限。旧版谜语卡 8+ 装饰崩溃的根因是伪元素/背景互相覆盖，新架构已解除背景类瓶颈，唯一硬约束就是上面的伪元素 2 槽。
+
+**⑥ 标准入库写法（CSS 规范）**
+
+可调用的调色槽（由 palette 维度注入，**装饰只引用这四色，禁止硬编码颜色**）：
+`--card-bg` / `--card-text` / `--card-accent` / `--card-muted`。
+
+槽位变量命名（背景类专用）：`--el-{corner|edge|bg|float}-{1..4}`，每组配 `-size-*`(如 `14px 14px`)、`-pos-*`(如 `top 6px right 6px`)、`-rep-*`(`no-repeat`/`repeat`)。
+
+- **背景类模板**（必须带主合成块，变量只写本组）：
+```css
+.gallery-card[data-style-element-bg="your_value"] {
+  --el-bg-1: radial-gradient(circle, var(--card-muted) 1px, transparent 1.6px);
+  --el-bg-size-1: 16px 16px;
+  --el-bg-pos-1: 0 0;
+  --el-bg-rep-1: repeat;
+  /* —— 固定 14 槽主合成（角标2 / 边缘4 / 背景纹4 / 浮动4），顺序不可改 —— */
+  background-image:
+    var(--el-corner-1, none), var(--el-corner-2, none),
+    var(--el-edge-1, none), var(--el-edge-2, none), var(--el-edge-3, none), var(--el-edge-4, none),
+    var(--el-bg-1, none), var(--el-bg-2, none), var(--el-bg-3, none), var(--el-bg-4, none),
+    var(--el-float-1, none), var(--el-float-2, none), var(--el-float-3, none), var(--el-float-4, none);
+  background-size:
+    var(--el-corner-size-1, auto), var(--el-corner-size-2, auto),
+    var(--el-edge-size-1, auto), var(--el-edge-size-2, auto), var(--el-edge-size-3, auto), var(--el-edge-size-4, auto),
+    var(--el-bg-size-1, auto), var(--el-bg-size-2, auto), var(--el-bg-size-3, auto), var(--el-bg-size-4, auto),
+    var(--el-float-size-1, auto), var(--el-float-size-2, auto), var(--el-float-size-3, auto), var(--el-float-size-4, auto);
+  background-position:
+    var(--el-corner-pos-1, 0 0), var(--el-corner-pos-2, 0 0),
+    var(--el-edge-pos-1, 0 0), var(--el-edge-pos-2, 0 0), var(--el-edge-pos-3, 0 0), var(--el-edge-pos-4, 0 0),
+    var(--el-bg-pos-1, 0 0), var(--el-bg-pos-2, 0 0), var(--el-bg-pos-3, 0 0), var(--el-bg-pos-4, 0 0),
+    var(--el-float-pos-1, 0 0), var(--el-float-pos-2, 0 0), var(--el-float-pos-3, 0 0), var(--el-float-pos-4, 0 0);
+  background-repeat:
+    var(--el-corner-rep-1, no-repeat), var(--el-corner-rep-2, no-repeat),
+    var(--el-edge-rep-1, no-repeat), var(--el-edge-rep-2, no-repeat), var(--el-edge-rep-3, no-repeat), var(--el-edge-rep-4, no-repeat),
+    var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat),
+    var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
+}
+```
+- **伪元素类模板**（文本类，按 ④ 占用指定伪元素）：
+```css
+.gallery-card[data-style-element-float="tamagotchi_label"]::before {
+  content: "TAMAGOTCHI";
+  position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+  font-size: 10px; letter-spacing: 1px; color: var(--card-accent);
+  font-family: monospace; pointer-events: none; z-index: 3;
+}
+```
+规则：`position:absolute`（卡片已 `position:relative`）；`z-index:3` 确保浮于内容之上；`pointer-events:none` 避免挡点击；**不要**在伪元素类装饰里写 `background-image`（会污染画布）；`content` 为空图形可用 `content:""` 但优先用背景类方案。
+- **box/clip/orthogonal 类模板**（正交，不抢背景/伪元素）：
+```css
+/* stamp_perforation：mask 四边镂空齿孔（真正的邮票齿孔，非虚线/非描边） */
+/* ⚠️ 每张遮罩必须用 100% 维度瓦片铺满整卡，否则只覆盖 13px 边缘条，
+   mask-composite:intersect 会把整卡内部判为「未覆盖=透明」→ 卡片整体消失。 */
+.gallery-card[data-style-element-edge="stamp_perforation"] {
+  --sp-r: 4px; --sp-g: 13px;   /* 齿孔半径 / 间距 */
+  -webkit-mask:
+    radial-gradient(circle var(--sp-r) at 50% 0,    #0000 96%, #000) repeat-x 0 0 / var(--sp-g) 100%,
+    radial-gradient(circle var(--sp-r) at 50% 100%, #0000 96%, #000) repeat-x 0 0 / var(--sp-g) 100%,
+    radial-gradient(circle var(--sp-r) at 0 50%,    #0000 96%, #000) repeat-y 0 0 / 100% var(--sp-g),
+    radial-gradient(circle var(--sp-r) at 100% 50%, #0000 96%, #000) repeat-y 0 0 / 100% var(--sp-g);
+  -webkit-mask-composite: source-in, source-in, source-in;
+          mask:
+    radial-gradient(circle var(--sp-r) at 50% 0,    #0000 96%, #000) repeat-x 0 0 / var(--sp-g) 100%,
+    radial-gradient(circle var(--sp-r) at 50% 100%, #0000 96%, #000) repeat-x 0 0 / var(--sp-g) 100%,
+    radial-gradient(circle var(--sp-r) at 0 50%,    #0000 96%, #000) repeat-y 0 0 / 100% var(--sp-g),
+    radial-gradient(circle var(--sp-r) at 100% 50%, #0000 96%, #000) repeat-y 0 0 / 100% var(--sp-g);
+          mask-composite: intersect;
+}
+.gallery-card[data-style-element-edge="notched_corner"] {
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+}
+```
+
+> 入库 SQL 模板见 §6（把 `<dim>` 换成 `element`，`sub_dim` 取上表子维度之一）。新增装饰前先用本地验证页 `web/element_compat_test.html` 打开核对「独立显示 / 四者叠加 / 文本类与背景类共存」三种效果再提 SQL。
+
+**⑦ 位置参数（锚点定位）—— 同一装饰贴任意角/边，无需另建 DB 条目**
+
+设计初衷：角标/浮动/切角默认钉在某个角（如丝带默认右上）。若想要「同一个丝带在左上角」，旧方案要再建一条 DB 条目；新方案在 `style_json.element` 加一个位置字段，引擎据此注入 CSS 变量，一份模板覆盖 8 锚点。
+
+**8 锚点词汇表**：四角（top-left / top-right / bottom-left / bottom-right）+ 四边居中（top-center / right-center / bottom-center / left-center）。
+
+**字段**（缺省 `'native'` = 沿用模板原生位置）：
+- `corner_badge_pos`、`floating_deco_pos`：取值 = 8 锚点之一。
+- `edge_deco_pos`：仅四角（只有 `notched_corner` 这类「切哪个角」有意义；整周/整框型边缘忽略）。
+
+**引擎行为**（`style-engine.js` 的 `renderStyleJson` / `buildDataAttrs`）：
+- 角标 / 浮动：把锚点翻译成 inline CSS 变量挂到 `.gallery-card` 根——`--el-{corner|float}-anchor-pos`（background-position 串）、`--el-{subdim}-pos-top/right/bottom/left`、`--el-{subdim}-pos-tf`（居中补偿 transform）。
+- 边缘（clip）：发射 `data-style-element-edge-anchor="<corner>"` 属性（仅四角）。
+
+**模板消费写法（三类）**：
+- 背景型（circle_stamp / dot_status / floating_circle / scatter_dots）：位置变量改写为 `var()` 兜底——
+  `--el-corner-pos-1: var(--el-corner-anchor-pos, top 6px right 6px);`
+- 伪元素型（corner_ribbon ::after / tamagotchi_label ::before）：`top/right/bottom/left/transform` 全部走变量，原生兜底；丝带自带 `rotate(45deg)` 固有旋转，居中锚点会注入 `translateX(-50%)` 叠加后仍保持旋转——
+  ```css
+  top: var(--el-corner-pos-top, 12px); right: var(--el-corner-pos-right, 12px);
+  bottom: var(--el-corner-pos-bottom, auto); left: var(--el-corner-pos-left, auto);
+  transform: var(--el-corner-pos-tf, none) rotate(45deg);
+  ```
+- clip 型（notched_corner）：用 `data-style-element-edge-anchor` 属性选择器枚举四角 clip-path 变体（默认无属性 = 右上切角）。
+
+**偏移量「设计期固定」**：引擎只决定锚点（贴哪角），离角多远由各模板的 `var()` 兜底值决定（移动后统一 12px，方向随锚点翻转）。若某装饰要不同的离角距离，改它自己的模板兜底值即可——无需引擎改动，也无需运行时滑块。
+
+**原生锁**：`page_fold`（dog-ear 翻角，方向性元素，移到对角需翻转渐变角度）与 `art_deco_diamond`（顶/底满宽条带）不参与位置切换，保持原生。
+
+**前端**：capsule-preview 在角标 / 边缘 / 浮动三处各提供一个「位置」下拉（角标+浮动 8 锚点，边缘 4 角）。
+
 ### 3.8 特效 effect（per-element，四字段各自独立）
 
 四项都按 `{title,date,capsule,highlights}` 设值，可字符串统配或对象分设。
