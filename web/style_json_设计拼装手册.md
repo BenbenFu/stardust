@@ -42,7 +42,7 @@
     "spacing_scale": "md"            // 全局间距基准 xs/sm/md/lg/xl
   },
   "typo": {
-    "font_family": { "title":"system_sans", "date":"system_sans", "capsule":"system_sans", "highlights":"system_sans" },
+    "font_family": { "title":"FontYuan", "date":"FontYuan", "capsule":"FontYuan", "highlights":"FontYuan" },
     "weight_gradient": "balanced",   // 字重梯度
     "size_scale": "petite",          // 字号梯度
     "alignment_mode": { "title":"inherit", "date":"inherit", "capsule":"inherit", "highlights":"inherit" },
@@ -141,6 +141,19 @@
 
 > 配色算法：harmony 行取种子色 → 每个色生成 10 阶 Ant Design 色阶 → tone 取各阶索引 → slot 重排。所以同一 harmony 换 tone/slot 就能得到完全不同的明暗与对比。
 
+**配色槽位映射透明化（P0-2）**
+`style_palette_options` 里每条记录的四个颜色列，存的是「harmony 种子色生成的 10 阶色阶**索引号**」（字符串，如 `"3"`/`"9"`/`"6"`/`"4"`），**不是最终 hex**。引擎按 `tone`/`slot` 解析后，注入卡片根的四个 CSS 变量；所有装饰模板**只引用这四色、禁止硬编码**。
+
+| 数据库列 | 语义 | 注入的 CSS 变量 | 典型用途 |
+|---|---|---|---|
+| `bg` | 背景色阶索引 | `--card-bg` | 卡片底 / 浮层底 |
+| `text_color` | 文字色阶索引 | `--card-text` | 标题/正文/日期主文字 |
+| `accent` | 强调色阶索引 | `--card-accent` | 色条/边框/强调元素 |
+| `muted` | 次要色阶索引 | `--card-muted` | 次要文字/装饰描边 |
+
+> 另有 `--card-accent-rgb` / `--card-bg-rgb` 两个「R,G,B 三元组」变量（如 `224,86,63`），供模板里 `color-mix(in srgb, var(--card-accent) 60%, transparent)` 之类做透明混色。
+> 设计要点：你只用 `palette.harmony/tone/slot` 三个 key 选配色，**永远不要在 css_template 里写死 hex**——换一套 palette 整卡配色应自动联动。若某装饰需要额外强调色，优先靠 `slot` 的 `shift_*` 派生，而非硬编码。
+
 ### 3.2 布局 layout
 
 - **grid（网格结构，17 个）**：`single` 单栏堆叠★ / `2col_equal` 双栏等宽 / `2col_left_wide` 左宽 / `2col_right_wide` 右宽 / `2col_left_narrow` 左窄侧栏 / `2col_right_narrow` 右窄侧栏 / `3col_equal` 三栏等宽 / `3col_left_focus` 左聚焦 / `3col_right_focus` 右聚焦 / `sidebar_left` 左侧栏 / `sidebar_right` 右侧栏 / `sidebar_both` 双侧栏 / `top_split` 顶部分栏 / `bottom_split` 底部分栏 / `hero` Hero 布局★ / `inverted` 倒置 / `timeline` 时间线★（自带左侧轴线）
@@ -152,7 +165,7 @@
 
 ### 3.3 排版 typo（per-element）
 
-- **font_family（9 个）**：`system_sans` 系统无衬线★ / `editorial_serif` 报刊衬线（文化感）/ `modern_sans` 现代无衬线（科技）/ `terminal_mono` 终端等宽（极客）/ `rounded_soft` 圆润柔和 / `display_geometric` 展示几何（冲击）/ `condensed_impact` 窄体冲击 / `slab_serif` 粗衬工业 / `handwritten_note` 手写笔记（仅标题）
+- **font_family（9 个，value 均为 `Font*` 字体族键，与 `web/font/fonts.css` 的 `@font-face` 一一对应；DB id：FontHei=6 / FontYuan=1 / FontSong=2 / FontKai=5 / FontMono=4 / FontCreative=7 / FontHand=9 / FontCalli=8 / FontCartoon=3）**：`FontHei` 黑体(得意黑)★ / `FontSong` 宋体(SourceHanSerifCN) / `FontYuan` 圆体(maoken 圆体) / `FontKai` 楷体(江西拙楷) / `FontMono` 等宽(NotoSansMonoCJK) / `FontCreative` 创意(fusion-pixel) / `FontHand` 手写(鸿雷拙书) / `FontCalli` 书法(Slidefu) / `FontCartoon` 卡通(mo導taiwan)。`FontHand` 笔画花，正文长段慎用，标题/短句最佳。
 - **weight_gradient（字重梯度，6 个）**：`high_contrast` 高对比 / `balanced` 均衡★ / `soft` 柔和 / `neutral` 极简中性 / `capsule_heavy` 标签突出 / `bold_heavy` 粗体厚重（海报）
 - **size_scale（字号梯度，5 个）**：`headline_impact` 大标题冲击 / `balanced_read` 均衡阅读 / `compact_dense` 紧凑密集 / `petite` 精致小巧★ / `large_comfort` 大字号舒适
 - **alignment_mode（字段级对齐，5 个）**：`inherit` 跟随行内（默认）/ `left` / `center` / `right` / `stretch` 撑满（日期无空格串用 `inter-character` 也能撑）
@@ -388,7 +401,55 @@
 
 **原生锁 / 方向性元素**：`art_deco_diamond`（顶/底满宽条带，无「角」概念）不参与位置切换，保持原生。`page_fold`（dog-ear 翻角）是方向性元素——移到对角需翻转渐变角度，故**不走通用位置变量**，而用专属的 `data-style-element-corner-anchor` 四角属性选择器（渐变角度抽成 `--pf-angle` 变量，top-left=135deg / bottom-left=45deg / bottom-right=315deg，原生无 anchor=右上 225deg）。翻角只能贴角，四边居中锚点对其无意义、回落原生。
 
+> **★ 设计经验沉淀（方向性元素「对角镜像」原则）**：凡是"贴角 / 沿边"的**方向性**装饰（`page_fold` 翻角、`corner_ribbon` 角标丝带、`notched_corner` 切角、`art_deco_diamond` 菱形），一旦用锚点移到对角，**必须镜像而非平移**——
+> - ↘↖ 对角（右上 / 左下）用**正向**角 / 朝向；↙↗ 对角（左上 / 右下）必须用**反向**（翻角：左上 `135deg` / 右下 `315deg`；丝带：左上 / 右下 `rotate(-45deg)`）。
+> - 四边居中：丝带长边要**平行**于所在边（顶 / 底边 → 横 `0deg`、左 / 右边 → 竖 `90deg`），而非垂直。
+> - 摆放错（平移不镜像）的典型症状：丝带变成贯穿卡身的对角斜杠；翻角折痕翻到卡外。模板用 `data-style-element-corner-anchor` / `-edge-anchor` 四角属性选择器切这两档，见 ⑦。
+
 **前端**：capsule-preview 在角标 / 边缘 / 浮动三处各提供一个「位置」下拉（角标+浮动 8 锚点，边缘 4 角）。
+
+#### 3.7.2 CSS Template 全量索引（element 维度 DB id 对照表）
+
+> 用途：要改某个 element 装饰的样式，先在下表找到它的 `id`，再 `UPDATE style_element_options SET css_template='...' WHERE id=<id>;`（幂等整行 SET，详见 §6）。`value='none'` 的行 `css_template` 为 null，仅作「关闭」占位，无需改。
+> element 维度共 35 条带模板（下表全量）；其它维度（layout / typo 字体 / border / deco / effect / palette / container_group）每个选项也各自带 `css_template`，按 §3 的 `value` 在该维度表反查 `id` 即可（字体 9 行的 id 见 §3.3）。
+
+| id | sub_dim | value | 中文标签 | 渲染位置 / 画布槽位 |
+|---|---|---|---|---|
+| 2 | header_deco | solid | 细 accent 线 | 顶栏条 |
+| 4 | header_deco | gradient | 渐变色带 | 顶栏条 |
+| 5 | header_deco | blink | 闪烁光标条 | 顶栏条 |
+| 42 | header_deco | diagonal | Diagonal 斜纹 | 顶栏条 |
+| 43 | header_deco | breathing | Breathing 呼吸 | 顶栏条 |
+| 44 | header_deco | scanline | Scanline 扫描 | 顶栏条 |
+| 7 | side_accent | solid | accent 实心侧条 | 侧栏条 |
+| 8 | side_accent | gradient | 渐变侧条 | 侧栏条 |
+| 9 | side_accent | line_number_column | 行号栏 | 侧栏条 |
+| 10 | side_accent | notebook_binding | 活页装订孔 | 侧栏条 |
+| 45 | side_accent | diagonal | Diagonal 斜纹 | 侧栏条 |
+| 46 | side_accent | breathing | Breathing 呼吸 | 侧栏条 |
+| 47 | side_accent | scanline | Scanline 扫描 | 侧栏条 |
+| 12 | divider | thin_solid | 细实线 | 分隔线 |
+| 13 | divider | double_line | 双实线 | 分隔线 |
+| 14 | divider | dotted_line | 点线分隔 | 分隔线 |
+| 15 | divider | gradient_line | 渐变线 | 分隔线 |
+| 16 | divider | char_asterisk | 星号字符分隔 | 分隔线 |
+| 18 | corner_badge | circle_stamp | 圆形印章角标 | 角标（corner-1 画布） |
+| 19 | corner_badge | page_fold | 折角 | 角标（corner-1,2；`--pf-angle` 对角镜像） |
+| 20 | corner_badge | corner_ribbon | 角标丝带 | 角标（`::after` 文字；四角镜像 / 四边长边平行） |
+| 21 | corner_badge | dot_status | 状态圆点 | 角标（corner-1 画布） |
+| 23 | bg_pattern | dot_grid | 点阵网格 | 背景纹（bg-1..4 画布） |
+| 24 | bg_pattern | fine_grid | 精细方格 | 背景纹 |
+| 25 | bg_pattern | horizontal_lines | 横线纹理 | 背景纹 |
+| 26 | bg_pattern | gradient_overlay | 渐变叠层 | 背景纹 |
+| 27 | bg_pattern | terminal_scanlines | 扫描线 | 背景纹 |
+| 29 | edge_deco | stamp_perforation | 邮票齿孔 | 边缘（mask 镂空四边） |
+| 30 | edge_deco | bracket_frame | 方括号边框 | 边缘（edge-1..4 画布） |
+| 31 | edge_deco | notched_corner | 切角 | 边缘（clip-path 四角） |
+| 32 | edge_deco | tape_stripe | 胶带纹背景 | 边缘（edge-1 画布） |
+| 34 | floating_deco | floating_circle | 悬浮圆 | 浮动（float-1 画布） |
+| 35 | floating_deco | scatter_dots | 散点阵 | 浮动（float-1,2 画布） |
+| 36 | floating_deco | art_deco_diamond | Art Deco 菱形 | 浮动（`.card-deco-layer` ::before/::after） |
+| 37 | floating_deco | tamagotchi_label | TAMAGOTCHI 标签 | 浮动（`::before` 文字） |
 
 ### 3.8 特效 effect（per-element，四字段各自独立）
 
@@ -478,7 +539,7 @@
 3. **定骨架**：从 §3.2 挑 `grid`；要不要竖排 `flow`；要不要 `container_groups` 做聊天/评论。
 4. **挑皮**：布局定好后，逐维度从 §3.3~§3.9 挑组件。
    - 求新提示：多试试 **Deco Box 叠加**（§3.6）+ **毛玻璃/渐变** + **背景纹理** + **顶/侧栏装饰** 的组合，这是最容易出"惊艳且不撞车"效果的地方。
-5. **差异化字段**：用 per-element 维度让某个字段跳出（如标题用 `display_geometric`+`bold_heavy`，正文用 `editorial_serif`）。
+5. **差异化字段**：用 per-element 维度让某个字段跳出（如标题用 `FontHei`+`bold_heavy`，正文用 `FontSong`）。
 6. **只写要改的字段**，其余交给默认。
 7. **（可选）存库**：把成型的 `style_json` 作为一条 `STYLE_POOL` 记录，方便复用与 Gallery 展示（见 §5）。
 8. **（组件不够时）提交入库请求**：见 §6。
@@ -497,7 +558,7 @@
 insert into "STYLE_POOL" (name, category, desc, style_json, active)
 values ('赛博终端_霓虹', 'tech',
   '黑底荧光+扫描线+行号栏，硬核终端风',
-  '{"palette":{"harmony":"comp_neon_black","tone":"dark_deep","slot":"original"},"layout":{"grid":"single","density":"dense"},"typo":{"font_family":"terminal_mono","weight_gradient":"bold_heavy","size_scale":"compact_dense"},"border":{"radius_size":"none","border_width":"thin","border_style":"solid","border_shadow":"none"},"deco":{"boxes":[{"style":"gradient_linear","target":"highlights"}],"box_radius":0},"element":{"header_deco":"blink","side_accent":"line_number_column","bg_pattern":"terminal_scanlines","band_inset":false},"effect":{"filter_backdrop":{"title":"backdrop_blur_md","date":"none","capsule":"none","highlights":"none"},"animation":{"title":"none","date":"none","capsule":"none","highlights":"none"}}}'::jsonb,
+  '{"palette":{"harmony":"comp_neon_black","tone":"dark_deep","slot":"original"},"layout":{"grid":"single","density":"dense"},"typo":{"font_family":"FontMono","weight_gradient":"bold_heavy","size_scale":"compact_dense"},"border":{"radius_size":"none","border_width":"thin","border_style":"solid","border_shadow":"none"},"deco":{"boxes":[{"style":"gradient_linear","target":"highlights"}],"box_radius":0},"element":{"header_deco":"blink","side_accent":"line_number_column","bg_pattern":"terminal_scanlines","band_inset":false},"effect":{"filter_backdrop":{"title":"backdrop_blur_md","date":"none","capsule":"none","highlights":"none"},"animation":{"title":"none","date":"none","capsule":"none","highlights":"none"}}}'::jsonb,
   true);
 ```
 
@@ -580,7 +641,7 @@ values ('cg_my_layout','我的布局','creative','说明',
 {
   "palette": {"harmony":"comp_neon_black","tone":"dark_deep","slot":"original"},
   "layout": {"grid":"single","density":"dense","flow":"horizontal"},
-  "typo": {"font_family":"terminal_mono","weight_gradient":"bold_heavy","size_scale":"compact_dense",
+  "typo": {"font_family":"FontMono","weight_gradient":"bold_heavy","size_scale":"compact_dense",
            "alignment_mode":{"title":"left","date":"left","capsule":"left","highlights":"left"}},
   "border": {"radius_size":"none","border_width":"thin","border_style":"solid","border_shadow":"none"},
   "deco": {"boxes":[{"style":"gradient_linear","target":"highlights"},{"style":"glass_standard","target":"highlights"}],"box_radius":0,"box_gap":8},
@@ -595,7 +656,7 @@ values ('cg_my_layout','我的布局','creative','说明',
 {
   "palette": {"harmony":"analogous_green_teal","tone":"light_soft","slot":"original"},
   "layout": {"grid":"single","density":"normal"},
-  "typo": {"font_family":"editorial_serif","weight_gradient":"soft","size_scale":"balanced_read",
+  "typo": {"font_family":"FontSong","weight_gradient":"soft","size_scale":"balanced_read",
            "alignment_mode":{"title":"center","date":"inherit","capsule":"inherit","highlights":"inherit"},
            "text_decoration":{"title":["prefix_bar"],"highlights":["gradient_text"]}},
   "border": {"radius_size":"sm","border_width":"hairline","border_style":"solid","border_shadow":"soft_small"},
@@ -611,7 +672,7 @@ values ('cg_my_layout','我的布局','creative','说明',
 {
   "palette": {"harmony":"analogous_blue_purple","tone":"light_standard","slot":"original"},
   "layout": {"grid":"single","density":"normal"},
-  "typo": {"font_family":"system_sans","weight_gradient":"balanced","size_scale":"petite"},
+  "typo": {"font_family":"FontYuan","weight_gradient":"balanced","size_scale":"petite"},
   "border": {"radius_size":"lg","border_width":"none","border_style":"solid","border_shadow":"soft"},
   "deco": {"avatar_style":"circle_solid","avatar_pos":"side","bubble_style":"wechat_left"},
   "element": {"header_deco":"gradient","band_inset":true},
@@ -624,7 +685,7 @@ values ('cg_my_layout','我的布局','creative','说明',
 {
   "palette": {"harmony":"split_yellow_purple","tone":"medium_strong","slot":"swap_bg_acc"},
   "layout": {"grid":"hero","density":"sparse"},
-  "typo": {"font_family":{"title":"display_geometric","date":"modern_sans","capsule":"modern_sans","highlights":"editorial_serif"},
+  "typo": {"font_family":{"title":"FontHei","date":"FontCartoon","capsule":"FontCartoon","highlights":"FontSong"},
            "weight_gradient":"bold_heavy","size_scale":"headline_impact",
            "text_decoration":{"title":["text_stroke"],"highlights":["prefix_bar"]}},
   "border": {"radius_size":"lg","border_width":"medium","border_style":"solid","border_shadow":"hard_offset"},
@@ -644,7 +705,7 @@ values ('cg_my_layout','我的布局','creative','说明',
   "palette": {"harmony":"analogous_rose_red","tone":"light_soft","slot":"original"},
   "layout": {"grid":"timeline","flow":"vertical","density":"sparse",
              "slot_assignment":{"a":"date","b":"title","c":"highlights","d":"capsule"}},
-  "typo": {"font_family":{"title":"editorial_serif","date":"handwritten_note","capsule":"system_sans","highlights":"editorial_serif"},
+  "typo": {"font_family":{"title":"FontSong","date":"FontHand","capsule":"FontYuan","highlights":"FontSong"},
            "weight_gradient":"soft","size_scale":"large_comfort",
            "alignment_mode":{"title":"center","date":"center","capsule":"center","highlights":"left"},
            "text_decoration":{"title":["prefix_bar"],"date":["italic"]}},

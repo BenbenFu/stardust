@@ -292,7 +292,7 @@ export const DEFAULT_STYLE_JSON = {
     density: 'normal',
     block_align: 'left', inline_align: 'left', spacing_scale: 'md' },
   typo: {
-    font_family: { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
+    font_family: { title:'FontSong', date:'FontSong', capsule:'FontSong', highlights:'FontSong' },
     weight_gradient: 'balanced', size_scale: 'petite',
     alignment_mode: { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
     spacing_tightness: { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
