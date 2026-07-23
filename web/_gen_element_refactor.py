@@ -51,7 +51,7 @@ E_circle_stamp = bg("corner", "circle_stamp", """  --el-corner-1: radial-gradien
 # page_fold —— 经典 dog-ear（翻起的页角 + 折痕阴影），走角标 corner-1,2 双槽
 # corner-1 = 翻角页背(muted 三角)；corner-2 = 沿折痕的深色细线(crease shadow)
 # 翻转：渐变角度抽成 --pf-angle 变量，配合 data-style-element-corner-anchor 四角属性选择器；
-#   原生(无 anchor)=右上 225deg；top-left=315deg / bottom-left=45deg / bottom-right=135deg（角度随角翻转）。
+#   原生(无 anchor)=右上 225deg；top-left=135deg / bottom-left=45deg / bottom-right=315deg（角度随角翻转，↙↗对角镜像）。
 #   不用居中锚点（翻角只能贴角，居中无意义，会回落原生）。
 E_page_fold = bg("corner", "page_fold", """  --pf-angle: 225deg;
   --el-corner-1: linear-gradient(var(--pf-angle), var(--card-muted, #ccc) 0 18px, transparent 18px);
@@ -64,13 +64,13 @@ E_page_fold = bg("corner", "page_fold", """  --pf-angle: 225deg;
   --el-corner-rep-2: no-repeat;""") + """
 
 .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="top-left"] {
-  --pf-angle: 315deg; --el-corner-pos-1: top left; --el-corner-pos-2: top left;
+  --pf-angle: 135deg; --el-corner-pos-1: top left; --el-corner-pos-2: top left;
 }
 .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-left"] {
   --pf-angle: 45deg; --el-corner-pos-1: bottom left; --el-corner-pos-2: bottom left;
 }
 .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-right"] {
-  --pf-angle: 135deg; --el-corner-pos-1: bottom right; --el-corner-pos-2: bottom right;
+  --pf-angle: 315deg; --el-corner-pos-1: bottom right; --el-corner-pos-2: bottom right;
 }"""
 
 E_dot_status = bg("corner", "dot_status", """  --el-corner-1: radial-gradient(circle, var(--card-bg, #fff) 0 3px, var(--card-accent, #888) 3px 5px, transparent 5px);
@@ -82,10 +82,13 @@ E_dot_status = bg("corner", "dot_status", """  --el-corner-1: radial-gradient(ci
 # 注意：① 选择器必须带前导 . ；② content 用固定字面量（两参 attr() 在 content 上不被支持，引擎也未发射该属性）
 #      ③ 卡片根 overflow:hidden 会裁掉探出角落的丝带，故锚定在卡内右上角(完全可见)
 #      ④ 位置走引擎发射的 --el-corner-pos-* 变量（8 锚点），原生兜底 = 右上角 12px。
-#      ⑤ 朝向：角落(四角锚点) = 45° 对角丝带（经典角标）；四边居中 = 垂直于所在边
-#         （顶/底边 → 竖丝带 rotate(90deg)；左/右边 → 横丝带 rotate(0deg)）。
-#      ⑥ 关键修复：--el-corner-pos-tf 兜底必须是合法值 translate(0,0) 而非 none——
-#         transform 列表中混入 none 会使整条声明失效（角落丝带因此变水平）。引擎四角锚点已改为 translate(0,0)。
+#      ⑤ 朝向（关键）：
+#         角落(四角锚点) = 对角丝带，但四角必须"镜像"而非"平移"——固定 rotate(45deg) 只让 ↘↖ 对角上的
+#         右上/左下贴角正常，↙↗ 对角上的左上/右下会变成贯穿卡身的对角斜杠。故左上、右下镜像为 rotate(-45deg)。
+#         四边居中 = 长边"平行于所在边"（顶/底边→横丝带 rotate(0deg)；左/右边→竖丝带 rotate(90deg)）。
+#      ⑥ 关键修复 A：--el-corner-pos-tf 兜底必须是合法值 translate(0,0) 而非 none——transform 列表里混入
+#         none 会使整条声明失效（角落丝带因此变水平）。引擎四角锚点已发 translate(0,0)。
+#      ⑦ 关键修复 B：四边朝向旧版为"垂直于边"(顶/底=90°、左/右=0°)不好看，已对调为"平行"。
 E_corner_ribbon = """
 .gallery-card[data-style-element-corner="corner_ribbon"]::after {
   content: "NEW";
@@ -101,14 +104,20 @@ E_corner_ribbon = """
   transform-origin: center; pointer-events: none; z-index: 4;
   border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
 }
-/* 四边居中：垂直于所在边（顶/底边=竖丝带 90°；左/右边=横丝带 0°）；角落保持 45° 对角（上方默认规则） */
+/* 角落镜像：左上 / 右下（↙↗ 对角）用 -45° 翻转，否则会变成贯穿卡身的对角斜杠；
+   右上 / 左下（↘↖ 对角）沿用上方默认 45°。 */
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="top-left"]::after,
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="bottom-right"]::after {
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(-45deg);
+}
+/* 四边居中：长边"平行于所在边"（顶/底边=横丝带 0°；左/右边=竖丝带 90°）。 */
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="top-center"]::after,
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="bottom-center"]::after {
-  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(90deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(0deg);
 }
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="left-center"]::after,
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="right-center"]::after {
-  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(0deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(90deg);
 }"""
 
 # ====== 背景纹 bg (attr=bg) ======
@@ -359,9 +368,9 @@ h1 { font-size:18px; } h2 { font-size:14px; margin-top:28px; color:#555; }
 <p style="font-size:12px;color:#777">下面 4 张卡都是 <b>同一个 corner_ribbon</b>，仅靠引擎注入的 --el-corner-* 位置变量切换到四角；切角卡演示 data-style-element-edge-anchor 切到左下角。</p>
 <div class="grid">
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·右上(原生)</div></div></div><div class="cap">corner=corner_ribbon（无变量，原生右上）</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 12px; --el-corner-pos-top:12px; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·左上</div></div></div><div class="cap">corner=corner_ribbon（注入左上变量）</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 12px; --el-corner-pos-bottom:12px; --el-corner-pos-left:12px; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·左下</div></div></div><div class="cap">corner=corner_ribbon（注入左下变量）</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px right 12px; --el-corner-pos-bottom:12px; --el-corner-pos-right:12px; --el-corner-pos-top:auto; --el-corner-pos-left:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon"><div class="card-content"><div class="card-title">丝带·右下</div></div></div><div class="cap">corner=corner_ribbon（注入右下变量）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 12px; --el-corner-pos-top:12px; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-left"><div class="card-content"><div class="card-title">丝带·左上</div></div></div><div class="cap">corner=corner_ribbon anchor=top-left（-45° 镜像）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 12px; --el-corner-pos-bottom:12px; --el-corner-pos-left:12px; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="bottom-left"><div class="card-content"><div class="card-title">丝带·左下</div></div></div><div class="cap">corner=corner_ribbon anchor=bottom-left（45°）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px right 12px; --el-corner-pos-bottom:12px; --el-corner-pos-right:12px; --el-corner-pos-top:auto; --el-corner-pos-left:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="bottom-right"><div class="card-content"><div class="card-title">丝带·右下</div></div></div><div class="cap">corner=corner_ribbon anchor=bottom-right（-45° 镜像）</div></div>
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-edge="notched_corner" data-style-element-edge-anchor="bottom-left"><div class="card-content"><div class="card-title">切角·左下</div><div class="card-highlights">data-style-element-edge-anchor=bottom-left</div></div></div><div class="cap">edge=notched_corner（锚点切到左下角）</div></div>
 </div>
 
@@ -369,18 +378,26 @@ h1 { font-size:18px; } h2 { font-size:14px; margin-top:28px; color:#555; }
 <p style="font-size:12px;color:#777">翻角是方向性 dog-ear，移到对角需翻转渐变角度；这里用四角属性选择器实现，原生(无 anchor)=右上。翻角只能贴角，居中锚点会回落原生。</p>
 <div class="grid">
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold"><div class="card-content"><div class="card-title">翻角·右上(原生)</div></div></div><div class="cap">corner=page_fold（无 anchor）</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="top-left"><div class="card-content"><div class="card-title">翻角·左上</div></div></div><div class="cap">corner=page_fold anchor=top-left 315deg</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="top-left"><div class="card-content"><div class="card-title">翻角·左上</div></div></div><div class="cap">corner=page_fold anchor=top-left 135deg</div></div>
   <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="bottom-left"><div class="card-content"><div class="card-title">翻角·左下</div></div></div><div class="cap">corner=page_fold anchor=bottom-left 45deg</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="bottom-right"><div class="card-content"><div class="card-title">翻角·右下</div></div></div><div class="cap">corner=page_fold anchor=bottom-right 135deg</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#e0563f;--card-muted:#bbb" data-style-element-corner="page_fold" data-style-element-corner-anchor="bottom-right"><div class="card-content"><div class="card-title">翻角·右下</div></div></div><div class="cap">corner=page_fold anchor=bottom-right 315deg</div></div>
 </div>
 
-<h2>G. 丝带朝向 + 菱形共存修复</h2>
-<p style="font-size:12px;color:#777">角落=45° 对角丝带；四边居中=垂直于所在边（顶/底边→竖丝带 90°、左/右边→横丝带 0°）。下方最后一张同时挂 corner_ribbon + art_deco_diamond，验证菱形不再消失、丝带不再被撑大。</p>
+<h2>G. 丝带朝向修复（四角镜像 + 四边长边平行）</h2>
+<p style="font-size:12px;color:#777">角落：右上/左下 = 45° 对角丝带；左上/右下 = -45° 镜像（否则会变成贯穿卡身的对角斜杠）。四边：长边平行于所在边（顶/底边=横丝带 0°、左/右边=竖丝带 90°）。最后一张验证 corner_ribbon + art_deco_diamond 共存。</p>
+<h3 style="font-size:13px;margin:14px 0 6px">四角（镜像）</h3>
 <div class="grid">
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 50%; --el-corner-pos-top:12px; --el-corner-pos-left:50%; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateX(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-center"><div class="card-content"><div class="card-title">丝带·顶边(垂直)</div></div></div><div class="cap">corner_ribbon anchor=top-center → 竖丝带 90°</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 50% right 12px; --el-corner-pos-top:50%; --el-corner-pos-right:12px; --el-corner-pos-left:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateY(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="right-center"><div class="card-content"><div class="card-title">丝带·右边(水平)</div></div></div><div class="cap">corner_ribbon anchor=right-center → 横丝带 0°</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 50%; --el-corner-pos-bottom:12px; --el-corner-pos-left:50%; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:translateX(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="bottom-center"><div class="card-content"><div class="card-title">丝带·底边(垂直)</div></div></div><div class="cap">corner_ribbon anchor=bottom-center → 竖丝带 90°</div></div>
-  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 50% left 12px; --el-corner-pos-top:50%; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateY(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="left-center"><div class="card-content"><div class="card-title">丝带·左边(水平)</div></div></div><div class="cap">corner_ribbon anchor=left-center → 横丝带 0°</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 12px; --el-corner-pos-top:12px; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-left"><div class="card-content"><div class="card-title">丝带·左上</div></div></div><div class="cap">anchor=top-left → -45° 镜像（贴左上角）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px right 12px; --el-corner-pos-top:12px; --el-corner-pos-right:12px; --el-corner-pos-left:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-right"><div class="card-content"><div class="card-title">丝带·右上</div></div></div><div class="cap">anchor=top-right → 45°（贴右上角）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 12px; --el-corner-pos-bottom:12px; --el-corner-pos-left:12px; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="bottom-left"><div class="card-content"><div class="card-title">丝带·左下</div></div></div><div class="cap">anchor=bottom-left → 45°（贴左下角）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px right 12px; --el-corner-pos-bottom:12px; --el-corner-pos-right:12px; --el-corner-pos-top:auto; --el-corner-pos-left:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="bottom-right"><div class="card-content"><div class="card-title">丝带·右下</div></div></div><div class="cap">anchor=bottom-right → -45° 镜像（贴右下角）</div></div>
+</div>
+<h3 style="font-size:13px;margin:14px 0 6px">四边（长边平行）</h3>
+<div class="grid">
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 12px left 50%; --el-corner-pos-top:12px; --el-corner-pos-left:50%; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateX(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-center"><div class="card-content"><div class="card-title">丝带·顶边</div></div></div><div class="cap">anchor=top-center → 横丝带 0°（长边平行顶边）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 50% right 12px; --el-corner-pos-top:50%; --el-corner-pos-right:12px; --el-corner-pos-left:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateY(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="right-center"><div class="card-content"><div class="card-title">丝带·右边</div></div></div><div class="cap">anchor=right-center → 竖丝带 90°（长边平行右边）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: bottom 12px left 50%; --el-corner-pos-bottom:12px; --el-corner-pos-left:50%; --el-corner-pos-top:auto; --el-corner-pos-right:auto; --el-corner-pos-tf:translateX(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="bottom-center"><div class="card-content"><div class="card-title">丝带·底边</div></div></div><div class="cap">anchor=bottom-center → 横丝带 0°（长边平行底边）</div></div>
+  <div><div class="gallery-card" style="--card-bg:#fff;--card-text:#222;--card-accent:#c0392b;--card-muted:#bbb; --el-corner-anchor-pos: top 50% left 12px; --el-corner-pos-top:50%; --el-corner-pos-left:12px; --el-corner-pos-right:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translateY(-50%)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="left-center"><div class="card-content"><div class="card-title">丝带·左边</div></div></div><div class="cap">anchor=left-center → 竖丝带 90°（长边平行左边）</div></div>
   <div><div class="gallery-card" style="--card-bg:#fff8f0;--card-text:#333;--card-accent:#a0522d;--card-muted:#d3b8a0; --el-corner-anchor-pos: top 12px right 12px; --el-corner-pos-top:12px; --el-corner-pos-right:12px; --el-corner-pos-left:auto; --el-corner-pos-bottom:auto; --el-corner-pos-tf:translate(0,0)" data-style-element-corner="corner_ribbon" data-style-element-corner-anchor="top-right" data-style-element-float="art_deco_diamond"><div class="card-deco-layer"></div><div class="card-content"><div class="card-title">丝带 + 菱形</div><div class="card-highlights">corner_ribbon::after + 菱形(.card-deco-layer 双伪元素)</div></div></div><div class="cap">同卡挂 corner_ribbon + art_deco_diamond，二者互不覆盖</div></div>
 </div>
 

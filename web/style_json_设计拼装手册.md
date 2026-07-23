@@ -367,24 +367,26 @@
 **引擎行为**（`style-engine.js` 的 `renderStyleJson` / `buildDataAttrs`）：
 - 角标 / 浮动：把锚点翻译成 inline CSS 变量挂到 `.gallery-card` 根——`--el-{corner|float}-anchor-pos`（background-position 串）、`--el-{subdim}-pos-top/right/bottom/left`、`--el-{subdim}-pos-tf`（居中补偿 transform）。
 - 边缘（clip）：发射 `data-style-element-edge-anchor="<corner>"` 属性（仅四角）。
-- 角标：`data-style-element-corner-anchor="<anchor>"` 属性由引擎按 `corner_badge_pos` 发射（8 锚点皆可）。`page_fold` 翻角用它切 `--pf-angle` 翻转渐变（仅四角有意义，四边居中回落原生）；`corner_ribbon` 丝带用它切「角落 45° 对角 / 四边垂直」朝向（四边居中有意义）。
+- 角标：`data-style-element-corner-anchor="<anchor>"` 属性由引擎按 `corner_badge_pos` 发射（8 锚点皆可）。`page_fold` 翻角用它切 `--pf-angle` 翻转渐变（仅四角有意义，四边居中回落原生）；`corner_ribbon` 丝带用它切「角落镜像 / 四边长边平行」朝向（四角+四边均有意义）。
 
 **模板消费写法（三类）**：
 - 背景型（circle_stamp / dot_status / floating_circle / scatter_dots）：位置变量改写为 `var()` 兜底——
   `--el-corner-pos-1: var(--el-corner-anchor-pos, top 6px right 6px);`
 - 伪元素型（corner_ribbon ::after / tamagotchi_label ::before）：`top/right/bottom/left/transform` 全部走变量，原生兜底。
-  **朝向规则（丝带）**：角落（四角锚点）= 45° 对角丝带（经典角标）；四边居中 = 垂直于所在边——顶/底边→竖丝带 `rotate(90deg)`、左/右边→横丝带 `rotate(0deg)`。用 `data-style-element-corner-anchor` 四边属性选择器切这三档旋转，四角锚点走默认 45°。
-  **⚠️ transform 兜底陷阱**：`--el-corner-pos-tf` 兜底必须是合法值 `translate(0,0)`，**绝不可写 `none`**——`transform` 列表里混入 `none` 会使整条声明失效（角落丝带因此变水平）。引擎四角锚点已发 `translate(0,0)`，居中锚点发 `translateX/Y(-50%)`。
+  **朝向规则（丝带 corner_ribbon）**：
+  - **四角必须「镜像」而非「平移」**：固定 `rotate(45deg)` 只让 ↘↖ 对角（右上 / 左下）贴角正常，↙↗ 对角（左上 / 右下）会变成贯穿卡身的对角斜杠。故左上、右下镜像为 `rotate(-45deg)`，右上、左下沿用默认 `45deg`。用 `data-style-element-corner-anchor` 四角属性选择器切这两档。
+  - **四边居中 = 长边「平行于所在边」**：顶/底边 → 横丝带 `rotate(0deg)`；左/右边 → 竖丝带 `rotate(90deg)`（早期版垂直于边，已对调）。用 `data-style-element-corner-anchor` 四边属性选择器切这两档。
+  - **⚠️ transform 兜底陷阱**：`--el-corner-pos-tf` 兜底必须是合法值 `translate(0,0)`，**绝不可写 `none`**——`transform` 列表里混入 `none` 会使整条声明失效（角落丝带因此变水平）。引擎四角锚点已发 `translate(0,0)`，居中锚点发 `translateX/Y(-50%)`。
   ```css
   top: var(--el-corner-pos-top, 12px); right: var(--el-corner-pos-right, 12px);
   bottom: var(--el-corner-pos-bottom, auto); left: var(--el-corner-pos-left, auto);
-  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(45deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(45deg);  /* 默认 45°；左上/右下→-45deg；四边→0/90deg */
   ```
 - clip 型（notched_corner）：用 `data-style-element-edge-anchor` 属性选择器枚举四角 clip-path 变体（默认无属性 = 右上切角）。
 
 **偏移量「设计期固定」**：引擎只决定锚点（贴哪角），离角多远由各模板的 `var()` 兜底值决定（移动后统一 12px，方向随锚点翻转）。若某装饰要不同的离角距离，改它自己的模板兜底值即可——无需引擎改动，也无需运行时滑块。
 
-**原生锁 / 方向性元素**：`art_deco_diamond`（顶/底满宽条带，无「角」概念）不参与位置切换，保持原生。`page_fold`（dog-ear 翻角）是方向性元素——移到对角需翻转渐变角度，故**不走通用位置变量**，而用专属的 `data-style-element-corner-anchor` 四角属性选择器（渐变角度抽成 `--pf-angle` 变量，top-left=315deg / bottom-left=45deg / bottom-right=135deg，原生无 anchor=右上 225deg）。翻角只能贴角，四边居中锚点对其无意义、回落原生。
+**原生锁 / 方向性元素**：`art_deco_diamond`（顶/底满宽条带，无「角」概念）不参与位置切换，保持原生。`page_fold`（dog-ear 翻角）是方向性元素——移到对角需翻转渐变角度，故**不走通用位置变量**，而用专属的 `data-style-element-corner-anchor` 四角属性选择器（渐变角度抽成 `--pf-angle` 变量，top-left=135deg / bottom-left=45deg / bottom-right=315deg，原生无 anchor=右上 225deg）。翻角只能贴角，四边居中锚点对其无意义、回落原生。
 
 **前端**：capsule-preview 在角标 / 边缘 / 浮动三处各提供一个「位置」下拉（角标+浮动 8 锚点，边缘 4 角）。
 

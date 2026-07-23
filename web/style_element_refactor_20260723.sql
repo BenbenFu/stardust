@@ -65,13 +65,13 @@ UPDATE style_element_options SET css_template = '.gallery-card[data-style-elemen
 }
 
 .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="top-left"] {
-  --pf-angle: 315deg; --el-corner-pos-1: top left; --el-corner-pos-2: top left;
+  --pf-angle: 135deg; --el-corner-pos-1: top left; --el-corner-pos-2: top left;
 }
 .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-left"] {
   --pf-angle: 45deg; --el-corner-pos-1: bottom left; --el-corner-pos-2: bottom left;
 }
 .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-right"] {
-  --pf-angle: 135deg; --el-corner-pos-1: bottom right; --el-corner-pos-2: bottom right;
+  --pf-angle: 315deg; --el-corner-pos-1: bottom right; --el-corner-pos-2: bottom right;
 }' WHERE id = 19;
 UPDATE style_element_options SET css_template = '.gallery-card[data-style-element-corner="dot_status"] {
   --el-corner-1: radial-gradient(circle, var(--card-bg, #fff) 0 3px, var(--card-accent, #888) 3px 5px, transparent 5px);
@@ -115,14 +115,20 @@ UPDATE style_element_options SET css_template = '
   transform-origin: center; pointer-events: none; z-index: 4;
   border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.25);
 }
-/* 四边居中：垂直于所在边（顶/底边=竖丝带 90°；左/右边=横丝带 0°）；角落保持 45° 对角（上方默认规则） */
+/* 角落镜像：左上 / 右下（↙↗ 对角）用 -45° 翻转，否则会变成贯穿卡身的对角斜杠；
+   右上 / 左下（↘↖ 对角）沿用上方默认 45°。 */
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="top-left"]::after,
+.gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="bottom-right"]::after {
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(-45deg);
+}
+/* 四边居中：长边"平行于所在边"（顶/底边=横丝带 0°；左/右边=竖丝带 90°）。 */
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="top-center"]::after,
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="bottom-center"]::after {
-  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(90deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(0deg);
 }
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="left-center"]::after,
 .gallery-card[data-style-element-corner="corner_ribbon"][data-style-element-corner-anchor="right-center"]::after {
-  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(0deg);
+  transform: var(--el-corner-pos-tf, translate(0,0)) rotate(90deg);
 }' WHERE id = 20;
 UPDATE style_element_options SET css_template = '.gallery-card[data-style-element-bg="dot_grid"] {
   --el-bg-1: radial-gradient(circle, var(--card-muted, #ccc) 1px, transparent 1.6px);
