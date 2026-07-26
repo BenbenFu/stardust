@@ -1378,8 +1378,20 @@ function applyStyleJsonToPanel(sj) {
 function setSelect(el, val) {
     if (!el || val === undefined || val === null) return;
     const strVal = String(val);
-    const opt = [...el.options].find(o => o.value === strVal);
-    if (opt) el.value = strVal;
+    let opt = [...el.options].find(o => o.value === strVal);
+    if (!opt) {
+        // 兜底：状态里的取值若不在下拉项中（如某些默认 sentinel / 历史 schema 旧值），
+        // 动态补一个选项，确保下拉显示真实当前值，避免“显示旧值 → 重选同值不触发 change
+        // → 需先选别的再切回来”的失焦不同步。
+        opt = document.createElement('option');
+        opt.value = strVal;
+        opt.textContent = (strVal === 'inherit') ? '跟随栏(inherit)' : strVal;
+        // 插到 '--' 占位项之后，避免排到最前干扰排序
+        const placeholder = [...el.options].find(o => o.value === 'none');
+        if (placeholder && placeholder.nextSibling) el.insertBefore(opt, placeholder.nextSibling);
+        else el.appendChild(opt);
+    }
+    el.value = strVal;
 }
 
 function updateFlowVerticalVisibility(flowVal) {
@@ -1591,6 +1603,15 @@ function populateSelect(el, rows, subDim) {
     if (!el) return;
     const filtered = rows.filter(r => r.sub_dim === subDim);
     el.innerHTML = '<option value="none">--</option>';
+    // 字段级双轴对齐(h_align/v_align)的默认语义是 inherit(跟随栏)，但 DB 选项里没有该取值。
+    // 必须显式补一个，否则 setSelect('inherit') 找不到 → 下拉残留上一个字段的旧值 →
+    // 切字段后“看着是旧值、重选同值不触发 change、需先选别的再切回来”的失焦不同步。
+    if (subDim === 'h_align' || subDim === 'v_align') {
+        const inh = document.createElement('option');
+        inh.value = 'inherit';
+        inh.textContent = '跟随栏(inherit)';
+        el.appendChild(inh);
+    }
     filtered
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
         .forEach(r => {

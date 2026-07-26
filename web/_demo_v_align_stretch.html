@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>v_align=stretch 竖排修复演示</title>
+<style>
+  body{font-family:system-ui,"PingFang SC","Microsoft YaHei",sans-serif;background:#f5f5f7;color:#222;margin:0;padding:24px}
+  h1{font-size:18px;margin:0 0 4px}
+  p.note{font-size:13px;color:#666;margin:0 0 20px;max-width:760px;line-height:1.6}
+  .stage{display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start}
+  .col{flex:0 0 auto}
+  .col h2{font-size:14px;margin:0 0 8px;color:#333}
+  .col .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle}
+  .tag.old{background:#ffe9e9;color:#b00}
+  .tag.new{background:#e7f7ec;color:#0a7}
+  .card{width:340px;height:480px;background:#fff;border:1px solid #ddd;border-radius:10px;padding:14px;box-sizing:border-box;
+        box-shadow:0 2px 10px rgba(0,0,0,.06)}
+  /* 内容区：3 列网格，三个竖排字段位于同一行 */
+  .content{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;height:100%}
+  /* 槽位：flex 列容器（主轴=高度），与引擎 BASE_CSS 一致 */
+  .card-slot{display:flex;flex-direction:column;min-height:32px;
+        outline:1px dashed #2cae66;outline-offset:-1px;padding:2px}   /* 绿框=槽位边界，对应「显示栏边界」 */
+  .card-slot-vertical{align-items:flex-start}
+  .fx-wrap{position:relative}
+  /* 竖排文字元素 */
+  .vfield{writing-mode:vertical-rl;font-size:20px;line-height:1.5;
+        font-weight:600;color:#222;word-break:break-word;overflow-wrap:break-word}
+  .vfield.cap{color:#c0392b;font-weight:500}
+  .vfield.hl{font-weight:400;font-size:18px}
+
+  /* ===== OLD v_align=stretch（20260727c，当前线上） ===== */
+  .old .fx-wrap[data-fx]{margin-top:0;margin-bottom:0;flex-grow:1}
+  /* ===== NEW v_align=stretch（20260727e 修复后） ===== */
+  .new .fx-wrap[data-fx]{margin-top:0;margin-bottom:0;flex-grow:1;display:flex;flex-direction:column}
+  .new .vfield{flex:1 1 auto;width:100%;text-align:justify;text-align-last:justify;text-justify:inter-character}
+</style>
+</head>
+<body>
+  <h1>v_align = 撑满(stretch) · 竖排短字段修复演示</h1>
+  <p class="note">
+    复现场景：highlight / capsule / title 三个字段位于同一行、全部竖排；highlight 文字很长，
+    故整行被撑高，capsule 与 title 的绿框（槽位）里有大量富余空间。<br>
+    左卡 = 当前线上规则（仅 flex-grow:1）→ 短文字停在盒顶、字距不散开，肉眼与「靠上」无差别；
+    右卡 = 修复后规则（盒撑高 + 文字元素 height:100% + text-align:justify）→ 短文字字距沿列高散开，真正撑满。
+  </p>
+
+  <div class="stage">
+    <div class="col">
+      <h2>修复前<span class="tag old">旧 stretch</span></h2>
+      <div class="card old">
+        <div class="content">
+          <div class="card-slot card-slot-vertical"><div class="fx-wrap" data-fx="highlights"><div class="vfield hl">今天晨跑五公里，风很轻，云很低，心情意外地平静而辽阔，像是把一周的疲惫都吹散了</div></div></div>
+          <div class="card-slot card-slot-vertical"><div class="fx-wrap" data-fx="capsule"><div class="vfield cap">胶囊标签</div></div></div>
+          <div class="card-slot card-slot-vertical"><div class="fx-wrap" data-fx="title"><div class="vfield">今日标题</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <h2>修复后<span class="tag new">新 stretch</span></h2>
+      <div class="card new">
+        <div class="content">
+          <div class="card-slot card-slot-vertical"><div class="fx-wrap" data-fx="highlights"><div class="vfield hl">今天晨跑五公里，风很轻，云很低，心情意外地平静而辽阔，像是把一周的疲惫都吹散了</div></div></div>
+          <div class="card-slot card-slot-vertical"><div class="fx-wrap" data-fx="capsule"><div class="vfield cap">胶囊标签</div></div></div>
+          <div class="card-slot card-slot-vertical"><div class="fx-wrap" data-fx="title"><div class="vfield">今日标题</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
