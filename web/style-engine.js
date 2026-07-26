@@ -45,21 +45,26 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
      对应 Word 的三级对齐：栏对齐(block) → 表格对齐(inline) → 表格内文字对齐(field)。 */
   text-align: var(--typo-inline-align, left);
   text-align-last: var(--typo-inline-align-last, auto); }
-.card-slot-a { grid-area: slot-a; writing-mode: var(--wm-a, horizontal-tb); }
-.card-slot-b { grid-area: slot-b; writing-mode: var(--wm-b, horizontal-tb); }
-.card-slot-c { grid-area: slot-c; writing-mode: var(--wm-c, horizontal-tb); }
-.card-slot-d { grid-area: slot-d; writing-mode: var(--wm-d, horizontal-tb); }
-/* 跨轴对齐(cross_alignment_mode)支持：使每个 slot 成为 flex 列容器，字段包裹层 .fx-wrap[data-fx]
-   成为其 flex item，从而可用 margin-block:auto 在「块轴」上定位（横排=竖直 / 竖排=水平，自动随
-   writing-mode 翻转，无需引擎翻译）。默认无 margin → 字段位于块轴起点，等同改动前行为，无回归。 */
+/* 注意：writing-mode 不再挂在 slot 容器上（旧版挂这里导致对齐属性语义随书写模式翻转）。
+   竖排文字的 writing-mode 只挂在文字元素 .card-XXX.is-vertical（见下方），slot 始终 horizontal-tb，
+   从而对齐坐标系固定为物理的「水平/垂直」，横排竖排语义一致。 */
+.card-slot-a { grid-area: slot-a; }
+.card-slot-b { grid-area: slot-b; }
+.card-slot-c { grid-area: slot-c; }
+.card-slot-d { grid-area: slot-d; }
+/* 稳定对齐坐标系：每个 slot 是 horizontal-tb 的 flex 列容器，字段包裹层 .fx-wrap[data-fx]
+   成为其 flex item。字段级 h_align(水平)经物理 margin-left/right:auto 在交叉轴(水平)定位；
+   v_align(垂直)经物理 margin-top/bottom:auto 在主轴(垂直)定位。两者均用物理方向，不随 writing-mode 翻转。 */
 .card-slot-a, .card-slot-b, .card-slot-c, .card-slot-d { display:flex; flex-direction:column;
-  /* 跨轴对齐(cross_alignment_mode)支持：
-     · min-height 32px 让短内容时槽位仍有垂直余量 → margin-block:auto 可在水平排版下垂直居中。
+  /* · min-height 32px 让短内容时槽位仍有垂直余量 → v_align 的 margin-top/bottom:auto 可在垂直方向分配。
      · 竖排槽位再加 .card-slot-vertical 类（见 buildCardHtml）让 align-items 变为 flex-start，
-       避免 .fx-wrap 被水平拉满 → margin-block:auto 可在竖排下水平居中。
-     长内容/多行时无垂直余量，margin-block:auto 无可视效果，是设计期取舍（非 bug）。 */
+       避免 .fx-wrap 被水平拉满 → h_align 的 margin-left/right:auto 可在水平方向分配余量。
+     长内容/多行时若槽位无多余空间，对应轴 auto margin 无可视效果，是设计期取舍（非 bug）。 */
   min-height: 32px; }
 .card-slot-vertical { align-items: flex-start; }
+/* 竖排文字：writing-mode 只挂文字元素本身，不挂容器。容器(horizontal-tb)承载稳定的物理对齐坐标系，
+   文字元素内部按 vertical-rl 决定字形流向。这样「水平对齐/垂直对齐」在横排与竖排下含义一致。 */
+.card-title.is-vertical, .card-date.is-vertical, .card-capsule.is-vertical, .card-highlights.is-vertical { writing-mode: vertical-rl; }
 .card-date   { color: var(--card-muted, inherit);
   font-weight: var(--typo-date-weight, 400);
   font-size: calc(0.8rem * var(--typo-date-scale, 0.85));
@@ -216,12 +221,14 @@ const ATTR_MAP = {
     elements: ['title','date','capsule','highlights'] },
   'typo_weight_gradient':   { attr: 'data-style-typo-weight-gradient' },
   'typo_size_scale':        { attr: 'data-style-typo-size-scale' },
-  'typo_alignment_mode':    { attr: 'data-style-typo-alignment-mode', perElement: true,
+  // 字段级双轴对齐（重构后）：物理「水平 / 垂直」稳定坐标系，不随 writing-mode 翻转。
+  // · h_align：字段在其 slot 内的水平位置，落地 = 物理 margin-left/right:auto（块级/弹性项均生效）。
+  // · v_align：字段在其 slot 内的垂直位置，落地 = 物理 margin-top/bottom:auto。
+  // 容器级对应 block_align(垂直)/inline_align(水平)，二者合起来 = 栏·双轴；字段级 = 字段·双轴。
+  // 旧 alignment_mode / cross_alignment_mode（writing-mode 相对，混排下语义翻转）已废弃不再发射。
+  'typo_h_align': { attr: 'data-style-typo-h-align', perElement: true,
     elements: ['title','date','capsule','highlights'] },
-  // cross_alignment_mode（跨轴对齐）：控制字段在其 slot 内的「块轴(block axis)」位置。
-  // 横排字段块轴=竖直（等价于 block_align 的逐字段覆盖），竖排字段块轴=水平（即补全此前缺失的水平独立控制）。
-  // 物理方向随 writing-mode 自动翻转，引擎只发射名义值，落地由 DB css_template 经 margin-block:auto 实现。
-  'typo_cross_alignment_mode': { attr: 'data-style-typo-cross-alignment-mode', perElement: true,
+  'typo_v_align': { attr: 'data-style-typo-v-align', perElement: true,
     elements: ['title','date','capsule','highlights'] },
   'typo_spacing_tightness': { attr: 'data-style-typo-spacing-tightness', perElement: true,
     elements: ['title','date','capsule','highlights'] },
@@ -310,7 +317,8 @@ export const DEFAULT_STYLE_JSON = {
   typo: {
     font_family: { title:'FontSong', date:'FontSong', capsule:'FontSong', highlights:'FontSong' },
     weight_gradient: 'balanced', size_scale: 'petite',
-    alignment_mode: { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
+    h_align: { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
+    v_align: { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
     spacing_tightness: { title:'normal', date:'normal', capsule:'normal', highlights:'normal' },
     text_decoration: { title:[], date:[], capsule:[], highlights:[] }
   },
@@ -566,8 +574,8 @@ function buildDataAttrs(styleJson) {
         for (const el of mapping.elements) {
           const elVal = perElVal[el];
           if (elVal == null || elVal === 'none') continue;
-          // 字段级 alignment_mode / cross_alignment_mode 默认 'inherit' = 跟随容器（行内对齐 / 块对齐），不发射 attr
-          if ((mapKey === 'typo_alignment_mode' || mapKey === 'typo_cross_alignment_mode') && elVal === 'inherit') continue;
+          // 字段级 h_align / v_align 默认 'inherit' = 跟随容器（栏·水平 / 栏·垂直），不发射 attr
+          if ((mapKey === 'typo_h_align' || mapKey === 'typo_v_align') && elVal === 'inherit') continue;
           if (Array.isArray(elVal)) {
             if (elVal.length === 0) continue;
             attrs[mapping.attr + '-' + el] = escapeAttr(elVal.join(' '));
@@ -626,9 +634,10 @@ function buildHighlightsInner(highlights) {
   return h;
 }
 
-function buildHighlightsHtml(highlights) {
+function buildHighlightsHtml(highlights, vCls) {
   if (!highlights || !highlights.length) return '';
-  return '<div class="card-highlights">' + buildHighlightsInner(highlights) + '</div>';
+  const cls = 'card-highlights' + (vCls || '');
+  return '<div class="' + cls + '">' + buildHighlightsInner(highlights) + '</div>';
 }
 
 // ============================================================
@@ -948,11 +957,14 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     for (const slot of ['a', 'b', 'c', 'd']) {
       const field = slotAssignment[slot];
       if (!field || !fieldContent[field]) continue;
-      // 内层字段元素(.card-XXX)承载 filter_self；外层 .fx-wrap[data-fx=field] 承载 backdrop-filter + box 叠放层
-      const innerField = '<div class="' + fieldClass[field] + '">' + fieldContent[field] + '</div>';
-      // 跨轴对齐支持：竖排槽位加 .card-slot-vertical 类，让 BASE_CSS 把 align-items 从 stretch 改为
-      // flex-start，避免 .fx-wrap 被水平拉满 → margin-block:auto 才能在水平方向分配余量。
+      // 内层字段元素(.card-XXX)承载 filter_self + 竖排 writing-mode(.is-vertical)；
+      // 外层 .fx-wrap[data-fx=field] 承载 backdrop-filter + box 叠放层。
+      // 竖排 writing-mode 只挂文字元素，容器 .card-slot-x 始终 horizontal-tb（见 BASE_CSS 注释）。
       const isVertical = Array.isArray(verticalFields) && verticalFields.includes(field);
+      const fieldCls = fieldClass[field] + (isVertical ? ' is-vertical' : '');
+      const innerField = '<div class="' + fieldCls + '">' + fieldContent[field] + '</div>';
+      // 竖排槽位加 .card-slot-vertical 类，让 BASE_CSS 把 align-items 从 stretch 改为 flex-start，
+      // 避免 .fx-wrap 被水平拉满 → h_align 的 margin-left/right:auto 才能在水平方向分配余量。
       const slotClass = 'card-slot-' + slot + (isVertical ? ' card-slot-vertical' : '');
       slotHtml += '<div class="' + slotClass + '">' + wrapField(field, innerField) + '</div>';
     }
@@ -988,11 +1000,13 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     }
 
     const fieldHtml = (field) => {
+      // 竖排 writing-mode 只挂文字元素 .is-vertical（与 slot-skeleton 路径一致），容器保持 horizontal-tb。
+      const vCls = (verticalFields && verticalFields.includes(field)) ? ' is-vertical' : '';
       switch (field) {
-        case 'date': return date ? '<div class="card-date">' + date + '</div>' : '';
-        case 'title': return title ? '<div class="card-title">' + title + '</div>' : '';
-        case 'highlights': return buildHighlightsHtml(highlights);
-        case 'capsule': return capsule ? '<div class="card-capsule">' + capsule + '</div>' : '';
+        case 'date': return date ? '<div class="card-date' + vCls + '">' + date + '</div>' : '';
+        case 'title': return title ? '<div class="card-title' + vCls + '">' + title + '</div>' : '';
+        case 'highlights': return buildHighlightsHtml(highlights, vCls);
+        case 'capsule': return capsule ? '<div class="card-capsule' + vCls + '">' + capsule + '</div>' : '';
         case 'avatar': return '<div class="cg-avatar-text">' + escapeHtml(d.avatar || 'BF') + '</div>';
         case 'like_count': return '<span class="cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>';
         case 'share_count': return '<span class="cg-share">' + escapeHtml(String(d.share_count || '0')) + ' \u8f6c</span>';
@@ -1000,7 +1014,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
         default:
           if (field.startsWith('highlight_')) {
             const idx = parseInt(field.slice(-1)) - 1;
-            return highlights[idx] ? '<div class="card-highlights">' + escapeHtml(highlights[idx]) + '</div>' : '';
+            return highlights[idx] ? '<div class="card-highlights' + vCls + '">' + escapeHtml(highlights[idx]) + '</div>' : '';
           }
           return '';
       }
@@ -1029,10 +1043,9 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
           && fieldsInSlot.some(f => verticalFields.includes(f));
         let slotStyle = '';
         if (cgRow.layout_ref === 'single') {
-          slotStyle = hasVertical ? 'writing-mode:vertical-rl' : '';
+          slotStyle = '';
         } else if (colIdx !== undefined) {
           slotStyle = 'grid-column:' + (colIdx + 1);
-          if (hasVertical) slotStyle += ';writing-mode:vertical-rl';
         }
         cgHtml += '<div class="' + escapeAttr(slotId.replace(/_/g, '-')) + '"'
           + (slotStyle ? ' style="' + slotStyle + '"' : '')
@@ -1202,16 +1215,10 @@ export function renderStyleJson(styleJson, diary, allOptions) {
     || { a: 'date', b: 'title', c: 'highlights', d: 'capsule' };
   const verticalFields = Array.isArray(layout.flow_vertical) ? layout.flow_vertical : [];
 
-  for (const slot of ['a', 'b', 'c', 'd']) {
-    const field = slotAssignment[slot];
-    if (field && verticalFields.includes(field)) {
-      paletteCssVars.push('--wm-' + slot + ':vertical-rl');
-    }
-  }
-  // 全部竖排时，容器加 writing-mode:vertical-rl 转置 grid
-  if (verticalFields.length >= 4) {
-    paletteCssVars.push('writing-mode:vertical-rl', 'max-height:400px', 'overflow:hidden');
-  }
+  // 注意：不再对整卡 .gallery-card 加 writing-mode:vertical-rl 转置网格，也不再给 slot 发 --wm-* 变量。
+  // 旧版此处的转置会把「单列四行」网格压成「右到左并排的窄列」，且令全部对齐属性语义翻转。
+  // 竖排由字段级 .card-XXX.is-vertical 承载（见 buildCardHtml），容器与网格保持 horizontal-tb，
+  // 从而对齐坐标系固定为物理的「水平/垂直」，横排竖排语义一致。
   // 装饰位置锚点：角标 / 浮动支持 8 锚点定位，无需为同一装饰另建 DB 条目。
   // 引擎把锚点翻译为 inline CSS 变量挂到 .gallery-card；DB 模板用 var(--el-{subdim}-anchor-pos, 原生兜底) 消费。
   // 偏移量"设计期固定"：引擎只定锚点，离角多远由模板 var() 兜底值决定。
