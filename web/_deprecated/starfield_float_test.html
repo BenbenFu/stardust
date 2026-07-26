@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>星空 × 浮动圆：根因 & 修复对照（真实 DB 模板）</title>
+<style>
+  body{background:#11131a;color:#cfd6e6;font-family:system-ui,sans-serif;padding:24px;line-height:1.7;}
+  h1{font-size:18px;margin:0 0 8px;}
+  .note{font-size:13px;color:#9aa3b6;max-width:920px;}
+  .note b{color:#ffd479;}
+  .note .ok{color:#7ee0a0;}
+  .note .bad{color:#ff9a9a;}
+  .row{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;margin:16px 0;}
+  .col{display:flex;flex-direction:column;gap:8px;align-items:center;}
+  .col .tag{font-size:12px;text-align:center;max-width:210px;color:#9aa3b6;}
+  select{background:#1c2030;color:#e8ecff;border:1px solid #333a4d;border-radius:6px;padding:6px 10px;font-size:14px;}
+  .gallery-card{
+    position:relative; overflow:hidden;
+    width:240px; min-height:170px;
+    --card-bg:#0b1026; --card-text:#e8ecff; --card-accent:#7aa2ff; --card-muted:#3a4a7a;
+    background:var(--card-bg);
+    border-radius:10px; padding:14px; box-sizing:border-box;
+    border:1px solid #2a3050;
+  }
+  .card-content{position:relative; z-index:1;}
+  .card-title{font-size:14px; font-weight:700; color:var(--card-text); margin-bottom:6px;}
+  .card-text{font-size:12px; color:#b9c2d6;}
+
+  /* ===== 真实 id=48 starfield 的 4 个 bg 槽（原样）===== */
+  .star-vars{
+    --el-bg-1:radial-gradient(2px 2px at 12% 18%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 78% 12%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 42% 38%,var(--card-text) 50%,transparent 100%),radial-gradient(2px 2px at 90% 28%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 22% 55%,var(--card-text) 50%,transparent 100%),radial-gradient(2px 2px at 58% 72%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 6% 82%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 95% 65%,var(--card-text) 50%,transparent 100%),radial-gradient(2px 2px at 35% 90%,var(--card-text) 50%,transparent 100%);
+    --el-bg-size-1:211px 173px;--el-bg-pos-1:0 0;--el-bg-rep-1:repeat;
+    --el-bg-2:radial-gradient(1.2px 1.2px at 25% 8%,var(--card-text) 50%,transparent 100%),radial-gradient(1px 1px at 63% 30%,var(--card-text) 50%,transparent 100%),radial-gradient(1.2px 1.2px at 88% 48%,var(--card-text) 50%,transparent 100%),radial-gradient(1px 1px at 15% 60%,var(--card-text) 50%,transparent 100%),radial-gradient(1.2px 1.2px at 48% 78%,var(--card-text) 50%,transparent 100%),radial-gradient(1px 1px at 72% 92%,var(--card-text) 50%,transparent 100%),radial-gradient(1.2px 1.2px at 5% 35%,var(--card-text) 50%,transparent 100%);
+    --el-bg-size-2:167px 199px;--el-bg-pos-2:47px 23px;--el-bg-rep-2:repeat;
+    --el-bg-3:radial-gradient(.8px .8px at 40% 15%,var(--card-text) 50%,transparent 100%),radial-gradient(.6px .6px at 82% 40%,var(--card-text) 50%,transparent 100%),radial-gradient(.8px .8px at 18% 70%,var(--card-text) 50%,transparent 100%),radial-gradient(.6px .6px at 55% 85%,var(--card-text) 50%,transparent 100%),radial-gradient(.8px .8px at 92% 10%,var(--card-text) 50%,transparent 100%),radial-gradient(.4px .4px at 8% 25%,var(--card-text) 50%,transparent 100%),radial-gradient(.3px .3px at 52% 5%,var(--card-text) 50%,transparent 100%),radial-gradient(.4px .4px at 75% 55%,var(--card-text) 50%,transparent 100%),radial-gradient(.3px .3px at 28% 82%,var(--card-text) 50%,transparent 100%);
+    --el-bg-size-3:137px 151px;--el-bg-pos-3:71px 59px;--el-bg-rep-3:repeat;
+    --el-bg-4:radial-gradient(.5px .5px at 30% 50%,var(--card-text) 50%,transparent 100%),radial-gradient(.4px .4px at 70% 20%,var(--card-text) 50%,transparent 100%),radial-gradient(.5px .5px at 50% 80%,var(--card-text) 50%,transparent 100%),radial-gradient(ellipse 200px 120px at 18% 78%,color-mix(in srgb,var(--card-muted) 5%,transparent) 0%,transparent 50%),radial-gradient(ellipse 160px 90px at 82% 22%,color-mix(in srgb,var(--card-muted) 4%,transparent) 0%,transparent 50%);
+    --el-bg-size-4:100% 100%;--el-bg-pos-4:0 0;--el-bg-rep-4:no-repeat;
+  }
+
+  /* ===== 浮动圆（真实 id=34）：现状 10% / 修复 40% ===== */
+  .float-vars{ --el-float-size-1:150px 150px; --el-float-rep-1:no-repeat; }
+  .float-10{ --el-float-1: radial-gradient(circle, color-mix(in srgb, var(--card-accent,#888) 10%, transparent) 0 70px, transparent 72px); }
+  .float-40{ --el-float-1: radial-gradient(circle, color-mix(in srgb, var(--card-accent,#888) 40%, transparent) 0 70px, transparent 72px); }
+  .float-pos{ --el-float-pos-1: var(--el-float-anchor-pos, bottom -10px right -10px); }
+
+  /* 复合层：当前顺序 corner,edge,bg,float（float 在最后=最底层，被星空盖住） */
+  .combo-cur{
+    background-image:
+      var(--el-corner-1,none),var(--el-corner-2,none),
+      var(--el-edge-1,none),var(--el-edge-2,none),var(--el-edge-3,none),var(--el-edge-4,none),
+      var(--el-bg-1,none),var(--el-bg-2,none),var(--el-bg-3,none),var(--el-bg-4,none),
+      var(--el-float-1,none),var(--el-float-2,none),var(--el-float-3,none),var(--el-float-4,none);
+    background-size:
+      var(--el-corner-size-1,auto),var(--el-corner-size-2,auto),
+      var(--el-edge-size-1,auto),var(--el-edge-size-2,auto),var(--el-edge-size-3,auto),var(--el-edge-size-4,auto),
+      var(--el-bg-size-1,auto),var(--el-bg-size-2,auto),var(--el-bg-size-3,auto),var(--el-bg-size-4,auto),
+      var(--el-float-size-1,auto),var(--el-float-size-2,auto),var(--el-float-size-3,auto),var(--el-float-size-4,auto);
+    background-position:
+      var(--el-corner-pos-1,0 0),var(--el-corner-pos-2,0 0),
+      var(--el-edge-pos-1,0 0),var(--el-edge-pos-2,0 0),var(--el-edge-pos-3,0 0),var(--el-edge-pos-4,0 0),
+      var(--el-bg-pos-1,0 0),var(--el-bg-pos-2,0 0),var(--el-bg-pos-3,0 0),var(--el-bg-pos-4,0 0),
+      var(--el-float-pos-1,0 0),var(--el-float-pos-2,0 0),var(--el-float-pos-3,0 0),var(--el-float-pos-4,0 0);
+    background-repeat:
+      var(--el-corner-rep-1,no-repeat),var(--el-corner-rep-2,no-repeat),
+      var(--el-edge-rep-1,no-repeat),var(--el-edge-rep-2,no-repeat),var(--el-edge-rep-3,no-repeat),var(--el-edge-rep-4,no-repeat),
+      var(--el-bg-rep-1,no-repeat),var(--el-bg-rep-2,no-repeat),var(--el-bg-rep-3,no-repeat),var(--el-bg-rep-4,no-repeat),
+      var(--el-float-rep-1,no-repeat),var(--el-float-rep-2,no-repeat),var(--el-float-rep-3,no-repeat),var(--el-float-rep-4,no-repeat);
+  }
+  /* 复合层：修复顺序 corner,edge,float,bg（float 提到 bg 前面=最上层，浮动圆压在星空之上） */
+  .combo-fix{
+    background-image:
+      var(--el-corner-1,none),var(--el-corner-2,none),
+      var(--el-edge-1,none),var(--el-edge-2,none),var(--el-edge-3,none),var(--el-edge-4,none),
+      var(--el-float-1,none),var(--el-float-2,none),var(--el-float-3,none),var(--el-float-4,none),
+      var(--el-bg-1,none),var(--el-bg-2,none),var(--el-bg-3,none),var(--el-bg-4,none);
+    background-size:
+      var(--el-corner-size-1,auto),var(--el-corner-size-2,auto),
+      var(--el-edge-size-1,auto),var(--el-edge-size-2,auto),var(--el-edge-size-3,auto),var(--el-edge-size-4,auto),
+      var(--el-float-size-1,auto),var(--el-float-size-2,auto),var(--el-float-size-3,auto),var(--el-float-size-4,auto),
+      var(--el-bg-size-1,auto),var(--el-bg-size-2,auto),var(--el-bg-size-3,auto),var(--el-bg-size-4,auto);
+    background-position:
+      var(--el-corner-pos-1,0 0),var(--el-corner-pos-2,0 0),
+      var(--el-edge-pos-1,0 0),var(--el-edge-pos-2,0 0),var(--el-edge-pos-3,0 0),var(--el-edge-pos-4,0 0),
+      var(--el-float-pos-1,0 0),var(--el-float-pos-2,0 0),var(--el-float-pos-3,0 0),var(--el-float-pos-4,0 0),
+      var(--el-bg-pos-1,0 0),var(--el-bg-pos-2,0 0),var(--el-bg-pos-3,0 0),var(--el-bg-pos-4,0 0);
+    background-repeat:
+      var(--el-corner-rep-1,no-repeat),var(--el-corner-rep-2,no-repeat),
+      var(--el-edge-rep-1,no-repeat),var(--el-edge-rep-2,no-repeat),var(--el-edge-rep-3,no-repeat),var(--el-edge-rep-4,no-repeat),
+      var(--el-float-rep-1,no-repeat),var(--el-float-rep-2,no-repeat),var(--el-float-rep-3,no-repeat),var(--el-float-rep-4,no-repeat),
+      var(--el-bg-rep-1,no-repeat),var(--el-bg-rep-2,no-repeat),var(--el-bg-rep-3,no-repeat),var(--el-bg-rep-4,no-repeat);
+  }
+</style>
+</head>
+<body>
+<h1>星空 × 浮动圆：根因 & 修复对照（全部用真实 DB 模板）</h1>
+<p class="note">
+  <b>根因（已用真实 DB 模板核实）：</b><br>
+  ① 你看到的"6 个平铺圆"<span class="bad">不是浮动圆被复制</span>，而是 <b>星空的星点本身</b>（一圈圈小圆形 radial-gradient，靠 <code>repeat</code> 平铺）。<code>floating_deco</code> 维度只有 4 个值，你用的 <code>floating_circle</code> 只写 <code>--el-float-1</code> 一个槽、<code>no-repeat</code>，本身就是 1 个圆。<br>
+  ② 当前 14 槽复合层顺序是 <code>corner, edge, bg, <b>float</b></code> —— 浮动圆排在<b>最后=最底层</b>，被星空星点（bg 层）画在<b>上面</b>盖住了；加上它默认锚点 <code>bottom -10px right -10px</code> 把圆推到卡片外只露一角，于是你满眼都是铺开的星点、看不见浮动圆，误以为"浮动圆被平铺成 6 个"。<br>
+  <b class="ok">修复方向：</b>把复合层顺序改为 <code>corner, edge, <b>float</b>, bg</code>，让浮动圆（前景装饰）画在星空（背景纹理）之上；并把默认锚点改为落在卡内。修复卡见右下。
+</p>
+
+<div style="margin:14px 0;">
+  <label>floating_deco_pos（影响带浮动圆的卡）：
+    <select id="posSel">
+      <option value="native">native（引擎不发射，回退默认锚点）</option>
+      <option value="top-left">top-left</option>
+      <option value="top-center">top-center</option>
+      <option value="top-right">top-right</option>
+      <option value="right-center">right-center</option>
+      <option value="bottom-right" selected>bottom-right</option>
+      <option value="bottom-center">bottom-center</option>
+      <option value="bottom-left">bottom-left</option>
+      <option value="left-center">left-center</option>
+      <option value="center">center（居中，最容易看清"是 1 个圆"）</option>
+    </select>
+  </label>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="gallery-card float-vars float-10 float-pos">
+      <div class="card-content"><div class="card-title">仅 floating_circle（现状 10%）</div><div class="card-text">单独就一个圆，右下角（默认锚点把圆推到卡外只露一角）</div></div>
+    </div>
+    <div class="tag">A · 仅浮动圆（现状）</div>
+  </div>
+  <div class="col">
+    <div class="gallery-card star-vars">
+      <div class="card-content"><div class="card-title">仅 starfield</div><div class="card-text">这些铺开的小圆 = 你误以为的"6 个平铺浮动圆"，其实是星点</div></div>
+    </div>
+    <div class="tag">B · 仅星空（"6 圆"真相）</div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="gallery-card star-vars float-vars float-10 float-pos combo-cur">
+      <div class="card-content"><div class="card-title">星空 + 浮动圆（现状顺序）</div><div class="card-text">浮动圆被压在星点下面→几乎看不见，你当前预览看到的就是这个</div></div>
+    </div>
+    <div class="tag">C · 混合（现状）= 你报告的"6 圆"</div>
+  </div>
+  <div class="col">
+    <div class="gallery-card star-vars float-vars float-40 float-pos combo-fix">
+      <div class="card-content"><div class="card-title">星空 + 浮动圆（修复：float 提到 bg 之上）</div><div class="card-text">一个清晰大圆压在星空之上，随下拉移动，与星点明显区分</div></div>
+    </div>
+    <div class="tag">D · 混合（修复提案）</div>
+  </div>
+</div>
+
+<script>
+const ANCHOR = {
+  'top-left':     { bg:'top 12px left 12px' },
+  'top-center':   { bg:'top 12px left 50%' },
+  'top-right':    { bg:'top 12px right 12px' },
+  'right-center': { bg:'top 50% right 12px' },
+  'bottom-right': { bg:'bottom 12px right 12px' },
+  'bottom-center':{ bg:'bottom 12px left 50%' },
+  'bottom-left':  { bg:'bottom 12px left 12px' },
+  'left-center':  { bg:'top 50% left 12px' },
+  'center':       { bg:'top 50% left 50%' },
+};
+const floatCards = Array.from(document.querySelectorAll('.float-vars'));
+function apply(v){
+  floatCards.forEach(c=>{
+    c.style.removeProperty('--el-float-anchor-pos');
+    if(v!=='native'){ c.style.setProperty('--el-float-anchor-pos', ANCHOR[v].bg); c.style.setProperty('--el-float-pos-1', ANCHOR[v].bg); }
+  });
+}
+document.getElementById('posSel').addEventListener('change', e=>apply(e.target.value));
+apply('bottom-right');
+</script>
+</body>
+</html>

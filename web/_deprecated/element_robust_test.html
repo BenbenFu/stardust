@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>element 健壮性验证（修复后机制）</title>
+<style>
+  body { font-family: system-ui, "Microsoft YaHei", sans-serif; background:#eee; padding:20px; color:#222; }
+  h2 { font-size:16px; margin:18px 0 8px; }
+  .controls { display:flex; flex-wrap:wrap; gap:6px 14px; max-width:780px; background:#fff; padding:12px; border-radius:8px; }
+  .controls label { font-size:13px; display:inline-flex; align-items:center; gap:4px; }
+  .group { border-top:1px dashed #ccc; padding-top:8px; margin-top:8px; width:100%; font-size:12px; color:#888; }
+  #posRow { margin-top:8px; width:100%; }
+  .stage { display:flex; gap:24px; flex-wrap:wrap; margin-top:16px; }
+  .cell { text-align:center; }
+  .cell .cap { font-size:12px; color:#666; margin-top:6px; }
+
+  /* ===== 引擎 BASE_CSS（修复后）：唯一权威 14 槽复合层 ===== */
+  .gallery-card {
+    display:flex; flex-direction:column; position:relative; overflow:hidden;
+    background-color:#fafafa;
+    background-image:
+      var(--el-corner-1, none), var(--el-corner-2, none),
+      var(--el-edge-1, none), var(--el-edge-2, none), var(--el-edge-3, none), var(--el-edge-4, none),
+      var(--el-float-1, none), var(--el-float-2, none), var(--el-float-3, none), var(--el-float-4, none),
+      var(--el-bg-1, none), var(--el-bg-2, none), var(--el-bg-3, none), var(--el-bg-4, none);
+    background-size:
+      var(--el-corner-size-1, auto), var(--el-corner-size-2, auto),
+      var(--el-edge-size-1, auto), var(--el-edge-size-2, auto), var(--el-edge-size-3, auto), var(--el-edge-size-4, auto),
+      var(--el-float-size-1, auto), var(--el-float-size-2, auto), var(--el-float-size-3, auto), var(--el-float-size-4, auto),
+      var(--el-bg-size-1, auto), var(--el-bg-size-2, auto), var(--el-bg-size-3, auto), var(--el-bg-size-4, auto);
+    background-position:
+      var(--el-corner-pos-1, 0 0), var(--el-corner-pos-2, 0 0),
+      var(--el-edge-pos-1, 0 0), var(--el-edge-pos-2, 0 0), var(--el-edge-pos-3, 0 0), var(--el-edge-pos-4, 0 0),
+      var(--el-float-pos-1, 0 0), var(--el-float-pos-2, 0 0), var(--el-float-pos-3, 0 0), var(--el-float-pos-4, 0 0),
+      var(--el-bg-pos-1, 0 0), var(--el-bg-pos-2, 0 0), var(--el-bg-pos-3, 0 0), var(--el-bg-pos-4, 0 0);
+    background-repeat:
+      var(--el-corner-rep-1, no-repeat), var(--el-corner-rep-2, no-repeat),
+      var(--el-edge-rep-1, no-repeat), var(--el-edge-rep-2, no-repeat), var(--el-edge-rep-3, no-repeat), var(--el-edge-rep-4, no-repeat),
+      var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat),
+      var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat);
+    color:#222; border:1px solid #ddd; border-radius:10px;
+    width:260px; height:340px; box-sizing:border-box;
+  }
+  .card-content { flex:1 1 auto; padding:14px; display:flex; flex-direction:column; gap:6px; }
+  .card-title { font-weight:700; font-size:18px; }
+  .card-date { color:#999; font-size:12px; }
+  .card-highlights { font-size:13px; color:#444; }
+
+  /* ===== 引擎 injectDynamicStyles（修复后）：仅变量，无 background-image ===== */
+  .gallery-card[data-style-element-corner="circle_stamp"] {
+    --el-corner-1: radial-gradient(circle, var(--card-accent, #888) 50%, transparent 52%);
+    --el-corner-size-1: 14px 14px;
+    --el-corner-pos-1: var(--el-corner-anchor-pos, top 6px right 6px);
+    --el-corner-rep-1: no-repeat;
+  }
+  .gallery-card[data-style-element-corner="dot_status"] {
+    --el-corner-1: radial-gradient(circle, var(--card-bg, #fff) 0 3px, var(--card-accent, #888) 3px 5px, transparent 5px);
+    --el-corner-size-1: 11px 11px;
+    --el-corner-pos-1: var(--el-corner-anchor-pos, top 6px right 6px);
+    --el-corner-rep-1: no-repeat;
+  }
+  .gallery-card[data-style-element-corner="page_fold"] {
+    --pf-angle: 225deg;
+    --el-corner-1: linear-gradient(var(--pf-angle), var(--card-muted, #ccc) 0 18px, transparent 18px);
+    --el-corner-size-1: 18px 18px;
+    --el-corner-pos-1: top right;
+    --el-corner-rep-1: no-repeat;
+    --el-corner-2: linear-gradient(var(--pf-angle), transparent 0 16px, var(--card-text, #222) 16px 18px, transparent 18px);
+    --el-corner-size-2: 18px 18px;
+    --el-corner-pos-2: top right;
+    --el-corner-rep-2: no-repeat;
+  }
+  .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="top-left"] { --pf-angle:135deg; --el-corner-pos-1:top left; --el-corner-pos-2:top left; }
+  .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-left"] { --pf-angle:45deg; --el-corner-pos-1:bottom left; --el-corner-pos-2:bottom left; }
+  .gallery-card[data-style-element-corner="page_fold"][data-style-element-corner-anchor="bottom-right"] { --pf-angle:315deg; --el-corner-pos-1:bottom right; --el-corner-pos-2:bottom right; }
+
+  .gallery-card[data-style-element-bg="dot_grid"] {
+    --el-bg-1: radial-gradient(circle, var(--card-muted, #ccc) 1px, transparent 1.6px);
+    --el-bg-size-1: 16px 16px; --el-bg-pos-1: 0 0; --el-bg-rep-1: repeat;
+  }
+  .gallery-card[data-style-element-bg="fine_grid"] {
+    --bg-grid-line: color-mix(in srgb, var(--card-muted, #ccc) 14%, transparent);
+    --el-bg-1: linear-gradient(var(--bg-grid-line) 1px, transparent 1px);
+    --el-bg-2: linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
+    --el-bg-size-1: 20px 20px; --el-bg-size-2: 20px 20px;
+    --el-bg-pos-1: 0 0; --el-bg-pos-2: 0 0; --el-bg-rep-1: repeat; --el-bg-rep-2: repeat;
+  }
+  .gallery-card[data-style-element-bg="horizontal_lines"] {
+    --el-bg-1: repeating-linear-gradient(to bottom, transparent, transparent calc(1.5em - 1px), var(--card-muted, #ccc) calc(1.5em - 1px), var(--card-muted, #ccc) 1.5em);
+    --el-bg-size-1: 100% 1.5em; --el-bg-pos-1: 0 0; --el-bg-rep-1: repeat;
+  }
+  .gallery-card[data-style-element-bg="gradient_overlay"] {
+    --el-bg-1: linear-gradient(to bottom, transparent 55%, color-mix(in srgb, var(--card-bg, #fff) 65%, var(--card-muted, #ccc) 35%) 100%);
+    --el-bg-size-1: 100% 100%; --el-bg-pos-1: 0 0; --el-bg-rep-1: no-repeat;
+  }
+  .gallery-card[data-style-element-bg="terminal_scanlines"] {
+    --el-bg-1: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
+    --el-bg-size-1: 100% 4px; --el-bg-pos-1: 0 0; --el-bg-rep-1: repeat;
+  }
+  .gallery-card[data-style-element-bg="starfield"] {
+    --el-bg-1:radial-gradient(2px 2px at 12% 18%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 78% 12%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 42% 38%,var(--card-text) 50%,transparent 100%),radial-gradient(2px 2px at 90% 28%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 22% 55%,var(--card-text) 50%,transparent 100%),radial-gradient(2px 2px at 58% 72%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 6% 82%,var(--card-text) 50%,transparent 100%),radial-gradient(1.5px 1.5px at 95% 65%,var(--card-text) 50%,transparent 100%),radial-gradient(2px 2px at 35% 90%,var(--card-text) 50%,transparent 100%);
+    --el-bg-size-1:211px 173px;--el-bg-pos-1:0 0;--el-bg-rep-1:repeat;
+    --el-bg-2:radial-gradient(1.2px 1.2px at 25% 8%,var(--card-text) 50%,transparent 100%),radial-gradient(1px 1px at 63% 30%,var(--card-text) 50%,transparent 100%),radial-gradient(1.2px 1.2px at 88% 48%,var(--card-text) 50%,transparent 100%),radial-gradient(1px 1px at 15% 60%,var(--card-text) 50%,transparent 100%),radial-gradient(1.2px 1.2px at 48% 78%,var(--card-text) 50%,transparent 100%),radial-gradient(1px 1px at 72% 92%,var(--card-text) 50%,transparent 100%),radial-gradient(1.2px 1.2px at 5% 35%,var(--card-text) 50%,transparent 100%);
+    --el-bg-size-2:167px 199px;--el-bg-pos-2:47px 23px;--el-bg-rep-2:repeat;
+    --el-bg-3:radial-gradient(.8px .8px at 40% 15%,var(--card-text) 50%,transparent 100%),radial-gradient(.6px .6px at 82% 40%,var(--card-text) 50%,transparent 100%),radial-gradient(.8px .8px at 18% 70%,var(--card-text) 50%,transparent 100%),radial-gradient(.6px .6px at 55% 85%,var(--card-text) 50%,transparent 100%),radial-gradient(.8px .8px at 92% 10%,var(--card-text) 50%,transparent 100%),radial-gradient(.4px .4px at 8% 25%,var(--card-text) 50%,transparent 100%),radial-gradient(.3px .3px at 52% 5%,var(--card-text) 50%,transparent 100%),radial-gradient(.4px .4px at 75% 55%,var(--card-text) 50%,transparent 100%),radial-gradient(.3px .3px at 28% 82%,var(--card-text) 50%,transparent 100%);
+    --el-bg-size-3:137px 151px;--el-bg-pos-3:71px 59px;--el-bg-rep-3:repeat;
+    --el-bg-4:radial-gradient(.5px .5px at 30% 50%,var(--card-text) 50%,transparent 100%),radial-gradient(.4px .4px at 70% 20%,var(--card-text) 50%,transparent 100%),radial-gradient(.5px .5px at 50% 80%,var(--card-text) 50%,transparent 100%),radial-gradient(ellipse 200px 120px at 18% 78%,color-mix(in srgb,var(--card-muted) 5%,transparent) 0%,transparent 50%),radial-gradient(ellipse 160px 90px at 82% 22%,color-mix(in srgb,var(--card-muted) 4%,transparent) 0%,transparent 50%);
+    --el-bg-size-4:100% 100%;--el-bg-pos-4:0 0;--el-bg-rep-4:no-repeat;
+  }
+
+  .gallery-card[data-style-element-edge="bracket_frame"] {
+    --el-edge-1: linear-gradient(var(--card-accent, #888), var(--card-accent, #888));
+    --el-edge-2: linear-gradient(var(--card-accent, #888), var(--card-accent, #888));
+    --el-edge-3: linear-gradient(var(--card-accent, #888), var(--card-accent, #888));
+    --el-edge-4: linear-gradient(var(--card-accent, #888), var(--card-accent, #888));
+    --el-edge-size-1: 12px 2px; --el-edge-size-2: 2px 12px; --el-edge-size-3: 12px 2px; --el-edge-size-4: 2px 12px;
+    --el-edge-pos-1: 6px 6px; --el-edge-pos-2: 6px 6px; --el-edge-pos-3: bottom 6px right 6px; --el-edge-pos-4: bottom 6px right 6px;
+    --el-edge-rep-1: no-repeat; --el-edge-rep-2: no-repeat; --el-edge-rep-3: no-repeat; --el-edge-rep-4: no-repeat;
+  }
+  .gallery-card[data-style-element-edge="tape_stripe"] {
+    --el-edge-1: repeating-linear-gradient(45deg, transparent, transparent 8px, color-mix(in srgb, var(--card-muted, #ccc) 28%, transparent) 8px, color-mix(in srgb, var(--card-muted, #ccc) 28%, transparent) 10px);
+    --el-edge-size-1: auto; --el-edge-pos-1: 0 0; --el-edge-rep-1: repeat;
+  }
+
+  .gallery-card[data-style-element-float="floating_circle"] {
+    --el-float-1: radial-gradient(circle, color-mix(in srgb, var(--card-accent, #888) 38%, transparent) 0 44px, transparent 46px);
+    --el-float-size-1: 90px 90px;
+    --el-float-pos-1: var(--el-float-anchor-pos, bottom 10px right 10px);
+    --el-float-rep-1: no-repeat;
+  }
+  .gallery-card[data-style-element-float="scatter_dots"] {
+    --el-float-1: radial-gradient(circle, var(--card-accent, #888) 1.2px, transparent 1.6px);
+    --el-float-size-1: 46px 46px; --el-float-pos-1: var(--el-float-anchor-pos, top 4px right 6px); --el-float-rep-1: repeat;
+    --el-float-2: radial-gradient(circle, var(--card-accent, #888) 1px, transparent 1.4px);
+    --el-float-size-2: 70px 70px; --el-float-pos-2: var(--el-float-anchor-pos, top 30px left 10px); --el-float-rep-2: repeat;
+  }
+
+  .gallery-card[data-style-element-side="notebook_binding"] .card-side-band { background-color: var(--card-muted, #bbb); background-image: radial-gradient(circle at center, var(--card-bg, #fff) 2px, transparent 2.5px); background-size: 100% 16px; background-repeat: repeat-y; }
+</style>
+</head>
+<body>
+<h1>element 健壮性验证 — 修复后机制（唯一复合层在 BASE_CSS）</h1>
+<p>机制：每个 element 模板只声明自己的 <code>--el-*</code> 变量；唯一的 14 槽复合层由引擎 BASE_CSS 注入一次。多装饰同卡 = 各自填槽，永不争抢 <code>background-image</code>。浮动类装饰（前景）恒在背景纹理之上。</p>
+
+<div class="controls" id="controls">
+  <div class="group">角标 corner_badge</div>
+  <label><input type="checkbox" data-dim="corner" data-val="circle_stamp"> circle_stamp</label>
+  <label><input type="checkbox" data-dim="corner" data-val="dot_status"> dot_status</label>
+  <label><input type="checkbox" data-dim="corner" data-val="page_fold"> page_fold</label>
+
+  <div class="group">背景纹理 bg_pattern</div>
+  <label><input type="checkbox" data-dim="bg" data-val="dot_grid"> dot_grid</label>
+  <label><input type="checkbox" data-dim="bg" data-val="fine_grid"> fine_grid</label>
+  <label><input type="checkbox" data-dim="bg" data-val="horizontal_lines"> horizontal_lines</label>
+  <label><input type="checkbox" data-dim="bg" data-val="gradient_overlay"> gradient_overlay</label>
+  <label><input type="checkbox" data-dim="bg" data-val="terminal_scanlines"> terminal_scanlines</label>
+  <label><input type="checkbox" data-dim="bg" data-val="starfield"> starfield</label>
+
+  <div class="group">边缘 edge_deco</div>
+  <label><input type="checkbox" data-dim="edge" data-val="bracket_frame"> bracket_frame</label>
+  <label><input type="checkbox" data-dim="edge" data-val="tape_stripe"> tape_stripe</label>
+
+  <div class="group">浮动 floating_deco</div>
+  <label><input type="checkbox" data-dim="float" data-val="floating_circle" id="chkFloat"> floating_circle</label>
+  <label><input type="checkbox" data-dim="float" data-val="scatter_dots"> scatter_dots</label>
+
+  <div class="group">侧栏 side_accent</div>
+  <label><input type="checkbox" data-dim="side" data-val="notebook_binding"> notebook_binding</label>
+
+  <div id="posRow" class="group">浮动圆位置（仅 floating_circle 生效）：
+    <select id="posSel" disabled>
+      <option value="bottom 10px right 10px">右下 (默认)</option>
+      <option value="top 10px left 10px">左上</option>
+      <option value="top 10px right 10px">右上</option>
+      <option value="bottom 10px left 10px">左下</option>
+      <option value="center">正中</option>
+    </select>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="cell">
+    <div class="gallery-card" id="card" style="--card-bg:#fafafa;--card-text:#222;--card-accent:#e0533d;--card-muted:#b9b3a8;">
+      <div class="card-content">
+        <div class="card-date">2026-07-25</div>
+        <div class="card-title">星屑日记</div>
+        <div class="card-highlights">今天的云很像棉花糖，风把傍晚染成了橘色。记一笔，留给未来的自己。</div>
+      </div>
+    </div>
+    <div class="cap">实时预览（勾选任意组合）</div>
+  </div>
+</div>
+
+<script>
+  const card = document.getElementById('card');
+  const chkFloat = document.getElementById('chkFloat');
+  const posSel = document.getElementById('posSel');
+
+  function sync() {
+    document.querySelectorAll('#controls input[type=checkbox]').forEach(cb => {
+      if (cb.checked) card.setAttribute('data-style-element-' + cb.dataset.dim, cb.dataset.val);
+      else card.removeAttribute('data-style-element-' + cb.dataset.dim);
+    });
+    // 角标锚点（page_fold 演示用）
+    if (card.getAttribute('data-style-element-corner') === 'page_fold') {
+      card.setAttribute('data-style-element-corner-anchor', 'top-left');
+    } else {
+      card.removeAttribute('data-style-element-corner-anchor');
+    }
+    posSel.disabled = !chkFloat.checked;
+    if (chkFloat.checked) card.style.setProperty('--el-float-anchor-pos', posSel.value);
+    else card.style.removeProperty('--el-float-anchor-pos');
+  }
+
+  document.querySelectorAll('#controls input[type=checkbox]').forEach(cb => cb.addEventListener('change', sync));
+  posSel.addEventListener('change', () => { if (chkFloat.checked) card.style.setProperty('--el-float-anchor-pos', posSel.value); });
+  sync();
+</script>
+</body>
+</html>
