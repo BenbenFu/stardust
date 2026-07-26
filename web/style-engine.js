@@ -52,7 +52,14 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 /* 跨轴对齐(cross_alignment_mode)支持：使每个 slot 成为 flex 列容器，字段包裹层 .fx-wrap[data-fx]
    成为其 flex item，从而可用 margin-block:auto 在「块轴」上定位（横排=竖直 / 竖排=水平，自动随
    writing-mode 翻转，无需引擎翻译）。默认无 margin → 字段位于块轴起点，等同改动前行为，无回归。 */
-.card-slot-a, .card-slot-b, .card-slot-c, .card-slot-d { display:flex; flex-direction:column; }
+.card-slot-a, .card-slot-b, .card-slot-c, .card-slot-d { display:flex; flex-direction:column;
+  /* 跨轴对齐(cross_alignment_mode)支持：
+     · min-height 32px 让短内容时槽位仍有垂直余量 → margin-block:auto 可在水平排版下垂直居中。
+     · 竖排槽位再加 .card-slot-vertical 类（见 buildCardHtml）让 align-items 变为 flex-start，
+       避免 .fx-wrap 被水平拉满 → margin-block:auto 可在竖排下水平居中。
+     长内容/多行时无垂直余量，margin-block:auto 无可视效果，是设计期取舍（非 bug）。 */
+  min-height: 32px; }
+.card-slot-vertical { align-items: flex-start; }
 .card-date   { color: var(--card-muted, inherit);
   font-weight: var(--typo-date-weight, 400);
   font-size: calc(0.8rem * var(--typo-date-scale, 0.85));
@@ -943,7 +950,11 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       if (!field || !fieldContent[field]) continue;
       // 内层字段元素(.card-XXX)承载 filter_self；外层 .fx-wrap[data-fx=field] 承载 backdrop-filter + box 叠放层
       const innerField = '<div class="' + fieldClass[field] + '">' + fieldContent[field] + '</div>';
-      slotHtml += '<div class="card-slot-' + slot + '">' + wrapField(field, innerField) + '</div>';
+      // 跨轴对齐支持：竖排槽位加 .card-slot-vertical 类，让 BASE_CSS 把 align-items 从 stretch 改为
+      // flex-start，避免 .fx-wrap 被水平拉满 → margin-block:auto 才能在水平方向分配余量。
+      const isVertical = Array.isArray(verticalFields) && verticalFields.includes(field);
+      const slotClass = 'card-slot-' + slot + (isVertical ? ' card-slot-vertical' : '');
+      slotHtml += '<div class="' + slotClass + '">' + wrapField(field, innerField) + '</div>';
     }
     bodyHtml = slotHtml;
     contentIsSlots = true;
