@@ -137,6 +137,27 @@
     .checkbox-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text, #444); cursor: pointer; }
     .checkbox-label input { width: auto; margin: 0; }
 
+    /* ===== 调试：栏边界可视化 ===== */
+    #previewArea.show-boundaries .gallery-card { outline: 1px dashed #e74c3c; outline-offset: -1px; }
+    #previewArea.show-boundaries .card-content--slots { outline: 1px dashed #3498db; outline-offset: -1px;
+      background: rgba(52,152,219,0.05); }
+    #previewArea.show-boundaries .card-slot-a,
+    #previewArea.show-boundaries .card-slot-b,
+    #previewArea.show-boundaries .card-slot-c,
+    #previewArea.show-boundaries .card-slot-d { position: relative; outline: 1px dashed #2ecc71; outline-offset: -2px; }
+    #previewArea.show-boundaries .card-slot-a::before { content: 'a'; }
+    #previewArea.show-boundaries .card-slot-b::before { content: 'b'; }
+    #previewArea.show-boundaries .card-slot-c::before { content: 'c'; }
+    #previewArea.show-boundaries .card-slot-d::before { content: 'd'; }
+    #previewArea.show-boundaries .card-slot-a::before,
+    #previewArea.show-boundaries .card-slot-b::before,
+    #previewArea.show-boundaries .card-slot-c::before,
+    #previewArea.show-boundaries .card-slot-d::before {
+      position: absolute; top: 0; right: 0; font: 700 9px/1 monospace;
+      padding: 1px 3px; background: #2ecc71; color: #fff; border-radius: 0 0 0 3px;
+      z-index: 5; pointer-events: none;
+    }
+
     /* ===== 色板选择器 ===== */
     .palette-grid {
         display: flex; flex-wrap: wrap; gap: 3px;
@@ -314,6 +335,12 @@
                             <input type="checkbox" id="fv-capsule"> capsule
                         </label>
                     </div>
+                </div>
+                <div class="dim-row">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="toggle-boundaries">
+                        显示栏边界（调试：红=卡片框 / 蓝=栏容器 / 绿=四个栏 a·b·c·d）
+                    </label>
                 </div>
                 <div class="dim-row-inline">
                     <div class="dim-row">
@@ -876,7 +903,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260727a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260727b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -2140,6 +2167,14 @@ Object.values(DIMS).forEach(el => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', debouncedUpdate); el.addEventListener('change', debouncedUpdate); }
 });
+
+// 调试：显示栏边界（红=卡片外框 / 蓝=栏容器 / 绿=四个栏）
+const toggleBoundaries = document.getElementById('toggle-boundaries');
+if (toggleBoundaries) {
+    toggleBoundaries.addEventListener('change', () => {
+        dom.previewArea.classList.toggle('show-boundaries', toggleBoundaries.checked);
+    });
+}
 
 // 容器组结构预览已由 updateContainerGroups() 接管（readStyleJson 与列表变更时调用）
 

@@ -40,6 +40,7 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
    避免同一卡片上「菱形 + 丝带」或「菱形 + 标签」争用同一伪元素导致相互覆盖/消失。 */
 .card-deco-layer { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
 .card-content--slots { display: grid; gap: var(--spacing-sm, var(--layout-gap, 8px));
+  grid-template-columns: 1fr;   /* 单列默认撑满卡宽，给「栏·水平对齐」(justify-items) 留横向余量；多列模板特异性更高会覆盖 */
   grid-template-areas: "slot-a" "slot-b" "slot-c" "slot-d";
   /* 行内对齐（表格对齐级）：写在容器上，被各字段继承；字段级可单独覆盖。
      对应 Word 的三级对齐：栏对齐(block) → 表格对齐(inline) → 表格内文字对齐(field)。 */
