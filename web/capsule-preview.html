@@ -679,6 +679,10 @@
                     <select id="pf-alignment-mode"></select>
                 </div>
                 <div class="dim-row">
+                    <label>Cross Align 跨轴对齐</label>
+                    <select id="pf-cross-alignment-mode"></select>
+                </div>
+                <div class="dim-row">
                     <label>Spacing Tightness 字间距</label>
                     <select id="pf-spacing-tightness"></select>
                 </div>
@@ -872,7 +876,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260724a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260726a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -892,6 +896,7 @@ const DIM_CONFIG = {
     weight_gradient:  { table: 'style_typo_options', col: 'sub_dim', colVal: 'weight_gradient',   label: 'Typo / Weight' },
     size_scale:       { table: 'style_typo_options', col: 'sub_dim', colVal: 'size_scale',        label: 'Typo / Size' },
     alignment_mode:   { table: 'style_typo_options', col: 'sub_dim', colVal: 'alignment_mode',    label: 'Typo / Alignment' },
+    cross_alignment_mode: { table: 'style_typo_options', col: 'sub_dim', colVal: 'cross_alignment_mode', label: 'Typo / Cross Align' },
     spacing_tightness:{ table: 'style_typo_options', col: 'sub_dim', colVal: 'spacing_tightness', label: 'Typo / Spacing' },
     text_decoration:  { table: 'style_typo_options', col: 'sub_dim', colVal: 'text_decoration',   label: 'Typo / Decoration' },
     // border (style_border_options)
@@ -944,6 +949,7 @@ const PF_FIELDS = ['title', 'date', 'highlights', 'capsule'];
 let perFieldState = {
   font_family:       { title:'system_sans', date:'system_sans', capsule:'system_sans', highlights:'system_sans' },
   alignment_mode:    { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
+  cross_alignment_mode: { title:'inherit', date:'inherit', capsule:'inherit', highlights:'inherit' },
   spacing_tightness: { title:'normal',      date:'normal',      capsule:'normal',      highlights:'normal' },
   text_decoration:   { title:[],            date:[],            capsule:[],            highlights:[] },
   filter_self:       { title:'none',        date:'none',        capsule:'none',        highlights:'none' },
@@ -1012,7 +1018,7 @@ function rebuildAlignOptions(pos) {
 
 // Per-field dropdown DOM refs (pf- prefix)
 const PF_DIMS = {};
-['font-family', 'alignment-mode', 'spacing-tightness', 'filter-self', 'filter-backdrop', 'transform', 'animation'].forEach(id => {
+['font-family', 'alignment-mode', 'cross-alignment-mode', 'spacing-tightness', 'filter-self', 'filter-backdrop', 'transform', 'animation'].forEach(id => {
   const key = id.replace(/-/g, '_');
   PF_DIMS[key] = document.getElementById('pf-' + id);
 });
@@ -1152,6 +1158,7 @@ function buildStyleJson() {
             weight_gradient:   v('weight_gradient', 'balanced'),
             size_scale:        v('size_scale', 'petite'),
             alignment_mode:    perFieldState.alignment_mode,
+            cross_alignment_mode: perFieldState.cross_alignment_mode,
             spacing_tightness: perFieldState.spacing_tightness,
             text_decoration:   perFieldState.text_decoration,
         },
@@ -1265,6 +1272,7 @@ function applyStyleJsonToPanel(sj) {
     // typo — per-element dims -> perFieldState
     perFieldState.font_family       = normalizePerEl(ty.font_family, 'system_sans');
     perFieldState.alignment_mode    = normalizePerEl(ty.alignment_mode, 'left');
+    perFieldState.cross_alignment_mode = normalizePerEl(ty.cross_alignment_mode, 'inherit');
     perFieldState.spacing_tightness = normalizePerEl(ty.spacing_tightness, 'normal');
     perFieldState.text_decoration   = normalizePerElArray(ty.text_decoration);
 
@@ -1540,6 +1548,7 @@ function updateContainerGroups() {
 function loadFieldToUI(field) {
     setSelect(PF_DIMS.font_family,       perFieldState.font_family[field]);
     setSelect(PF_DIMS.alignment_mode,    perFieldState.alignment_mode[field]);
+    setSelect(PF_DIMS.cross_alignment_mode, perFieldState.cross_alignment_mode[field]);
     setSelect(PF_DIMS.spacing_tightness, perFieldState.spacing_tightness[field]);
     setSelect(PF_DIMS.filter_self,       perFieldState.filter_self[field]);
     setSelect(PF_DIMS.filter_backdrop,   perFieldState.filter_backdrop[field]);
@@ -1636,6 +1645,7 @@ function applyPerFieldOptionsToUI() {
     populateSelect(PF_DIMS.font_family,       typoRows,   'font_family');
     populateSelect(CT_DIMS.family,             typoRows,   'font_family');  // 自定义文字（顶栏/侧栏）字体
     populateSelect(PF_DIMS.alignment_mode,    typoRows,   'alignment_mode');
+    populateSelect(PF_DIMS.cross_alignment_mode, typoRows, 'cross_alignment_mode');
     populateSelect(PF_DIMS.spacing_tightness, typoRows,   'spacing_tightness');
     populateSelect(PF_DIMS.filter_self,       effectRows, 'filter_self');
     populateSelect(PF_DIMS.filter_backdrop,   effectRows, 'filter_backdrop');

@@ -49,6 +49,10 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
 .card-slot-b { grid-area: slot-b; writing-mode: var(--wm-b, horizontal-tb); }
 .card-slot-c { grid-area: slot-c; writing-mode: var(--wm-c, horizontal-tb); }
 .card-slot-d { grid-area: slot-d; writing-mode: var(--wm-d, horizontal-tb); }
+/* 跨轴对齐(cross_alignment_mode)支持：使每个 slot 成为 flex 列容器，字段包裹层 .fx-wrap[data-fx]
+   成为其 flex item，从而可用 margin-block:auto 在「块轴」上定位（横排=竖直 / 竖排=水平，自动随
+   writing-mode 翻转，无需引擎翻译）。默认无 margin → 字段位于块轴起点，等同改动前行为，无回归。 */
+.card-slot-a, .card-slot-b, .card-slot-c, .card-slot-d { display:flex; flex-direction:column; }
 .card-date   { color: var(--card-muted, inherit);
   font-weight: var(--typo-date-weight, 400);
   font-size: calc(0.8rem * var(--typo-date-scale, 0.85));
@@ -206,6 +210,11 @@ const ATTR_MAP = {
   'typo_weight_gradient':   { attr: 'data-style-typo-weight-gradient' },
   'typo_size_scale':        { attr: 'data-style-typo-size-scale' },
   'typo_alignment_mode':    { attr: 'data-style-typo-alignment-mode', perElement: true,
+    elements: ['title','date','capsule','highlights'] },
+  // cross_alignment_mode（跨轴对齐）：控制字段在其 slot 内的「块轴(block axis)」位置。
+  // 横排字段块轴=竖直（等价于 block_align 的逐字段覆盖），竖排字段块轴=水平（即补全此前缺失的水平独立控制）。
+  // 物理方向随 writing-mode 自动翻转，引擎只发射名义值，落地由 DB css_template 经 margin-block:auto 实现。
+  'typo_cross_alignment_mode': { attr: 'data-style-typo-cross-alignment-mode', perElement: true,
     elements: ['title','date','capsule','highlights'] },
   'typo_spacing_tightness': { attr: 'data-style-typo-spacing-tightness', perElement: true,
     elements: ['title','date','capsule','highlights'] },
@@ -550,8 +559,8 @@ function buildDataAttrs(styleJson) {
         for (const el of mapping.elements) {
           const elVal = perElVal[el];
           if (elVal == null || elVal === 'none') continue;
-          // 字段级 alignment_mode 默认 'inherit' = 跟随行内对齐，不发射 attr（由容器统一控制）
-          if (mapKey === 'typo_alignment_mode' && elVal === 'inherit') continue;
+          // 字段级 alignment_mode / cross_alignment_mode 默认 'inherit' = 跟随容器（行内对齐 / 块对齐），不发射 attr
+          if ((mapKey === 'typo_alignment_mode' || mapKey === 'typo_cross_alignment_mode') && elVal === 'inherit') continue;
           if (Array.isArray(elVal)) {
             if (elVal.length === 0) continue;
             attrs[mapping.attr + '-' + el] = escapeAttr(elVal.join(' '));
