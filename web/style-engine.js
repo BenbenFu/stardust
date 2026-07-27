@@ -57,11 +57,11 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
    成为其 flex item。字段级 h_align(水平)经物理 margin-left/right:auto 在交叉轴(水平)定位；
    v_align(垂直)经物理 margin-top/bottom:auto 在主轴(垂直)定位。两者均用物理方向，不随 writing-mode 翻转。 */
 .card-slot-a, .card-slot-b, .card-slot-c, .card-slot-d { display:flex; flex-direction:column;
-  /* · min-height 32px 让短内容时槽位仍有垂直余量 → v_align 的 margin-top/bottom:auto 可在垂直方向分配。
+  /* 垂直余量(min-height)不再全局写死：短字段(date/capsule)顶对齐时会把余量变成「下方空白」。
+     改为由字段级 v_align 非 start 选项(center/end/stretch)的 DB 模板，经 .card-slot[data-field] 按需补 min-height
+     （见 web/_deprecated/style_typo_v_align_slot_minheight_20260727g.sql）；默认零余量→紧凑。
      · 竖排槽位再加 .card-slot-vertical 类（见 buildCardHtml）让 align-items 变为 flex-start，
-       避免 .fx-wrap 被水平拉满 → h_align 的 margin-left/right:auto 可在水平方向分配余量。
-     长内容/多行时若槽位无多余空间，对应轴 auto margin 无可视效果，是设计期取舍（非 bug）。 */
-  min-height: 32px; }
+       避免 .fx-wrap 被水平拉满 → h_align 的 margin-left/right:auto 可在水平方向分配余量。 */ }
 .card-slot-vertical { align-items: flex-start; }
 /* 竖排文字：writing-mode 只挂文字元素本身，不挂容器。容器(horizontal-tb)承载稳定的物理对齐坐标系，
    文字元素内部按 vertical-rl 决定字形流向。这样「水平对齐/垂直对齐」在横排与竖排下含义一致。 */
@@ -967,7 +967,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       // 竖排槽位加 .card-slot-vertical 类，让 BASE_CSS 把 align-items 从 stretch 改为 flex-start，
       // 避免 .fx-wrap 被水平拉满 → h_align 的 margin-left/right:auto 才能在水平方向分配余量。
       const slotClass = 'card-slot-' + slot + (isVertical ? ' card-slot-vertical' : '');
-      slotHtml += '<div class="' + slotClass + '">' + wrapField(field, innerField) + '</div>';
+      slotHtml += '<div class="' + slotClass + '" data-field="' + field + '">' + wrapField(field, innerField) + '</div>';
     }
     bodyHtml = slotHtml;
     contentIsSlots = true;
