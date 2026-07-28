@@ -903,7 +903,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260727g';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260728a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -990,6 +990,8 @@ let boxListState = [];
 
 // 容器组扁平有序列表状态：container_groups = [code, ...]（顺序=渲染堆叠顺序）
 let containerGroupsState = [];
+// 按组头像文本：cg_avatar_text = { "<group_code>": "文本" }（含 avatar 字段的组行内输入框；支持符号/emoji）
+let cgAvatarTextState = {};
 
 // 自定义文字（顶栏 / 侧栏）独立排版状态 —— 不参与 fieldSelector 字段机制
 let ctCurrentPos = 'header';
@@ -1240,6 +1242,14 @@ function buildStyleJson() {
         container_groups: containerGroupsState.slice(),
     };
 
+    // 按组头像文本：只收集当前已选组且非空的条目
+    const avatarTexts = {};
+    containerGroupsState.forEach(code => {
+        const t = code && cgAvatarTextState[code];
+        if (t && t.trim()) avatarTexts[code] = t.trim();
+    });
+    if (Object.keys(avatarTexts).length) sj.cg_avatar_text = avatarTexts;
+
     const customCss = DIMS.customCss?.value.trim();
     if (customCss) sj.customCss = customCss;
 
@@ -1262,6 +1272,7 @@ function applyStyleJsonToPanel(sj) {
     containerGroupsState = (Array.isArray(sj.container_groups) && sj.container_groups.length)
       ? sj.container_groups.filter(c => c && c !== 'none')
       : (legacySingle ? [legacySingle] : []);
+    cgAvatarTextState = (sj.cg_avatar_text && typeof sj.cg_avatar_text === 'object') ? { ...sj.cg_avatar_text } : {};
     renderContainerGroupList();
 
     // layout
@@ -1510,14 +1521,16 @@ function renderContainerGroupList() {
     return;
   }
   containerGroupsState.forEach((code, i) => {
+    const entry = document.createElement('div');
+    entry.style.cssText = 'margin:3px 0;';
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:4px;align-items:center;margin:3px 0;';
+    row.style.cssText = 'display:flex;gap:4px;align-items:center;';
     const sel = document.createElement('select');
     sel.style.cssText = 'flex:1;min-width:0;font-size:10px;';
     sel.innerHTML = '<option value="">— 选择容器组 —</option>'
       + opts.map(o => '<option value="' + escBox(o.group_code) + '">' + escBox(o.group_name || o.group_code) + '</option>').join('');
     sel.value = code || '';
-    sel.addEventListener('change', () => { containerGroupsState[i] = sel.value; updateContainerGroups(); debouncedUpdate(); });
+    sel.addEventListener('change', () => { containerGroupsState[i] = sel.value; renderContainerGroupList(); updateContainerGroups(); debouncedUpdate(); });
     const rm = document.createElement('button');
     rm.type = 'button';
     rm.style.cssText = 'flex:0 0 auto;width:22px;height:22px;cursor:pointer;';
@@ -1525,7 +1538,31 @@ function renderContainerGroupList() {
     rm.title = '移除该容器组';
     rm.addEventListener('click', () => { containerGroupsState.splice(i, 1); renderContainerGroupList(); updateContainerGroups(); debouncedUpdate(); });
     row.appendChild(sel); row.appendChild(rm);
-    listEl.appendChild(row);
+    entry.appendChild(row);
+
+    // 该组含 avatar 字段 → 行内头像文本输入框（按 group_code 存入 cg_avatar_text，逐组独立）
+    const cgRow = code ? opts.find(o => o.group_code === code) : null;
+    if (cgRow) {
+      let fsm = {};
+      try { fsm = typeof cgRow.field_slot_map === 'string' ? JSON.parse(cgRow.field_slot_map) : (cgRow.field_slot_map || {}); } catch {}
+      if (Object.prototype.hasOwnProperty.call(fsm, 'avatar')) {
+        const avRow = document.createElement('div');
+        avRow.style.cssText = 'display:flex;gap:4px;align-items:center;margin-top:2px;padding-left:8px;';
+        const lab = document.createElement('span');
+        lab.style.cssText = 'flex:0 0 auto;font-size:9px;color:var(--pixel-dim);';
+        lab.textContent = '头像文本';
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.maxLength = 4;
+        inp.placeholder = 'BF';
+        inp.style.cssText = 'flex:1;min-width:0;font-size:10px;';
+        inp.value = cgAvatarTextState[code] || '';
+        inp.addEventListener('input', () => { cgAvatarTextState[code] = inp.value; debouncedUpdate(); });
+        avRow.appendChild(lab); avRow.appendChild(inp);
+        entry.appendChild(avRow);
+      }
+    }
+    listEl.appendChild(entry);
   });
 }
 (function initContainerGroupUI() {

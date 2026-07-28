@@ -336,7 +336,8 @@ export const DEFAULT_STYLE_JSON = {
     transform: { title:'none', date:'none', capsule:'none', highlights:'none' },
     animation: { title:'none', date:'none', capsule:'none', highlights:'none' } },
   container_group: 'none',
-  container_groups: []
+  container_groups: [],
+  cg_avatar_text: {}
 };
 
 // ============================================================
@@ -745,13 +746,16 @@ function buildContainerGroupBands(styleJson, diary, allOptions, cgCodes) {
   }
   if (!perLine.length && !onceBefore.length && !onceAfter.length) return '';
 
+  // 按组头像文本覆盖：style_json.cg_avatar_text = { "<group_code>": "文本" }（支持符号/emoji，逐卡独立）
+  const avatarMap = (styleJson && styleJson.cg_avatar_text) || {};
+
   const bandParts = [];
-  for (const row of onceBefore) bandParts.push(renderCgBand(row, highlights, -1, d));
+  for (const row of onceBefore) bandParts.push(renderCgBand(row, highlights, -1, d, avatarMap));
   const n = highlights.length || 1;
   for (let i = 0; i < n; i++) {
-    bandParts.push(renderCgBand(perLine[i % perLine.length], highlights, i, d));
+    bandParts.push(renderCgBand(perLine[i % perLine.length], highlights, i, d, avatarMap));
   }
-  for (const row of onceAfter) bandParts.push(renderCgBand(row, highlights, -1, d));
+  for (const row of onceAfter) bandParts.push(renderCgBand(row, highlights, -1, d, avatarMap));
   if (!bandParts.length) return '';
 
   if (divider) {
@@ -768,8 +772,11 @@ function buildContainerGroupBands(styleJson, diary, allOptions, cgCodes) {
 // 渲染单条容器组带：复用 DB 的 field_slot_map / slot_deco_map / layout_slot_map（cell 模型）。
 // slot 包裹层 class = slotId.replace(/_/g,'-')（与 DB extra_css 的 .cg-xxx 选择器一致）；
 // slot_deco_map 的 deco:xxx.yyy → 对应 data-style-deco-*，命中 DB css_template。
-function renderCgBand(cgRow, highlights, lineIdx, diary) {
+function renderCgBand(cgRow, highlights, lineIdx, diary, avatarMap) {
   const d = diary || {};
+  // 头像文本优先级：style_json.cg_avatar_text[group_code] > diary.avatar > 'BF'
+  const avatarText = (avatarMap && avatarMap[cgRow.group_code] != null && avatarMap[cgRow.group_code] !== '')
+    ? avatarMap[cgRow.group_code] : (d.avatar || 'BF');
   let fieldSlotMap = {}, slotDecoMap = {}, layoutSlotMap = {};
   try {
     fieldSlotMap  = typeof cgRow.field_slot_map  === 'string' ? JSON.parse(cgRow.field_slot_map)  : (cgRow.field_slot_map  || {});
@@ -798,7 +805,7 @@ function renderCgBand(cgRow, highlights, lineIdx, diary) {
       case 'highlight_4': return highlights[3] ? '<div class="card-highlight-item">' + escapeHtml(highlights[3]) + '</div>' : '';
       case 'highlight_5': return highlights[4] ? '<div class="card-highlight-item">' + escapeHtml(highlights[4]) + '</div>' : '';
       case 'avatar':
-        return '<div class="card-avatar cg-avatar-text">' + escapeHtml(d.avatar || 'BF') + '</div>';
+        return '<div class="card-avatar cg-avatar-text">' + escapeHtml(avatarText) + '</div>';
       case 'like_count':
         return '<span class="card-action-item cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>';
       case 'share_count':
@@ -1008,7 +1015,11 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
         case 'title': return title ? '<div class="card-title' + vCls + '">' + title + '</div>' : '';
         case 'highlights': return buildHighlightsHtml(highlights, vCls);
         case 'capsule': return capsule ? '<div class="card-capsule' + vCls + '">' + capsule + '</div>' : '';
-        case 'avatar': return '<div class="cg-avatar-text">' + escapeHtml(d.avatar || 'BF') + '</div>';
+        case 'avatar': {
+          const am = (styleJson && styleJson.cg_avatar_text) || {};
+          const at = (am[legacyCg] != null && am[legacyCg] !== '') ? am[legacyCg] : (d.avatar || 'BF');
+          return '<div class="cg-avatar-text">' + escapeHtml(at) + '</div>';
+        }
         case 'like_count': return '<span class="cg-like">' + escapeHtml(String(d.like_count || '0')) + ' \u8d5e</span>';
         case 'share_count': return '<span class="cg-share">' + escapeHtml(String(d.share_count || '0')) + ' \u8f6c</span>';
         case 'comment_count': return '<span class="cg-comment">' + escapeHtml(String(d.comment_count || '0')) + ' \u8bc4</span>';
