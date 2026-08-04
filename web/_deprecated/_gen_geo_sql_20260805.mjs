@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs';
-const rows = JSON.parse(readFileSync('web/_db_dump_geo_20260805.json', 'utf8'));
+const rows = JSON.parse(readFileSync('./_db_dump_geo_20260805.json', 'utf8'));
 const byId = Object.fromEntries(rows.map(r => [r.id, r]));
 const get = id => byId[id].css_template;
 
@@ -52,13 +52,13 @@ for (const [id, repl] of Object.entries(plan)) {
   }
   if (next === orig) { console.warn('NO CHANGE id', id); continue; }
   changed.push(id);
-  upd += `UPDATE style_element_options SET css_template = $${next}$$ WHERE id = ${id};\n`;
-  rev += `UPDATE style_element_options SET css_template = $${orig}$$ WHERE id = ${id};\n`;
+  upd += 'UPDATE style_element_options SET css_template = $$' + next + '$$ WHERE id = ' + id + ';\n';
+  rev += 'UPDATE style_element_options SET css_template = $$' + orig + '$$ WHERE id = ' + id + ';\n';
 }
-writeFileSync('web/style_geo_size_gap_20260805.sql',
+writeFileSync('../style_geo_size_gap_20260805.sql',
   '-- 几何纹理尺寸/间距统一控制：硬编码尺寸/间距 -> 变量引用\n' +
   '-- 引擎按需发射 --el-geo-gap(间距/步长) / --el-geo-thick(尺寸/粗细)；不填则回退各模板原值（非破坏性）。\n' +
   '-- 接入：dot_grid(23) fine_grid(24) horizontal_lines(25) terminal_scanlines(27) grain_noise(51) scatter_dots(35)\n\n' + upd);
-writeFileSync('web/style_geo_size_gap_revert_20260805.sql',
+writeFileSync('../style_geo_size_gap_revert_20260805.sql',
   '-- 回退：精准恢复各模板 css_template 原文\n\n' + rev);
 console.log('changed ids:', changed.join(','));

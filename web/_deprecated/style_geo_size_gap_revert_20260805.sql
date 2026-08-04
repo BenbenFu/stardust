@@ -1,6 +1,6 @@
 -- 回退：精准恢复各模板 css_template 原文
 
-UPDATE style_element_options SET css_template = $.gallery-card[data-style-element-bg="dot_grid"] {
+UPDATE style_element_options SET css_template = $$.gallery-card[data-style-element-bg="dot_grid"] {
   --el-bg-1: radial-gradient(circle, var(--card-muted, #ccc) 1px, transparent 1.6px);
   --el-bg-size-1: 16px 16px;
   --el-bg-pos-1: 0 0;
@@ -27,7 +27,7 @@ UPDATE style_element_options SET css_template = $.gallery-card[data-style-elemen
     var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat),
     var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
 }$$ WHERE id = 23;
-UPDATE style_element_options SET css_template = $.gallery-card[data-style-element-bg="fine_grid"] {
+UPDATE style_element_options SET css_template = $$.gallery-card[data-style-element-bg="fine_grid"] {
   --bg-grid-line: color-mix(in srgb, var(--card-muted, #ccc) 14%, transparent);
   --el-bg-1: linear-gradient(var(--bg-grid-line) 1px, transparent 1px);
   --el-bg-2: linear-gradient(90deg, var(--bg-grid-line) 1px, transparent 1px);
@@ -56,7 +56,7 @@ UPDATE style_element_options SET css_template = $.gallery-card[data-style-elemen
     var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat),
     var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
 }$$ WHERE id = 24;
-UPDATE style_element_options SET css_template = $.gallery-card[data-style-element-bg="horizontal_lines"] {
+UPDATE style_element_options SET css_template = $$.gallery-card[data-style-element-bg="horizontal_lines"] {
   --el-bg-1: repeating-linear-gradient(to bottom, transparent, transparent calc(1.5em - 1px), var(--card-muted, #ccc) calc(1.5em - 1px), var(--card-muted, #ccc) 1.5em);
   --el-bg-size-1: 100% 1.5em;
   --el-bg-pos-1: 0 0;
@@ -83,7 +83,7 @@ UPDATE style_element_options SET css_template = $.gallery-card[data-style-elemen
     var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat),
     var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
 }$$ WHERE id = 25;
-UPDATE style_element_options SET css_template = $.gallery-card[data-style-element-bg="terminal_scanlines"] {
+UPDATE style_element_options SET css_template = $$.gallery-card[data-style-element-bg="terminal_scanlines"] {
   --el-bg-1: repeating-linear-gradient(to bottom, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px);
   --el-bg-size-1: 100% 4px;
   --el-bg-pos-1: 0 0;
@@ -110,7 +110,7 @@ UPDATE style_element_options SET css_template = $.gallery-card[data-style-elemen
     var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat),
     var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
 }$$ WHERE id = 27;
-UPDATE style_element_options SET css_template = $.gallery-card[data-style-element-float="scatter_dots"] {
+UPDATE style_element_options SET css_template = $$.gallery-card[data-style-element-float="scatter_dots"] {
   --el-float-1: radial-gradient(circle, var(--card-accent, #888) 1.2px, transparent 1.6px);
   --el-float-size-1: 46px 46px;
   --el-float-pos-1: var(--el-float-anchor-pos, top 4px right 6px);
@@ -141,7 +141,7 @@ UPDATE style_element_options SET css_template = $.gallery-card[data-style-elemen
     var(--el-bg-rep-1, no-repeat), var(--el-bg-rep-2, no-repeat), var(--el-bg-rep-3, no-repeat), var(--el-bg-rep-4, no-repeat),
     var(--el-float-rep-1, no-repeat), var(--el-float-rep-2, no-repeat), var(--el-float-rep-3, no-repeat), var(--el-float-rep-4, no-repeat);
 }$$ WHERE id = 35;
-UPDATE style_element_options SET css_template = $
+UPDATE style_element_options SET css_template = $$
 .gallery-card[data-style-element-bg="grain_noise"] {
   --el-bg-1: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='2.2' intercept='-0.6'/%3E%3CfeFuncG type='linear' slope='2.2' intercept='-0.6'/%3E%3CfeFuncB type='linear' slope='2.2' intercept='-0.6'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E");
   --el-bg-size-1: 180px 180px;
