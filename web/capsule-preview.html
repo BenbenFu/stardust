@@ -567,6 +567,19 @@
                         <select id="d-edge-deco"></select>
                     </div>
                 </div>
+                <div class="dim-row-inline">
+                    <div class="dim-row">
+                        <label>纹理间距 Tile Gap (px)</label>
+                        <input type="number" id="d-bg-gap" min="2" max="120" step="1" value="16">
+                    </div>
+                    <div class="dim-row">
+                        <label>纹理粗细 Stroke (px)</label>
+                        <input type="number" id="d-bg-thick" min="0" max="8" step="0.5" value="1">
+                    </div>
+                </div>
+                <div style="font-size:9px;color:var(--pixel-dim);line-height:1.4;margin:-4px 0 6px;">
+                    作用于背景纹 / 散点（dot_grid·fine_grid·horizontal_lines·scanlines·grain·scatter_dots）。留默认=各纹理原设计；填写=统一缩放。
+                </div>
                 <div class="dim-row">
                     <label>Edge Position 边缘位置(切角)</label>
                     <select id="d-edge-deco-pos">
@@ -903,7 +916,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260728a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260805a';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -992,6 +1005,9 @@ let boxListState = [];
 let containerGroupsState = [];
 // 按组头像文本：cg_avatar_text = { "<group_code>": "文本" }（含 avatar 字段的组行内输入框；支持符号/emoji）
 let cgAvatarTextState = {};
+// 几何纹理尺寸/间距：记录当前加载的卡是否曾含 bg_gap / bg_thick（决定 collect 是否发射，避免覆盖模板原值）
+let loadedHasBgGap = false;
+let loadedHasBgThick = false;
 
 // 自定义文字（顶栏 / 侧栏）独立排版状态 —— 不参与 fieldSelector 字段机制
 let ctCurrentPos = 'header';
@@ -1227,6 +1243,9 @@ function buildStyleJson() {
             corner_badge: v('corner_badge', 'none'),
             corner_badge_pos: document.getElementById('d-corner-badge-pos')?.value || 'native',
             bg_pattern: v('bg_pattern', 'none'),
+            // 几何纹理尺寸/间距：按需发射（仅用户填过或原卡已有该字段才写入；留默认则不写→引擎不覆盖模板原值）
+            bg_gap:   (() => { const v = document.getElementById('d-bg-gap')?.value; const n = (v !== '' && v != null) ? parseInt(v, 10) : NaN; return (!isNaN(n) && (n !== 16 || loadedHasBgGap)) ? n : undefined; })(),
+            bg_thick: (() => { const v = document.getElementById('d-bg-thick')?.value; const n = (v !== '' && v != null) ? parseFloat(v) : NaN; return (!isNaN(n) && (n !== 1 || loadedHasBgThick)) ? n : undefined; })(),
             edge_deco: v('edge_deco', 'none'),
             edge_deco_pos: document.getElementById('d-edge-deco-pos')?.value || 'native',
             floating_deco: v('floating_deco', 'none'),
@@ -1365,6 +1384,13 @@ function applyStyleJsonToPanel(sj) {
     setSelect(DIMS.divider,       el.divider);
     setSelect(DIMS.corner_badge,  el.corner_badge);
     setSelect(DIMS.bg_pattern,    el.bg_pattern);
+    // 几何纹理尺寸/间距：回填输入框 + 记录原卡是否曾含该字段（决定 collect 是否发射）
+    loadedHasBgGap   = (el.bg_gap   != null);
+    loadedHasBgThick = (el.bg_thick != null);
+    const bgGapInput   = document.getElementById('d-bg-gap');
+    const bgThickInput = document.getElementById('d-bg-thick');
+    if (bgGapInput)   bgGapInput.value   = (el.bg_gap   != null) ? el.bg_gap   : 16;
+    if (bgThickInput) bgThickInput.value = (el.bg_thick != null) ? el.bg_thick : 1;
     setSelect(DIMS.edge_deco,     el.edge_deco);
     setSelect(DIMS.floating_deco, el.floating_deco);
     const posCorner = document.getElementById('d-corner-badge-pos'); if (posCorner) posCorner.value = el.corner_badge_pos || 'native';
@@ -2220,7 +2246,7 @@ Object.values(DIMS).forEach(el => {
 });
 
 // 装饰条粗细/位置控件不参与 DIM_CONFIG 的 DB 下拉，单独绑定
-['d-header-width', 'd-side-width', 'd-side-position', 'd-band-inset', 'd-box-radius', 'd-box-gap', 'd-avatar-pos',
+['d-header-width', 'd-side-width', 'd-side-position', 'd-bg-gap', 'd-bg-thick', 'd-band-inset', 'd-box-radius', 'd-box-gap', 'd-avatar-pos',
  'd-corner-badge-pos', 'd-edge-deco-pos', 'd-floating-deco-pos'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', debouncedUpdate); el.addEventListener('change', debouncedUpdate); }

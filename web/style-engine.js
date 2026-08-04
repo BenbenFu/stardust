@@ -1196,6 +1196,16 @@ export function renderStyleJson(styleJson, diary, allOptions) {
     '--header-band-size:' + parsePx(elBand.header_width, 6) + 'px',
     '--side-band-size:' + parsePx(elBand.side_width, 8) + 'px'
   );
+  // 几何纹理尺寸/间距统一控制（bg_pattern / scatter_dots 等）：
+  // 仅当控件填写才发射变量，覆盖模板兜底；不填则各模板用自身原值（非破坏性）。
+  if (elBand.bg_gap != null) {
+    const g = parsePx(elBand.bg_gap, 16);
+    paletteCssVars.push('--el-geo-gap:' + g + 'px');
+  }
+  if (elBand.bg_thick != null) {
+    const t = parsePx(elBand.bg_thick, 1);
+    paletteCssVars.push('--el-geo-thick:' + t + 'px');
+  }
 
   // ---- 间距模型 v3：色条满边(通长) + density 仅作用于内容 ----
   // · 色条(band)默认【满边/通长】：覆盖 density-pad 区域，两端不再留空。
