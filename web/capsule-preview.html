@@ -172,6 +172,23 @@
     .palette-swatch:hover { border-color: var(--pixel-dark); }
     .palette-swatch.active { border-color: var(--pixel-dark); outline: 2px solid var(--pixel-alert); outline-offset: 1px; }
 
+    /* ===== 配色细部微调（[配色] 标签页） ===== */
+    .co-hint {
+        font-size: 9.5px; color: var(--pixel-dim); line-height: 1.5;
+        margin: 4px 0 8px; padding: 6px 8px;
+        background: rgba(0,0,0,0.03); border-left: 2px solid var(--pixel-dim);
+    }
+    .co-row {
+        display: flex; align-items: center; gap: 6px;
+        margin: 5px 0; font-size: 10px;
+    }
+    .co-name { flex: 0 0 116px; color: var(--pixel-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .co-sel  { flex: 1; min-width: 0; font-size: 10px; }
+    .co-color { width: 26px; height: 22px; padding: 0; border: 1px solid var(--pixel-dim); flex: 0 0 auto; cursor: pointer; background: none; }
+    .co-hex  { flex: 0 0 76px; font-size: 9px; font-family: "Courier New", monospace; }
+    .co-group-title { font-size: 10.5px; font-weight: bold; color: var(--pixel-dark); margin: 9px 0 2px; }
+    .co-empty { font-size: 9px; color: var(--pixel-dim); padding: 4px 0; }
+
     /* ===== 预览区 ===== */
     .preview-area {
         flex: 1; border: 2px dashed var(--pixel-dim);
@@ -272,6 +289,7 @@
         <button class="tab-btn active" data-tab="global">[ 全局 ]</button>
         <button class="tab-btn" data-tab="field">[ 字段级 ]</button>
         <button class="tab-btn" data-tab="container">[ 容器 ]</button>
+        <button class="tab-btn" data-tab="color">[ 配色 ]</button>
     </div>
 
     <!-- ===== Tab 1: 全局 ===== -->
@@ -359,25 +377,7 @@
             </div>
         </div>
 
-        <!-- [中] Palette 配色 -->
-        <div class="dim-group" id="grp-palette">
-            <div class="dim-group-header" data-grp="palette">
-                <span>[中] PALETTE 配色方案 <button class="btn-add-opt" data-grp="palette" title="新增色板">+新增</button></span>
-                <span class="toggle-icon">v</span>
-            </div>
-            <div class="dim-group-body">
-                <label>点击色块选择配色（当前: <span id="paletteLabel">mono_grey</span>）</label>
-                <div class="palette-grid" id="paletteGrid"></div>
-                <div class="dim-row">
-                    <label>Tone Mapping 色调映射</label>
-                    <select id="d-palette-tone"></select>
-                </div>
-                <div class="dim-row">
-                    <label>Slot Assignment 槽位分配</label>
-                    <select id="d-palette-slot"></select>
-                </div>
-            </div>
-        </div>
+        <!-- [中] Palette 配色 —— 已迁至「配色」标签页（见 #tab-color / grp-palette） -->
 
         <!-- [中] Typo Presets (全局排版预设) -->
         <div class="dim-group" id="grp-typo">
@@ -834,6 +834,61 @@
 
     </div><!-- /tab-container -->
 
+    <!-- ===== Tab 4: 配色 ===== -->
+    <div class="tab-content" id="tab-color" style="display:none;">
+
+        <!-- [中] Palette 配色（从「全局」页迁入，保持全部 id 不变） -->
+        <div class="dim-group" id="grp-palette">
+            <div class="dim-group-header" data-grp="palette">
+                <span>[中] PALETTE 配色方案 <button class="btn-add-opt" data-grp="palette" title="新增色板">+新增</button></span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <label>点击色块选择配色（当前: <span id="paletteLabel">mono_grey</span>）</label>
+                <div class="palette-grid" id="paletteGrid"></div>
+                <div class="dim-row">
+                    <label>Tone Mapping 色调映射</label>
+                    <select id="d-palette-tone"></select>
+                </div>
+                <div class="dim-row">
+                    <label>Slot Assignment 槽位分配</label>
+                    <select id="d-palette-slot"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 细部微调：字段 / 自定义文字 / 边框 -->
+        <div class="dim-group" id="grp-color-basic">
+            <div class="dim-group-header" data-grp="color_basic">
+                <span>OVERRIDE 细部微调（字段 / 文字 / 边框）</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="co-hint">
+                    先选定上方配色方案，再在此逐项微调。首选四个色板槽（换色板自动联动、不引入额外颜色）；
+                    实在解决不了再用「自定义」冻结为固定色。留「默认」= 完全不覆写。
+                </div>
+                <div id="co-basic-list"></div>
+            </div>
+        </div>
+
+        <!-- 装饰元素色槽（随当前所选装饰动态生成） -->
+        <div class="dim-group" id="grp-color-element">
+            <div class="dim-group-header" data-grp="color_element">
+                <span>ELEMENT SLOTS 装饰元素色槽</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="co-hint">
+                    只列出当前卡片已启用的装饰。色槽数量来自 DB 的 color_slots，
+                    括号内是该槽原本取自哪个色板槽。
+                </div>
+                <div id="co-element-list"></div>
+            </div>
+        </div>
+
+    </div><!-- /tab-color -->
+
 </div>
 
 <!-- ========== 中：实时预览 ========== -->
@@ -916,7 +971,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260805a';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260805b';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1008,6 +1063,20 @@ let cgAvatarTextState = {};
 // 几何纹理尺寸/间距：记录当前加载的卡是否曾含 bg_gap / bg_thick（决定 collect 是否发射，避免覆盖模板原值）
 let loadedHasBgGap = false;
 let loadedHasBgThick = false;
+
+// 配色细部微调（color_overrides）独立状态 —— 由「[配色]」标签页的控件读写
+// 结构（与引擎 style-engine.js §2.45 一致）：
+//   fields:   { title|date|capsule|highlights: <color> }
+//   bands:    { header_text|side_text: <color> }
+//   border:   <color>
+//   elements: { <element取值名>: { c1|c2|c3|c4: <color> } }
+// <color> 三态：''=不覆写 | var(--card-X)=跟随色板 | #hex/rgb()/hsl()=冻结
+let colorOverrideState = {
+  fields:   { title:'', date:'', capsule:'', highlights:'' },
+  bands:    { header_text:'', side_text:'' },
+  border:   '',
+  elements: {},
+};
 
 // 自定义文字（顶栏 / 侧栏）独立排版状态 —— 不参与 fieldSelector 字段机制
 let ctCurrentPos = 'header';
@@ -1272,6 +1341,21 @@ function buildStyleJson() {
     const customCss = DIMS.customCss?.value.trim();
     if (customCss) sj.customCss = customCss;
 
+    // 配色细部微调（color_overrides）：只发射非空的子项，保持 style_json 精简
+    const coFields = coPrune({ ...colorOverrideState.fields });
+    const coBands  = coPrune({ ...colorOverrideState.bands });
+    const coEls = {};
+    for (const v in colorOverrideState.elements) {
+      const pr = coPrune({ ...colorOverrideState.elements[v] });
+      if (Object.keys(pr).length) coEls[v] = pr;
+    }
+    const coOut = {};
+    if (Object.keys(coFields).length) coOut.fields = coFields;
+    if (Object.keys(coBands).length)  coOut.bands  = coBands;
+    if (colorOverrideState.border)    coOut.border = colorOverrideState.border;
+    if (Object.keys(coEls).length)    coOut.elements = coEls;
+    sj.color_overrides = coOut;
+
     return sj;
 }
 
@@ -1408,6 +1492,24 @@ function applyStyleJsonToPanel(sj) {
 
     // container_group（新模型：扁平有序多选列表，已在上文回填并渲染）
     updateContainerGroups();
+
+    // 配色细部微调（color_overrides）回填
+    const coSj = sj.color_overrides || {};
+    colorOverrideState.fields = {
+      title:     (coSj.fields && coSj.fields.title)      || '',
+      date:      (coSj.fields && coSj.fields.date)        || '',
+      capsule:   (coSj.fields && coSj.fields.capsule)    || '',
+      highlights:(coSj.fields && coSj.fields.highlights) || '',
+    };
+    colorOverrideState.bands = {
+      header_text: (coSj.bands && coSj.bands.header_text) || '',
+      side_text:   (coSj.bands && coSj.bands.side_text)   || '',
+    };
+    colorOverrideState.border = coSj.border || '';
+    colorOverrideState.elements = (coSj.elements && typeof coSj.elements === 'object')
+      ? JSON.parse(JSON.stringify(coSj.elements)) : {};
+    renderCoBasicList();
+    renderCoElementList();
 
     DIMS.customCss.value = sj.customCss || '';
 }
@@ -1799,6 +1901,183 @@ function injectActiveElementCss(sj, allOptions) {
     st.textContent = css;
 }
 
+// ============================================================
+// 配色细部微调（color_overrides）—— [配色] 标签页逻辑
+// 引擎约定（style-engine.js Section 2.45）：
+//   字段/文字走内联 color；边框发射 --border-color；装饰元素发射 --el-<subdim>-cN。
+//   取值三态：''=不覆写 | var(--card-X)=跟随色板（换色板自动联动）| #hex=冻结固定色。
+//   装饰元素按「取值名」存储（切到别的装饰再切回，原颜色仍在）。
+// ============================================================
+const CO_PALETTE_OPTS = [
+  { v: '',               t: '默认 (不覆写)' },
+  { v: 'var(--card-bg)',      t: '背景 bg' },
+  { v: 'var(--card-text)',    t: '正文 text' },
+  { v: 'var(--card-accent)',  t: '强调 accent' },
+  { v: 'var(--card-muted)',   t: '弱化 muted' },
+  { v: '__custom__',     t: '自定义…' },
+];
+const CO_SRC_LABEL = { bg:'背景bg', text:'正文text', accent:'强调accent', muted:'弱化muted' };
+const CO_BASIC_TARGETS = [
+  { key:'fields.title',      label:'标题 Title' },
+  { key:'fields.date',       label:'日期 Date' },
+  { key:'fields.capsule',    label:'胶囊 Capsule' },
+  { key:'fields.highlights', label:'亮点 Highlights' },
+  { key:'bands.header_text', label:'顶栏文字 Header Text' },
+  { key:'bands.side_text',   label:'侧栏文字 Side Text' },
+  { key:'border',            label:'边框 Border' },
+];
+const CO_ELEMENT_SUBDIM_UI = {
+  header_deco:'header', side_accent:'side', divider:'divider',
+  corner_badge:'corner', bg_pattern:'bg', edge_deco:'edge', floating_deco:'float'
+};
+
+function coPrune(o) { const out = {}; for (const k in o) if (o[k]) out[k] = o[k]; return out; }
+function coGet(path) {
+  const parts = path.split('.');
+  let o = colorOverrideState;
+  for (const p of parts) { if (o == null) return ''; o = o[p]; }
+  return o || '';
+}
+function coSet(path, val) {
+  const parts = path.split('.');
+  let o = colorOverrideState;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const p = parts[i];
+    if (o[p] == null || typeof o[p] !== 'object') o[p] = {};
+    o = o[p];
+  }
+  o[parts[parts.length - 1]] = val;
+}
+function coPaletteVarOf(v) {
+  return CO_PALETTE_OPTS.find(o => o.v && o.v.startsWith('var(--card-') && o.v === v) ? o.v : '';
+}
+function expandHex(h) {
+  return '#' + h.slice(1).split('').map(c => c + c).join('');
+}
+function coIsHex(v) { return /^#[0-9a-fA-F]{3}$/.test(v) || /^#[0-9a-fA-F]{6}$/.test(v); }
+
+// 一行「调色控件」：select(跟随色板/默认/自定义) + color picker + hex 文本
+function coBuildRow(path, nameLabel) {
+  const row = document.createElement('div');
+  row.className = 'co-row';
+  row._path = path;
+
+  const name = document.createElement('span');
+  name.className = 'co-name';
+  name.textContent = nameLabel;
+
+  const sel = document.createElement('select');
+  sel.className = 'co-sel';
+  sel.innerHTML = CO_PALETTE_OPTS.map(o => '<option value="' + o.v + '">' + o.t + '</option>').join('');
+
+  const color = document.createElement('input');
+  color.type = 'color'; color.className = 'co-color';
+
+  const hex = document.createElement('input');
+  hex.type = 'text'; hex.className = 'co-hex'; hex.placeholder = '自定义hex';
+
+  function syncFromValue(val) {
+    const pv = coPaletteVarOf(val);
+    if (pv) {
+      sel.value = pv; color.value = ''; hex.value = '';
+    } else if (val) {
+      sel.value = '__custom__'; hex.value = val;
+      color.value = coIsHex(val) ? (val.length === 4 ? expandHex(val) : val) : '';
+    } else {
+      sel.value = ''; color.value = ''; hex.value = '';
+    }
+  }
+  row._sync = syncFromValue;
+
+  sel.addEventListener('change', () => {
+    if (sel.value === '__custom__') {
+      if (!hex.value.trim()) hex.value = '#888888';
+      coSet(path, hex.value.trim() || '');
+    } else {
+      coSet(path, sel.value);   // '' 或 var(--card-*)
+    }
+    syncFromValue(coGet(path));
+    debouncedUpdate();
+  });
+  color.addEventListener('input', () => {
+    sel.value = '__custom__'; hex.value = color.value; coSet(path, color.value); debouncedUpdate();
+  });
+  hex.addEventListener('input', () => {
+    sel.value = '__custom__';
+    const v = hex.value.trim(); coSet(path, v);
+    if (coIsHex(v)) color.value = v.length === 4 ? expandHex(v) : v;
+    debouncedUpdate();
+  });
+
+  syncFromValue(coGet(path));
+  row.appendChild(name); row.appendChild(sel); row.appendChild(color); row.appendChild(hex);
+  return row;
+}
+
+// 基础列表：四字段 + 两自定义文字 + 边框（结构固定，仅构建一次，之后只同步值）
+let _coBasicBuilt = false;
+function renderCoBasicList() {
+  const el = document.getElementById('co-basic-list');
+  if (!el) return;
+  if (!_coBasicBuilt) {
+    el.innerHTML = '';
+    CO_BASIC_TARGETS.forEach(t => el.appendChild(coBuildRow(t.key, t.label)));
+    _coBasicBuilt = true;
+  }
+  const rows = el.querySelectorAll('.co-row');
+  CO_BASIC_TARGETS.forEach((t, i) => {
+    const r = rows[i]; if (r && r._sync) r._sync(coGet(t.key));
+  });
+}
+
+// 装饰元素列表：随当前启用的装饰动态生成（结构变更才重建，避免编辑中丢焦点）
+let _coElementSig = '';
+function renderCoElementList() {
+  const el = document.getElementById('co-element-list');
+  if (!el) return;
+  const elCfg = (buildStyleJson().element) || {};
+  const rows = dimensionCache['style_element_options'] || [];
+  const items = [];
+  for (const subDim in CO_ELEMENT_SUBDIM_UI) {
+    const val = elCfg[subDim];
+    if (!val || val === 'none') continue;
+    const dbRow = rows.find(r => r.sub_dim === subDim && (r.value === val || r.option_key === val));
+    const slots = (dbRow && typeof dbRow.color_slots === 'number') ? dbRow.color_slots : 0;
+    if (!slots) continue;
+    items.push({ subDim, val, slots, dbRow });
+  }
+  const sig = items.map(it => it.subDim + ':' + it.val + ':' + it.slots).join('|');
+  if (sig === _coElementSig) {
+    // 结构未变：仅同步值（不重建 → 编辑中不会丢焦点，也避免切卡时残留旧色）
+    el.querySelectorAll('.co-row').forEach(r => { if (r._sync) r._sync(coGet(r._path)); });
+    return;
+  }
+  _coElementSig = sig;
+
+  el.innerHTML = '';
+  if (!items.length) {
+    const empty = document.createElement('div');
+    empty.className = 'co-empty';
+    empty.textContent = '（当前卡片未启用任何可调色装饰元素）';
+    el.appendChild(empty);
+    return;
+  }
+  items.forEach(it => {
+    const title = document.createElement('div');
+    title.className = 'co-group-title';
+    title.textContent = it.subDim + ' / ' + (it.dbRow && (it.dbRow.label || it.val));
+    el.appendChild(title);
+
+    const sources = (it.dbRow && it.dbRow.color_slot_sources)
+      ? String(it.dbRow.color_slot_sources).split('|') : [];
+    for (let i = 1; i <= it.slots; i++) {
+      const src = sources[i - 1] ? ('（原 ' + (CO_SRC_LABEL[sources[i - 1]] || sources[i - 1]) + '）') : '';
+      const path = 'elements.' + it.val + '.c' + i;
+      el.appendChild(coBuildRow(path, '色槽 ' + i + ' ' + src));
+    }
+  });
+}
+
 function updatePreview() {
     const sj = buildStyleJson();
 
@@ -1850,6 +2129,9 @@ function updatePreview() {
 
     // 元素维度表为空 → 装饰 CSS 未注入，显示可见告警（见 showDecoWarn）
     showDecoWarn(elCount === 0);
+
+    // 同步「[配色]」标签页的装饰元素色槽列表（结构变更才重建，避免编辑中丢焦点）
+    renderCoElementList();
 }
 
 // 元素维度表未加载时的可见告警横幅（避免“装饰条静默不显示”难以排查）

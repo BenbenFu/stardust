@@ -27,7 +27,9 @@ const BASE_CSS = `/* style-engine v2.2 — band-based card layout */
   color: var(--card-text, inherit);
   border-width: var(--border-width, 0);
   border-style: var(--border-style, none);
-  border-color: var(--card-accent, transparent);
+  /* 两级回退：--border-color 仅在「配色方案」页覆写边框色时由引擎发射；
+     未覆写时逐字节等价于改造前的 var(--card-accent, transparent)。 */
+  border-color: var(--border-color, var(--card-accent, transparent));
 }
 /* 内容包裹层：slot skeleton 或 container-group 都放在这里。
    四边统一 = --density-pad（DB 密度模板提供，缺省 12px）：
@@ -260,6 +262,92 @@ const ANCHOR = {
 };
 // 边缘位置锚点只取四角（仅 notched_corner 这类"切哪个角"的 clip 型有意义；整周/整框型忽略）
 const EDGE_ANCHOR_CORNERS = ['top-left','top-right','bottom-left','bottom-right'];
+
+// ============================================================
+// Section 2.45: color_overrides — 逐元素颜色覆写
+// 设计原则「两级回退 + 非破坏性」：不填 = 一个字符都不发射，色板/DB 原值分毫不动。
+//   · 四字段(title/date/capsule/highlights) 与 顶栏/侧栏自定义文字
+//       → 直接内联 color。inline style 特异性高于任何选择器，必然压过 DB typo 模板
+//         （元素入库铁律禁 !important，故无对手）。此路无需改任何 DB 行。
+//   · 边框 → 根元素发射 --border-color，BASE_CSS 侧消费 var(--border-color, var(--card-accent, transparent))。
+//   · 装饰元素 → 根元素发射 --el-<subdim>-cN（N=1..4）。DB css_template 需把硬编码的
+//         var(--card-accent, #888) 改写为 var(--el-corner-c1, var(--card-accent, #888))，
+//     形成两级回退：未覆写 → 落回原色板槽 → 落回原兜底色，行为与改造前逐字节一致。
+//
+// 取值语义（三态）：
+//   'var(--card-accent)' → 跟随色板（推荐首选，不引入额外颜色，换色板自动联动）
+//   '#rrggbb'            → 冻结为固定色（换色板不变）
+//   ''/undefined         → 不覆写
+//
+// 存储结构（style_json.color_overrides）：
+//   { fields:   { title|date|capsule|highlights: <color> },
+//     bands:    { header_text|side_text: <color> },
+//     border:   <color>,
+//     elements: { <element取值名>: { c1|c2|c3|c4: <color> } } }
+// elements 按「取值名」而非子维度键：切换装饰取值不会串色，切回来颜色仍在。
+// ============================================================
+
+// element 子维度 → 变量短名（与 ATTR_MAP 的 data-style-element-* 后缀严格一致）
+const CO_ELEMENT_SUBDIM = {
+  header_deco:   'header',
+  side_accent:   'side',
+  divider:       'divider',
+  corner_badge:  'corner',
+  bg_pattern:    'bg',
+  edge_deco:     'edge',
+  floating_deco: 'float',
+};
+const CO_MAX_SLOTS = 4;
+
+// 颜色白名单：只放行 #hex / rgb()/rgba() / hsl()/hsla() / var(--card-*) / 纯字母命名色。
+// 含 ; { } url( 等越权字符一律丢弃，杜绝经 style_json 注入内联样式。
+const CO_COLOR_RE = /^(#[0-9a-fA-F]{3,8}|var\(\s*--card-[a-zA-Z0-9_-]+\s*\)|rgba?\(\s*[\d.,\s%/]+\)|hsla?\(\s*[\d.,\s%/a-z]+\)|[a-zA-Z]{3,20})$/;
+
+export function sanitizeColor(v) {
+  if (typeof v !== 'string') return '';
+  const s = v.trim();
+  if (!s || s.length > 64) return '';
+  return CO_COLOR_RE.test(s) ? s : '';
+}
+
+// 字段级（四字段）覆写色
+function coFieldColor(styleJson, field) {
+  const f = styleJson && styleJson.color_overrides && styleJson.color_overrides.fields;
+  return f ? sanitizeColor(f[field]) : '';
+}
+// 顶栏/侧栏自定义文字覆写色（key: 'header_text' | 'side_text'）
+function coBandTextColor(styleJson, key) {
+  const b = styleJson && styleJson.color_overrides && styleJson.color_overrides.bands;
+  return b ? sanitizeColor(b[key]) : '';
+}
+// 生成内联 style 片段（供字段元素直接拼接），无覆写时返回 ''
+function coFieldStyleAttr(styleJson, field) {
+  const c = coFieldColor(styleJson, field);
+  return c ? ' style="color:' + c + '"' : '';
+}
+
+// 根元素颜色变量：边框 + 当前生效装饰元素的色槽
+function buildColorOverrideVars(styleJson) {
+  const co = (styleJson && styleJson.color_overrides) || {};
+  const out = [];
+  const bd = sanitizeColor(co.border);
+  if (bd) out.push('--border-color:' + bd);
+
+  const elCfg = (styleJson && styleJson.element) || {};
+  const elMap = co.elements || {};
+  for (const subDim in CO_ELEMENT_SUBDIM) {
+    const val = elCfg[subDim];
+    if (!val || val === 'none') continue;        // 该子维度未启用 → 不发射
+    const slots = elMap[val];
+    if (!slots || typeof slots !== 'object') continue;
+    const short = CO_ELEMENT_SUBDIM[subDim];
+    for (let i = 1; i <= CO_MAX_SLOTS; i++) {
+      const c = sanitizeColor(slots['c' + i]);
+      if (c) out.push('--el-' + short + '-c' + i + ':' + c);
+    }
+  }
+  return out;
+}
 
 // ============================================================
 // Section 2.5: 容器组带渲染辅助（Phase 2）
@@ -551,7 +639,8 @@ function buildDataAttrs(styleJson) {
   //   backdrop → data-style-effect-backdrop-<el>（作用于外层 .fx-wrap[data-fx=el] 的 backdrop-filter）
   // 两者不再互斥，可同时生效（DOM 分层化解浏览器层叠上下文冲突）。
   for (const [dim, subDims] of Object.entries(styleJson)) {
-    if (dim === 'palette' || dim === 'container_group') continue;
+    // color_overrides 是纯颜色数据（非维度取值），不参与 data-attr 发射
+    if (dim === 'palette' || dim === 'container_group' || dim === 'color_overrides') continue;
     if (!subDims || typeof subDims !== 'object') continue;
 
       for (const [subDim, value] of Object.entries(subDims)) {
@@ -636,10 +725,10 @@ function buildHighlightsInner(highlights) {
   return h;
 }
 
-function buildHighlightsHtml(highlights, vCls) {
+function buildHighlightsHtml(highlights, vCls, styleAttr) {
   if (!highlights || !highlights.length) return '';
   const cls = 'card-highlights' + (vCls || '');
-  return '<div class="' + cls + '">' + buildHighlightsInner(highlights) + '</div>';
+  return '<div class="' + cls + '"' + (styleAttr || '') + '>' + buildHighlightsInner(highlights) + '</div>';
 }
 
 // ============================================================
@@ -970,7 +1059,9 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       // 竖排 writing-mode 只挂文字元素，容器 .card-slot-x 始终 horizontal-tb（见 BASE_CSS 注释）。
       const isVertical = Array.isArray(verticalFields) && verticalFields.includes(field);
       const fieldCls = fieldClass[field] + (isVertical ? ' is-vertical' : '');
-      const innerField = '<div class="' + fieldCls + '">' + fieldContent[field] + '</div>';
+      // 字段级颜色覆写：内联 color 直接压过 DB typo 模板（不填则不发射，DOM 与改造前一致）
+      const innerField = '<div class="' + fieldCls + '"' + coFieldStyleAttr(styleJson, field) + '>'
+        + fieldContent[field] + '</div>';
       // 竖排槽位加 .card-slot-vertical 类，让 BASE_CSS 把 align-items 从 stretch 改为 flex-start，
       // 避免 .fx-wrap 被水平拉满 → h_align 的 margin-left/right:auto 才能在水平方向分配余量。
       const slotClass = 'card-slot-' + slot + (isVertical ? ' card-slot-vertical' : '');
@@ -1010,11 +1101,13 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
     const fieldHtml = (field) => {
       // 竖排 writing-mode 只挂文字元素 .is-vertical（与 slot-skeleton 路径一致），容器保持 horizontal-tb。
       const vCls = (verticalFields && verticalFields.includes(field)) ? ' is-vertical' : '';
+      // 字段级颜色覆写（与 slot-skeleton 路径同源）；highlight_N 归入 highlights 的覆写
+      const csa = coFieldStyleAttr(styleJson, field.startsWith('highlight_') ? 'highlights' : field);
       switch (field) {
-        case 'date': return date ? '<div class="card-date' + vCls + '">' + date + '</div>' : '';
-        case 'title': return title ? '<div class="card-title' + vCls + '">' + title + '</div>' : '';
-        case 'highlights': return buildHighlightsHtml(highlights, vCls);
-        case 'capsule': return capsule ? '<div class="card-capsule' + vCls + '">' + capsule + '</div>' : '';
+        case 'date': return date ? '<div class="card-date' + vCls + '"' + csa + '>' + date + '</div>' : '';
+        case 'title': return title ? '<div class="card-title' + vCls + '"' + csa + '>' + title + '</div>' : '';
+        case 'highlights': return buildHighlightsHtml(highlights, vCls, csa);
+        case 'capsule': return capsule ? '<div class="card-capsule' + vCls + '"' + csa + '>' + capsule + '</div>' : '';
         case 'avatar': {
           const am = (styleJson && styleJson.cg_avatar_text) || {};
           const at = (am[legacyCg] != null && am[legacyCg] !== '') ? am[legacyCg] : (d.avatar || 'BF');
@@ -1026,7 +1119,7 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
         default:
           if (field.startsWith('highlight_')) {
             const idx = parseInt(field.slice(-1)) - 1;
-            return highlights[idx] ? '<div class="card-highlights' + vCls + '">' + escapeHtml(highlights[idx]) + '</div>' : '';
+            return highlights[idx] ? '<div class="card-highlights' + vCls + '"' + csa + '>' + escapeHtml(highlights[idx]) + '</div>' : '';
           }
           return '';
       }
@@ -1092,7 +1185,10 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
   // 顶栏装饰条
   let headerBandHtml = '';
   if (showHeader) {
-    const headerTextStyle = buildTextStyle(headerTextFamily, headerTextSize, headerTextAlign, true);
+    // 自定义文字颜色覆写：追加在排版样式串尾部（内联，压过 DB 模板）
+    const hdrCo = coBandTextColor(styleJson, 'header_text');
+    const headerTextStyle = buildTextStyle(headerTextFamily, headerTextSize, headerTextAlign, true)
+      + (hdrCo ? 'color:' + hdrCo + ';' : '');
     headerBandHtml = '<div class="card-header-band' + (headerText ? ' card-header-band--has-text' : '') + '">';
     if (headerText) headerBandHtml += '<span class="card-header-text"'
       + (headerTextStyle ? ' style="' + headerTextStyle + '"' : '')
@@ -1115,7 +1211,9 @@ function buildCardHtml(styleJson, diary, dataAttrs, paletteStyle, allOptions, ve
       if (sideAlign === 'top')         sideBandAlignStyle = 'justify-content:flex-start;';
       else if (sideAlign === 'bottom') sideBandAlignStyle = 'justify-content:flex-end;';
     }
-    const sideTextStyle = buildTextStyle(sideTextFamily, sideTextSize, sideAlign, false);
+    const sideCo = coBandTextColor(styleJson, 'side_text');
+    const sideTextStyle = buildTextStyle(sideTextFamily, sideTextSize, sideAlign, false)
+      + (sideCo ? 'color:' + sideCo + ';' : '');
     const sideInner = sideText
       ? '<span class="card-side-text"'
         + (sideTextStyle ? ' style="' + sideTextStyle + '"' : '')
@@ -1258,6 +1356,12 @@ export function renderStyleJson(styleJson, diary, allOptions) {
   };
   if (elBand.corner_badge && elBand.corner_badge !== 'none') emitAnchorVars('corner', 'corner_badge_pos');
   if (elBand.floating_deco && elBand.floating_deco !== 'none') emitAnchorVars('float', 'floating_deco_pos');
+
+  // 颜色覆写（根级）：边框 --border-color + 装饰元素色槽 --el-<subdim>-cN。
+  // 字段 / 顶栏侧栏自定义文字的覆写在 buildCardHtml 内联发射，不走根级变量。
+  // 未覆写时本段一个字符都不追加，fullStyle 与改造前逐字节一致。
+  const coVars = buildColorOverrideVars(sj);
+  for (let i = 0; i < coVars.length; i++) paletteCssVars.push(coVars[i]);
 
   const fullStyle = paletteCssVars.join(';');
 
