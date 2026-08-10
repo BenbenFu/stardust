@@ -283,8 +283,10 @@ const EDGE_ANCHOR_CORNERS = ['top-left','top-right','bottom-left','bottom-right'
 //   { fields:   { title|date|capsule|highlights: <color> },
 //     bands:    { header_text|side_text: <color> },
 //     border:   <color>,
-//     elements: { <element取值名>: { c1|c2|c3|c4: <color> } } }
+//     elements: { <element取值名>: { c1|c2|c3|c4: <color> } },
+//     box:      { <box_style取值名>: { accent|bg|muted|text: <color> } } }
 // elements 按「取值名」而非子维度键：切换装饰取值不会串色，切回来颜色仍在。
+// box 同理按 box_style 取值名；角色用命名（accent/bg/muted/text）而非 cN，更直观。
 // ============================================================
 
 // element 子维度 → 变量短名（与 ATTR_MAP 的 data-style-element-* 后缀严格一致）
@@ -308,6 +310,13 @@ export function sanitizeColor(v) {
   const s = v.trim();
   if (!s || s.length > 64) return '';
   return CO_COLOR_RE.test(s) ? s : '';
+}
+
+// box_style 取值名会被拼进 CSS 变量名（--box-<style>-<role>），必须限制为安全标识符，
+// 杜绝经 style_json 的 box_style 注入越权字符。
+function sanitizeBoxToken(v) {
+  if (typeof v !== 'string') return '';
+  return /^[a-zA-Z0-9_-]+$/.test(v) ? v : '';
 }
 
 // 字段级（四字段）覆写色
@@ -346,6 +355,27 @@ function buildColorOverrideVars(styleJson) {
       if (c) out.push('--el-' + short + '-c' + i + ':' + c);
     }
   }
+
+  // Deco Box 色槽：按 box_style 取值名，命名角色 accent/bg/muted/text。
+  // 与 element 同理走根级变量；DB css_template 已包成 var(--box-<style>-<role>, var(--card-<role>, 兜底)) 两级回退。
+  // 未覆写 → 落回原色板槽 → 落回原兜底色，行为与改造前逐字节一致。
+  const boxCfg = co.box || {};
+  const deco4box = (styleJson && styleJson.deco) || {};
+  const boxStyles = new Set();
+  (deco4box.boxes || []).forEach(b => {
+    const t = sanitizeBoxToken(b && b.style);
+    if (t && t !== 'none') boxStyles.add(t);
+  });
+  const legacyBox = sanitizeBoxToken(deco4box.box_style);
+  if (legacyBox && legacyBox !== 'none') boxStyles.add(legacyBox);
+  const BOX_ROLES = ['accent', 'bg', 'muted', 'text'];
+  boxStyles.forEach(style => {
+    const slots = boxCfg[style] || {};
+    for (const role of BOX_ROLES) {
+      const c = sanitizeColor(slots[role]);
+      if (c) out.push('--box-' + style + '-' + role + ':' + c);
+    }
+  });
   return out;
 }
 

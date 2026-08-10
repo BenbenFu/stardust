@@ -887,6 +887,21 @@
             </div>
         </div>
 
+        <!-- Deco Box 色槽（随当前所选盒子动态生成） -->
+        <div class="dim-group" id="grp-color-box">
+            <div class="dim-group-header" data-grp="color_box">
+                <span>BOX SLOTS Deco Box 色槽</span>
+                <span class="toggle-icon">v</span>
+            </div>
+            <div class="dim-group-body">
+                <div class="co-hint">
+                    只列出当前卡片已添加的 Deco Box。每个盒子按它在 DB 模板里实际用到的色板槽给出角色
+                    （accent/bg/muted/text）；未使用的角色留「默认」即可，填了也不生效。
+                </div>
+                <div id="co-box-list"></div>
+            </div>
+        </div>
+
     </div><!-- /tab-color -->
 
 </div>
@@ -971,7 +986,7 @@
 
 <script type="module">
 import { supabase, checkAuth } from './script.js?v=20260710b';
-import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260805b';
+import { renderStyleJson, injectBaseCss, injectDynamicStyles, DEFAULT_STYLE_JSON } from './style-engine.js?v=20260805c';
 
 // ============================================================
 // DIM_CONFIG: 维度 key → DB 表 + 过滤规则
@@ -1070,12 +1085,14 @@ let loadedHasBgThick = false;
 //   bands:    { header_text|side_text: <color> }
 //   border:   <color>
 //   elements: { <element取值名>: { c1|c2|c3|c4: <color> } }
+//   box:      { <box_style取值名>: { accent|bg|muted|text: <color> } }
 // <color> 三态：''=不覆写 | var(--card-X)=跟随色板 | #hex/rgb()/hsl()=冻结
 let colorOverrideState = {
   fields:   { title:'', date:'', capsule:'', highlights:'' },
   bands:    { header_text:'', side_text:'' },
   border:   '',
   elements: {},
+  box:      {},
 };
 
 // 自定义文字（顶栏 / 侧栏）独立排版状态 —— 不参与 fieldSelector 字段机制
@@ -1349,11 +1366,23 @@ function buildStyleJson() {
       const pr = coPrune({ ...colorOverrideState.elements[v] });
       if (Object.keys(pr).length) coEls[v] = pr;
     }
+    // Deco Box 色槽：只发射当前卡片实际使用的 box_style（其余残留项不进 style_json）
+    const coBox = {};
+    const usedBox = new Set();
+    const decoForBox = sj.deco || {};
+    (decoForBox.boxes || []).forEach(b => { if (b && b.style && b.style !== 'none') usedBox.add(b.style); });
+    if (decoForBox.box_style && decoForBox.box_style !== 'none') usedBox.add(decoForBox.box_style);
+    for (const v in colorOverrideState.box) {
+      if (!usedBox.has(v)) continue;
+      const pr = coPrune({ ...colorOverrideState.box[v] });
+      if (Object.keys(pr).length) coBox[v] = pr;
+    }
     const coOut = {};
     if (Object.keys(coFields).length) coOut.fields = coFields;
     if (Object.keys(coBands).length)  coOut.bands  = coBands;
     if (colorOverrideState.border)    coOut.border = colorOverrideState.border;
     if (Object.keys(coEls).length)    coOut.elements = coEls;
+    if (Object.keys(coBox).length)    coOut.box = coBox;
     sj.color_overrides = coOut;
 
     return sj;
@@ -1508,8 +1537,11 @@ function applyStyleJsonToPanel(sj) {
     colorOverrideState.border = coSj.border || '';
     colorOverrideState.elements = (coSj.elements && typeof coSj.elements === 'object')
       ? JSON.parse(JSON.stringify(coSj.elements)) : {};
+    colorOverrideState.box = (coSj.box && typeof coSj.box === 'object')
+      ? JSON.parse(JSON.stringify(coSj.box)) : {};
     renderCoBasicList();
     renderCoElementList();
+    renderCoBoxList();
 
     DIMS.customCss.value = sj.customCss || '';
 }
@@ -2078,6 +2110,55 @@ function renderCoElementList() {
   });
 }
 
+// Deco Box 色槽列表：随当前已添加的盒子动态生成（结构变更才重建，避免编辑中丢焦点）
+let _coBoxSig = '';
+function renderCoBoxList() {
+  const el = document.getElementById('co-box-list');
+  if (!el) return;
+  const sj = buildStyleJson();
+  const deco = sj.deco || {};
+  const styles = [];
+  const seen = new Set();
+  (deco.boxes || []).forEach(b => {
+    if (b && b.style && b.style !== 'none' && !seen.has(b.style)) { seen.add(b.style); styles.push(b.style); }
+  });
+  if (deco.box_style && deco.box_style !== 'none' && !seen.has(deco.box_style)) styles.push(deco.box_style);
+  const sig = styles.join(',');
+  if (sig === _coBoxSig) {
+    el.querySelectorAll('.co-row').forEach(r => { if (r._sync) r._sync(coGet(r._path)); });
+    return;
+  }
+  _coBoxSig = sig;
+
+  el.innerHTML = '';
+  if (!styles.length) {
+    const empty = document.createElement('div');
+    empty.className = 'co-empty';
+    empty.textContent = '（当前卡片未添加任何 Deco Box）';
+    el.appendChild(empty);
+    return;
+  }
+  // 从维度表读该 box_style 的 css_template，只展示它实际用到的色板角色（更干净）
+  const decoRows = dimensionCache['style_deco_options'] || [];
+  const ROLE_LABEL = { accent: '强调 accent', bg: '背景 bg', muted: '弱化 muted', text: '正文 text' };
+  const ALL_ROLES = ['accent', 'bg', 'muted', 'text'];
+  styles.forEach(style => {
+    const dbRow = decoRows.find(r => r.sub_dim === 'box_style' && r.value === style);
+    const tpl = (dbRow && dbRow.css_template) || '';
+    const usedRoles = tpl
+      ? ALL_ROLES.filter(role => new RegExp('var\\(--card-' + role + '[,)]').test(tpl))
+      : [];
+    const roles = usedRoles.length ? usedRoles : ALL_ROLES;
+    const title = document.createElement('div');
+    title.className = 'co-group-title';
+    title.textContent = 'BOX / ' + style + (usedRoles.length ? '' : '（未识别角色，已显示全部）');
+    el.appendChild(title);
+    roles.forEach(role => {
+      el.appendChild(coBuildRow('box.' + style + '.' + role, ROLE_LABEL[role]));
+    });
+  });
+}
+
 function updatePreview() {
     const sj = buildStyleJson();
 
@@ -2132,6 +2213,7 @@ function updatePreview() {
 
     // 同步「[配色]」标签页的装饰元素色槽列表（结构变更才重建，避免编辑中丢焦点）
     renderCoElementList();
+    renderCoBoxList();
 }
 
 // 元素维度表未加载时的可见告警横幅（避免“装饰条静默不显示”难以排查）
